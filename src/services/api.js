@@ -113,15 +113,20 @@ export const api = {
       })
       .then((r) => r.data),
 
-  getProfile: () =>
-    client
-      .get("/me/profile")
-      .then((r) => r.data),
+getProfile: () =>
+  client
+    .get("/profiles/me")
+    .then((r) => r.data),
 
-  updateProfile: (body) =>
-    client
-      .put("/me/profile", body)
-      .then((r) => r.data),
+updateProfile: (body) =>
+  client
+    .put("/profiles/me", body)
+    .then((r) => r.data),
+
+getProfileById: (profileId) =>
+  client
+    .get(`/profiles/${profileId}`)
+    .then((r) => r.data),
 
   // ------------------------------------------------
   // Career
@@ -329,11 +334,11 @@ export const api = {
       .then((r) => r.data);
   },
 };
-const token = localStorage.getItem("dp_token");
+// const token = localStorage.getItem("dp_token");
 
-if (token) {
-  config.headers.Authorization = `Bearer ${token}`;
-}
+// if (token) {
+//   config.headers.Authorization = `Bearer ${token}`;
+// }
 
 // Default axios client
 export default client;

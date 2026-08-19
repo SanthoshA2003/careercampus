@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAcademyAuth } from "@/context/AuthContext";
+import { useAuth } from "@/features/auth/components/AuthModal";
 
 export default function GoogleCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refresh } = useAcademyAuth();
+const { refresh } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -27,10 +27,10 @@ export default function GoogleCallback() {
     );
 
     // Get logged-in user
-    refresh()
-      .then(() => {
-        navigate("/profile");
-      })
+   refresh()
+  .then(() => {
+    navigate("/");
+  })
       .catch((error) => {
         console.error("Failed to load user:", error);
         localStorage.removeItem("dp_token");

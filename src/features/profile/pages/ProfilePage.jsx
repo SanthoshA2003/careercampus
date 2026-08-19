@@ -41,13 +41,98 @@ function ScoreRing({ score, tier }) {
 
 export default function ProfilePage() {
   const { ready, isAuthed, openAuth, logout } = useAuth();
-  const [data, setData] = useState(null);
 
-  const fetchScore = () => api.profileScore().then(setData).catch(() => {});
-  useEffect(() => {
-    if (!ready) return;
-    if (isAuthed) fetchScore(); else openAuth(fetchScore);
-  }, [ready, isAuthed]);
+  const [data, setData] = useState({
+  score: 0,
+  tier: "Explorer",
+  user: {
+    name: "",
+    careerGoal: "",
+  },
+  stats: {
+    xp: 0,
+    streak: 0,
+    levelsCompleted: 0,
+    applications: 0,
+    hasCareerPlan: false,
+  },
+  breakdown: [],
+  journey: [],
+  nextSteps: [],
+});
+
+const [scoreLoading, setScoreLoading] = useState(false);
+
+const fetchScore = async () => {
+  try {
+    setScoreLoading(true);
+
+    const result = await api.profileScore();
+
+    console.log("PROFILE SCORE RESPONSE:", result);
+
+    setData(result);
+  } catch (error) {
+    console.error("PROFILE SCORE ERROR:", error);
+    console.error("STATUS:", error.response?.status);
+    console.error("RESPONSE:", error.response?.data);
+
+    // Keep the profile page usable even if score API doesn't exist yet
+    setData({
+      score: 0,
+      tier: "Explorer",
+      user: {
+        name: "",
+        careerGoal: "",
+      },
+      stats: {
+        xp: 0,
+        streak: 0,
+        levelsCompleted: 0,
+        applications: 0,
+        hasCareerPlan: false,
+      },
+      breakdown: [],
+      journey: [],
+      nextSteps: [],
+    });
+  } finally {
+    setScoreLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (!ready || !isAuthed) return;
+
+  fetchScore();
+}, [ready, isAuthed]);
+
+  // const fetchScore = async () => {
+  //   try {
+  //     setScoreLoading(true);
+
+  //     const result = await api.profileScore();
+
+  //     console.log("PROFILE SCORE:", result);
+  //     setData(result);
+  //   } catch (error) {
+  //     console.error("PROFILE SCORE ERROR:", error);
+  //     console.error("STATUS:", error.response?.status);
+  //     console.error("RESPONSE:", error.response?.data);
+
+  //     // IMPORTANT:
+  //     // Don't keep the whole page blocked if score API fails.
+  //     setData(null);
+  //   } finally {
+  //     setScoreLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (!ready || !isAuthed) return;
+
+  //   fetchScore();
+  // }, [ready, isAuthed]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -58,47 +143,55 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3">
             <Link to="/" className="hidden items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 sm:flex"><ArrowLeft className="h-4 w-4" /> Home</Link>
             {isAuthed && (
-              <button onClick={() => { logout(); setData(null); }} data-testid="profile-logout"
+              <button onClick={logout} data-testid="profile-logout"
                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"><LogOut className="h-4 w-4" /> Logout</button>
             )}
           </div>
         </div>
       </header>
 
-      {!ready || (isAuthed && !data) ? (
-        <div className="grid h-[70vh] place-items-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
-      ) : !isAuthed ? (
-        <div className="mx-auto grid max-w-md place-items-center px-5 py-32 text-center">
-          <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-glow"><Lock className="h-7 w-7" /></span>
-          <h1 className="mt-6 text-3xl font-black text-slate-900">Your Profile Score</h1>
-          <p className="mt-3 text-slate-600">Log in to see your personalised MyMentor score and your journey with us.</p>
-          <button onClick={() => openAuth(fetchScore)} data-testid="profile-login-cta" className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold text-white shadow-medium">Login to continue</button>
-        </div>
-      ) : (
-        <div className="mx-auto max-w-6xl px-5 pb-24 pt-10 lg:px-8">
-          {/* Hero */}
-          <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-8 shadow-soft lg:p-12">
-            <div className="aurora-blob right-[4%] top-[-10%] h-72 w-72 bg-cyan-300/25" />
-            <div className="relative grid items-center gap-8 lg:grid-cols-[auto_1fr]">
-              <ScoreRing score={data.score} tier={data.tier} />
-              <div>
-                <span className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${TIER_COLORS[data.tier] || TIER_COLORS.Explorer} px-4 py-1.5 text-sm font-bold text-white shadow-soft`} data-testid="tier-badge"><Award className="h-4 w-4" /> {data.tier}</span>
-                <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">Hey {data.user.name?.split(" ")[0] || "there"} 👋</h1>
-                <p className="mt-2 max-w-lg text-[17px] text-slate-600">
-                  {data.user.careerGoal ? <>Your goal: <span className="font-semibold text-slate-800">{data.user.careerGoal}</span>. </> : "Set a career goal to boost your clarity. "}
-                  Here's your MyMentor Score and how far you've come with us.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Stat icon={Zap} label="XP" value={data.stats.xp} />
-                  <Stat icon={Flame} label="Day streak" value={data.stats.streak} />
-                  <Stat icon={GraduationCap} label="Levels" value={`${data.stats.levelsCompleted}/${data.stats.totalLevels}`} />
-                  <Stat icon={Briefcase} label="Applications" value={data.stats.applications} />
-                </div>
-              </div>
-            </div>
-          </div>
+{!ready ? (
+  <div className="grid h-[70vh] place-items-center">
+    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+  </div>
+) : !isAuthed ? (
+  <div className="mx-auto grid max-w-md place-items-center px-5 py-32 text-center">
+    <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-glow">
+      <Lock className="h-7 w-7" />
+    </span>
 
-          <ProfileEditor />
+    <h1 className="mt-6 text-3xl font-black text-slate-900">
+      Your Profile
+    </h1>
+
+    <p className="mt-3 text-slate-600">
+      Log in to view and edit your profile.
+    </p>
+
+    <button
+      onClick={() => openAuth()}
+      data-testid="profile-login-cta"
+      className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold text-white shadow-medium"
+    >
+      Login to continue
+    </button>
+  </div>
+) : (
+  <div className="mx-auto max-w-6xl px-5 pb-24 pt-10 lg:px-8">
+
+    <div className="mb-8">
+      <h1 className="text-4xl font-black tracking-tight text-slate-900">
+        My Profile
+      </h1>
+
+      <p className="mt-2 text-slate-600">
+        Complete your profile to get better career recommendations.
+      </p>
+    </div>
+
+    <ProfileEditor />
+
+  
 
 
           <div className="mt-8 grid gap-8 lg:grid-cols-2">
@@ -188,26 +281,122 @@ const pfield = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 t
 const PLabel = ({ children }) => <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">{children}</label>;
 
 function ProfileEditor() {
+  const { user } = useAuth();
+
   const [p, setP] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const set = (k) => (e) => setP((s) => ({ ...s, [k]: e.target.value }));
 
-  useEffect(() => { api.getProfile().then(setP).catch(() => {}); }, []);
+useEffect(() => {
+  const loadProfile = async () => {
+  try {
+    setProfileLoading(true);
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      const body = { name: p.name, dob: p.dob, profileCategory: p.profileCategory, education: p.education, classYear: p.classYear, institution: p.institution, careerGoal: p.careerGoal, careerInterests: p.careerInterests };
-      const r = await api.updateProfile(body);
-      setP(r.user);
-      toast.success("Profile saved");
-    } catch (e) { toast.error("Could not save profile"); }
-    finally { setSaving(false); }
-  };
+    const data = await api.getProfile();
 
-  if (!p) return null;
-  const pct = p.profileCompletion ?? 0;
+    console.log("PROFILE API RESPONSE:", data);
 
+    setP({
+      ...data,
+       name: user?.name ?? "",
+      profileCategory: data.profile_category ?? "",
+      classYear: data.class_year ?? "",
+      careerGoal: data.career_goal ?? "",
+      careerInterests: data.career_interests ?? "",
+    });
+
+  } catch (error) {
+    console.error("PROFILE LOAD ERROR:", error);
+    console.error("STATUS:", error.response?.status);
+    console.error("RESPONSE:", error.response?.data);
+
+    // If profile does not exist yet,
+    // show an empty profile form instead of infinite loading.
+    if (error.response?.status === 404) {
+      setP({
+        dob: "",
+        age: null,
+        profileCategory: "",
+        education: "",
+        classYear: "",
+        institution: "",
+        careerGoal: "",
+        careerInterests: "",
+      });
+    }
+  } finally {
+    setProfileLoading(false);
+  }
+};
+
+  loadProfile();
+}, []);
+
+ const save = async () => {
+  setSaving(true);
+
+  try {
+    const body = {
+      dob: p.dob,
+      profile_category: p.profileCategory,
+      education: p.education,
+      class_year: p.classYear,
+      institution: p.institution,
+      career_goal: p.careerGoal,
+      career_interests: p.careerInterests,
+    };
+
+    console.log("PROFILE UPDATE REQUEST:", body);
+
+    const r = await api.updateProfile(body);
+
+    console.log("PROFILE UPDATE RESPONSE:", r);
+
+    setP({
+      ...r,
+      profileCategory: r.profile_category ?? "",
+      classYear: r.class_year ?? "",
+      careerGoal: r.career_goal ?? "",
+      careerInterests: r.career_interests ?? "",
+    });
+
+    toast.success("Profile saved");
+  } catch (error) {
+    console.error("PROFILE UPDATE ERROR:", error);
+    console.error("STATUS:", error.response?.status);
+    console.error("RESPONSE:", error.response?.data);
+
+    toast.error("Could not save profile");
+  } finally {
+    setSaving(false);
+  }
+};
+
+if (!p) {
+  return (
+    <div className="mt-8 grid min-h-[300px] place-items-center rounded-3xl border border-slate-100 bg-white shadow-soft">
+      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+    </div>
+  );
+}
+const profileFields = [
+  p.dob,
+  p.profileCategory,
+  p.education,
+  p.classYear,
+  p.institution,
+  p.careerGoal,
+  p.careerInterests,
+];
+
+const completedFields = profileFields.filter(
+  (value) => value && String(value).trim() !== ""
+);
+
+const pct = Math.round(
+  (completedFields.length / profileFields.length) * 100
+);
   return (
     <div className="mt-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-soft" data-testid="profile-editor">
       <div className="flex flex-wrap items-center justify-between gap-4">
