@@ -1,15 +1,26 @@
 import axios from "axios";
 
-const API_BASE_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-const authClient = axios.create({
-  baseURL: API_BASE_URL,
+const client = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
+  withCredentials: true,
 });
 
-export const googleStudentLogin = async (credential) => {
-  const response = await authClient.post("/auth/student/google", {
-    credential,
-  });
+// Google Login
+export const googleLogin = () => {
+  if (!API_BASE_URL) {
+    console.error("REACT_APP_BACKEND_URL is not configured");
+    return;
+  }
 
+  window.location.href = `${API_BASE_URL}/api/auth/google`;
+};
+
+// Get logged-in user
+export const getCurrentUser = async () => {
+  const response = await client.get("/auth/me");
   return response.data;
 };
+
+export default client;

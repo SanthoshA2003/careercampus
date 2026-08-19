@@ -5,38 +5,25 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Logo } from "@/features/career/components/landing/primitives";
 import { api } from "@/services/api";
 import { toast } from "sonner";
-import { googleStudentLogin } from "@/features/auth/services/authService";
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
-const loadGoogleScript = () => {
-  return new Promise((resolve, reject) => {
-    if (window.google?.accounts?.id) {
-      resolve();
-      return;
-    }
 
-    const existingScript = document.getElementById("google-gsi-script");
+ const handleGoogleLogin = () => {
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
-    if (existingScript) {
-      existingScript.addEventListener("load", resolve);
-      existingScript.addEventListener("error", reject);
-      return;
-    }
+  if (!backendUrl) {
+    toast.error("Backend URL is not configured");
+    console.error("REACT_APP_BACKEND_URL is undefined");
+    return;
+  }
 
-    const script = document.createElement("script");
-    script.id = "google-gsi-script";
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-
-    script.onload = resolve;
-    script.onerror = reject;
-
-    document.head.appendChild(script);
-  });
+  window.location.href = `${backendUrl}/api/auth/google`;
 };
+
+
+
 const GoogleIcon = (props) => (
   <svg viewBox="0 0 24 24" width="20" height="20" {...props}>
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z" />
@@ -62,22 +49,7 @@ export const AuthProvider = ({ children }) => {
   // Hydrate session on load. If returning from Google OAuth, process the session_id first.
   useEffect(() => {
     const hash = window.location.hash || "";
-    if (hash.includes("session_id=")) {
-      const sid = new URLSearchParams(hash.replace(/^#/, "")).get("session_id");
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      if (sid) {
-        api.googleSession(sid)
-          .then((res) => {
-            localStorage.setItem("dp_token", res.token);
-            setUser(res.user);
-            if (res.isNewUser) { setStep("onboarding"); setOb({ name: res.user?.name || "", dob: "" }); setOpen(true); }
-            else toast.success("Signed in with Google");
-          })
-          .catch(() => toast.error("Google sign-in failed"))
-          .finally(() => setReady(true));
-        return;
-      }
-    }
+   
     const token = localStorage.getItem("dp_token");
     if (!token) { setUser(false); setReady(true); return; }
     api.me().then((u) => setUser(u)).catch(() => { localStorage.removeItem("dp_token"); setUser(false); }).finally(() => setReady(true));
@@ -125,65 +97,7 @@ export const AuthProvider = ({ children }) => {
     finally { setLoading(false); }
   };
 
-const google = async () => {
-  try {
-    setLoading(true);
 
-    await loadGoogleScript();
-
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-
-    if (!clientId) {
-      toast.error("Google Client ID is not configured");
-      return;
-    }
-
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-
-      callback: async (response) => {
-        try {
-          if (!response?.credential) {
-            toast.error("Google authentication failed");
-            return;
-          }
-
-          const result = await googleStudentLogin(response.credential);
-
-          console.log("Google login response:", result);
-
-          if (result.token) {
-            localStorage.setItem("dp_token", result.token);
-          }
-
-          setUser(result.user);
-
-          toast.success("Signed in with Google");
-
-          setOpen(false);
-
-          runSuccess(result.user);
-        } catch (error) {
-          console.error("Google login API error:", error);
-
-          toast.error(
-            error.response?.data?.message ||
-            error.response?.data?.detail ||
-            "Google sign-in failed"
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-
-    window.google.accounts.id.prompt();
-  } catch (error) {
-    console.error("Google initialization error:", error);
-    toast.error("Unable to start Google sign-in");
-    setLoading(false);
-  }
-};
 
   const completeOnboarding = async () => {
     if (!ob.name.trim()) return toast.error("Please enter your name");
@@ -223,9 +137,14 @@ const google = async () => {
                       <h3 className="text-2xl font-bold text-slate-900">Start your journey</h3>
                       <p className="mt-2 text-sm text-slate-500">One login for your entire Career Operating System.</p>
 
-                      <button onClick={google} className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-[15px] font-semibold text-slate-800 shadow-soft transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-medium" data-testid="auth-google-button">
-                        <GoogleIcon /> Continue with Google
-                      </button>
+     <button
+  type="button"
+  onClick={handleGoogleLogin}
+  className="w-full flex items-center justify-center gap-3 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-100 transition"
+>
+  <GoogleIcon />
+  <span>Continue with Google</span>
+</button>
 
                       <div className="my-5 flex items-center gap-3 text-xs font-medium text-slate-400"><span className="h-px flex-1 bg-slate-200" /> OR <span className="h-px flex-1 bg-slate-200" /></div>
 

@@ -11,6 +11,7 @@ import MentorsPage from "@/features/mentors/pages/MentorsPage";
 import MentorDetailPage from "@/features/mentors/pages/MentorDetailPage";
 import OrganizationsPage from "@/features/organizations/pages/OrganizationsPage";
 import JobsPage from "@/features/jobs/pages/JobsPage";
+import GoogleCallback from "@/features/auth/pages/GoogleCallback";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 
 function LandingPage() {
@@ -48,6 +49,7 @@ function App() {
             <Route path="/organizations" element={<OrganizationsPage />} />
             <Route path="/jobs" element={<JobsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/auth/callback" element={<GoogleCallback />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
