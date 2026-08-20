@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Terminal, LayoutDashboard, Map, Award, ShieldCheck, Users, Hammer, LogOut, Flame, Zap } from "lucide-react";
 import { useAcademyAuth } from "@/context/AuthContext";
+import { useAuth } from "@/features/auth/components/AuthModal";
 
 const studentNav = [
   { to: "/skillhub", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -13,13 +14,20 @@ const adminNav = [
   { to: "/skillhub/admin/students", label: "Students", icon: Users },
 ];
 
-export default function Shell({ children }) {
-  const { user, logout } = useAcademyAuth();
-  const loc = useLocation();
+export default function Shell({ children }) { 
+  const { user, logout } = useAcademyAuth(); 
+  const { logout: mainLogout } = useAuth();
+
+  const loc = useLocation(); 
   const nav = useNavigate();
   const items = user?.role === "admin" ? adminNav : studentNav;
 
   const isActive = (item) => item.end ? loc.pathname === item.to : loc.pathname.startsWith(item.to);
+  const handleLogout = () => {
+  logout();       // Logout from SkillHub
+  mainLogout();   // Logout from entire website
+  nav("/", { replace: true });
+};
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-200">
@@ -45,7 +53,7 @@ export default function Shell({ children }) {
               <p className="truncate text-xs capitalize text-slate-400">{user?.role}</p>
             </div>
           </div>
-          <button onClick={() => { logout(); nav("/skillhub/login"); }} data-testid="logout-btn"
+<button onClick={handleLogout} data-testid="logout-btn"
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10">
             <LogOut className="h-3.5 w-3.5" /> Sign out
           </button>

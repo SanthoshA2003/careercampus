@@ -44,19 +44,37 @@ export function AcademyAuthProvider({ children }) {
   }, []);
 
   // Normal email/password login
-  const login = useCallback(async (email, password) => {
-    const data = await api.login(email, password);
+ const login = useCallback(async (email, password) => {
+  const data = await api.adminLogin(email, password);
 
-    if (data.access_token) {
-      localStorage.setItem("dp_token", data.access_token);
-    }
+  const token = data.access_token || data.token;
 
-    const userData = await api.me();
+  if (token) {
+    localStorage.setItem("dp_token", token);
+  }
 
-    setUser(userData);
+  const userData = await api.me();
 
-    return userData;
-  }, []);
+  setUser(userData);
+
+  return userData;
+}, []);
+
+const adminLogin = useCallback(async (email, password) => {
+  const data = await api.adminLogin(email, password);
+
+  const token = data.access_token || data.token;
+
+  if (token) {
+    localStorage.setItem("dp_token", token);
+  }
+
+  const userData = await api.me();
+
+  setUser(userData);
+
+  return userData;
+}, []);
 
   // Logout
   const logout = useCallback(() => {
@@ -75,14 +93,15 @@ export function AcademyAuthProvider({ children }) {
 
   return (
     <AuthCtx.Provider
-      value={{
-        user,
-        ready,
-        login,
-        logout,
-        refresh,
-        setUser,
-      }}
+     value={{
+  user,
+  ready,
+  login,
+  adminLogin,
+  logout,
+  refresh,
+  setUser,
+}}
     >
       {children}
     </AuthCtx.Provider>

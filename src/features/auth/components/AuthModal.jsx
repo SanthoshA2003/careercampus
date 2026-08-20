@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowRight, Loader2, Phone, ShieldCheck, ChevronLeft, CalendarDays, User } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -36,6 +37,8 @@ const GoogleIcon = (props) => (
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
+const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [user, setUser] = useState(null); // null = loading, false = guest, object = authenticated
   const [ready, setReady] = useState(false);
   const [open, setOpen] = useState(false);
@@ -55,11 +58,18 @@ export const AuthProvider = ({ children }) => {
     api.me().then((u) => setUser(u)).catch(() => { localStorage.removeItem("dp_token"); setUser(false); }).finally(() => setReady(true));
   }, []);
 
-  const openAuth = useCallback((onSuccess) => {
-    onSuccessRef.current = typeof onSuccess === "function" ? onSuccess : null;
-    setStep("phone"); setPhone(""); setOtp(""); setOb({ name: "", dob: "" });
-    setOpen(true);
-  }, []);
+ const openAuth = useCallback((onSuccess, adminLogin = false) => {
+  onSuccessRef.current =
+    typeof onSuccess === "function" ? onSuccess : null;
+
+  setShowAdminLogin(adminLogin);
+
+  setStep("phone");
+  setPhone("");
+  setOtp("");
+  setOb({ name: "", dob: "" });
+  setOpen(true);
+}, []);
   const closeAuth = useCallback(() => setOpen(false), []);
   const logout = useCallback(() => { localStorage.removeItem("dp_token"); setUser(false); }, []);
   const refresh = useCallback(async () => { try { setUser(await api.me()); } catch { /* ignore */ } }, []);
@@ -145,6 +155,19 @@ export const AuthProvider = ({ children }) => {
   <GoogleIcon />
   <span>Continue with Google</span>
 </button>
+{showAdminLogin && (
+  <button
+    type="button"
+    onClick={() => {
+      closeAuth();
+      navigate("/skillhub/login");
+    }}
+    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+  >
+    <ShieldCheck className="h-5 w-5 text-violet-600" />
+    Login as Admin
+  </button>
+)}
 
                       <div className="my-5 flex items-center gap-3 text-xs font-medium text-slate-400"><span className="h-px flex-1 bg-slate-200" /> OR <span className="h-px flex-1 bg-slate-200" /></div>
 

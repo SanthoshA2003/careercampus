@@ -6,7 +6,7 @@ import { useAcademyAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 export default function Login() {
-  const { user, ready, login } = useAcademyAuth();
+const { user, ready, adminLogin } = useAcademyAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function Login() {
     e?.preventDefault();
     setLoading(true);
     try {
-      const u = await login(email.trim(), password);
+      const u = await adminLogin(email.trim(), password);
       toast.success(`Welcome back, ${u.name.split(" ")[0]}!`);
       nav(u.role === "admin" ? "/skillhub/admin" : "/skillhub");
     } catch (err) {
@@ -28,10 +28,15 @@ export default function Login() {
     }
   };
 
-  const quick = (role) => {
-    if (role === "admin") { setEmail("admin@digipin.academy"); setPassword("admin123"); }
-    else { setEmail("student@digipin.academy"); setPassword("student123"); }
-  };
+ const quick = (role) => {
+  if (role === "admin") {
+    setEmail("admin@mymentor.com");
+    setPassword("Admin@123");
+  } else {
+    setEmail("");
+    setPassword("");
+  }
+};
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4">

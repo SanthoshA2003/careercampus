@@ -65,6 +65,14 @@ export const api = {
       })
       .then((r) => r.data),
 
+      adminLogin: (email, password) =>
+  client
+    .post("/auth/admin/login", {
+      email,
+      password,
+    })
+    .then((r) => r.data),
+
   register: (name, email, password) =>
     client
       .post("/auth/register", {
@@ -116,6 +124,11 @@ export const api = {
 getProfile: () =>
   client
     .get("/profiles/me")
+    .then((r) => r.data),
+
+    createProfile: (body) =>
+  client
+    .post("/profiles/me", body)
     .then((r) => r.data),
 
 updateProfile: (body) =>
@@ -278,9 +291,23 @@ getProfileById: (profileId) =>
       .get("/me/profile-score")
       .then((r) => r.data),
 
+      // ------------------------------------------------
+// Student Dashboard / SkillHub
+// ------------------------------------------------
+
+studentSkillHubDashboard: () =>
+  client
+    .get("/dashboard/student/skillhub")
+    .then((r) => r.data),
+
   // ------------------------------------------------
   // Admin
   // ------------------------------------------------
+
+  skillHubDashboard: () =>
+  client
+    .get("/dashboard/admin/skillhub")
+    .then((r) => r.data),
 
   analytics: () =>
     client

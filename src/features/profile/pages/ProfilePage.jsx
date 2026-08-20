@@ -286,6 +286,7 @@ function ProfileEditor() {
   const [p, setP] = useState(null);
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [profileExists, setProfileExists] = useState(false);
   const set = (k) => (e) => setP((s) => ({ ...s, [k]: e.target.value }));
 
 useEffect(() => {
@@ -294,6 +295,7 @@ useEffect(() => {
     setProfileLoading(true);
 
     const data = await api.getProfile();
+    setProfileExists(true);
 
     console.log("PROFILE API RESPONSE:", data);
 
@@ -313,61 +315,76 @@ useEffect(() => {
 
     // If profile does not exist yet,
     // show an empty profile form instead of infinite loading.
-    if (error.response?.status === 404) {
-      setP({
-        dob: "",
-        age: null,
-        profileCategory: "",
-        education: "",
-        classYear: "",
-        institution: "",
-        careerGoal: "",
-        careerInterests: "",
-      });
-    }
+   if (error.response?.status === 404) {
+    setProfileExists(false);
+  setP({
+    name: user?.name || "",
+    dob: "",
+    age: null,
+    profileCategory: "",
+    education: "",
+    classYear: "",
+    institution: "",
+    careerGoal: "",
+    careerInterests: "",
+  });
+}
   } finally {
     setProfileLoading(false);
   }
 };
 
   loadProfile();
-}, []);
+}, [user]);
 
  const save = async () => {
   setSaving(true);
 
   try {
     const body = {
-      dob: p.dob,
-      profile_category: p.profileCategory,
-      education: p.education,
-      class_year: p.classYear,
-      institution: p.institution,
-      career_goal: p.careerGoal,
-      career_interests: p.careerInterests,
+      dob: p.dob || null,
+      profile_category: p.profileCategory || null,
+      education: p.education || null,
+      class_year: p.classYear || null,
+      institution: p.institution || null,
+      career_goal: p.careerGoal || null,
+      career_interests: p.careerInterests || null,
     };
 
-    console.log("PROFILE UPDATE REQUEST:", body);
+    console.log("PROFILE SAVE REQUEST:", body);
 
-    const r = await api.updateProfile(body);
+    let r;
 
-    console.log("PROFILE UPDATE RESPONSE:", r);
+    if (profileExists) {
+      // Profile already exists → UPDATE
+      r = await api.updateProfile(body);
+    } else {
+      // Profile does not exist → CREATE
+      r = await api.createProfile(body);
+      setProfileExists(true);
+    }
+
+    console.log("PROFILE SAVE RESPONSE:", r);
 
     setP({
       ...r,
+      name: user?.name || p.name || "",
       profileCategory: r.profile_category ?? "",
       classYear: r.class_year ?? "",
       careerGoal: r.career_goal ?? "",
       careerInterests: r.career_interests ?? "",
     });
 
-    toast.success("Profile saved");
+    toast.success("Profile saved successfully");
+
   } catch (error) {
-    console.error("PROFILE UPDATE ERROR:", error);
+    console.error("PROFILE SAVE ERROR:", error);
     console.error("STATUS:", error.response?.status);
     console.error("RESPONSE:", error.response?.data);
 
-    toast.error("Could not save profile");
+    toast.error(
+      error.response?.data?.detail || "Could not save profile"
+    );
   } finally {
     setSaving(false);
   }

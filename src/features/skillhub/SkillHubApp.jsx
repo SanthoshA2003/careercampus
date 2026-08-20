@@ -12,7 +12,7 @@ import { AdminStudents, Certificates } from "@/features/skillhub/pages/Misc";
 function Guard({ children, admin = false }) {
   const { user, ready } = useAcademyAuth();
   if (!ready) return <div className="grid h-screen place-items-center bg-slate-950"><Loader2 className="h-8 w-8 animate-spin text-cyan-400" /></div>;
-  if (!user) return <Navigate to="/skillhub/login" replace />;
+if (!user) return <Navigate to="/" replace />;
   if (admin && user.role !== "admin") return <Navigate to="/skillhub" replace />;
   return children;
 }

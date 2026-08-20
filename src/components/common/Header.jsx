@@ -13,12 +13,19 @@ export default function Navbar() {
   const { openAuth, isAuthed, user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const goProtected = (to) => (e) => {
-    e.preventDefault();
-    setMobileOpen(false);
-    if (isAuthed) navigate(to);
-    else openAuth(() => navigate(to));
-  };
+ const goProtected = (to) => (e) => {
+  e.preventDefault();
+  setMobileOpen(false);
+
+  if (isAuthed) {
+    navigate(to);
+  } else {
+    openAuth(
+      () => navigate(to),
+      to === "/skillhub"
+    );
+  }
+};
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
