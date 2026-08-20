@@ -6,6 +6,7 @@ import { Logo, Magnetic } from "@/features/career/components/landing/primitives"
 import { navItems } from "@/features/career/services/landingData";
 import { useAuth } from "@/features/auth/components/AuthModal";
 
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,9 +31,8 @@ export default function Navbar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow,border] duration-300 ${
-        scrolled ? "border-b border-slate-200/60 bg-white/70 backdrop-blur-xl shadow-soft" : "bg-white/40 backdrop-blur-md"
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow,border] duration-300 ${scrolled ? "border-b border-slate-200/60 bg-white/70 backdrop-blur-xl shadow-soft" : "bg-white/40 backdrop-blur-md"
+        }`}
       data-testid="navbar"
     >
       <nav className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 lg:px-8">
@@ -84,17 +84,32 @@ export default function Navbar() {
                 <LogOut className="h-4 w-4" /> Logout
               </button>
             </div>
-          ) : (
-            <Magnetic strength={0.25}>
-              <button
-                onClick={() => openAuth()}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-2.5 text-[15px] font-semibold text-white shadow-soft transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-glow"
-                data-testid="nav-login-button"
-              >
-                <LogIn className="h-4 w-4" /> Login
-              </button>
-            </Magnetic>
-          )}
+      ) : (
+  <div className="flex items-center gap-2">
+
+    {/* Register */}
+    <Link
+      to="/register"
+      className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600"
+      data-testid="nav-register-button"
+    >
+      Register
+    </Link>
+
+    {/* Login */}
+    <Magnetic strength={0.25}>
+      <button
+        onClick={() => openAuth()}
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-2.5 text-[15px] font-semibold text-white shadow-soft transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-glow"
+        data-testid="nav-login-button"
+      >
+        <LogIn className="h-4 w-4" />
+        Login
+      </button>
+    </Magnetic>
+
+  </div>
+)}
         </div>
 
         <button
@@ -145,17 +160,37 @@ export default function Navbar() {
               >
                 <CircleUserRound className="h-4 w-4" /> My Score
               </Link>
+
+
+              {!isAuthed && (
+                <Link
+                  to="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="mt-2 flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3.5 text-[16px] font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                  data-testid="nav-mobile-register-button"
+                >
+                  Register
+                </Link>
+              )}
+
               {isAuthed ? (
                 <button
-                  onClick={() => { setMobileOpen(false); logout(); }}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    logout();
+                  }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 px-6 py-3.5 text-[16px] font-semibold text-slate-700"
                   data-testid="nav-mobile-logout-button"
                 >
-                  <LogOut className="h-4 w-4" /> Logout ({user?.name?.split(" ")[0] || "Account"})
+                  <LogOut className="h-4 w-4" />
+                  Logout ({user?.name?.split(" ")[0] || "Account"})
                 </button>
               ) : (
                 <button
-                  onClick={() => { setMobileOpen(false); openAuth(); }}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openAuth();
+                  }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3.5 text-[16px] font-semibold text-white shadow-soft"
                   data-testid="nav-mobile-login-button"
                 >
