@@ -15,7 +15,6 @@ const { refresh } = useAuth();
       navigate("/");
       return;
     }
-
     // Save JWT token
     localStorage.setItem("dp_token", token);
 

@@ -13,8 +13,7 @@ import OrganizationsPage from "@/features/organizations/pages/OrganizationsPage"
 import JobsPage from "@/features/jobs/pages/JobsPage";
 import GoogleCallback from "@/features/auth/pages/GoogleCallback";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
-import RegisterPage from "@/features/auth/pages/RegisterPage";
-import LoginPage from "@/features/auth/pages/LoginPage";
+
 
 function LandingPage() {
   useEffect(() => {
@@ -52,11 +51,7 @@ function App() {
             <Route path="/jobs" element={<JobsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/auth/callback" element={<GoogleCallback />} />
-            <Route
-              path="/register"
-              element={<RegisterPage />}
-            />
-            <Route path="/login" element={<LoginPage />} />
+            
           </Routes>
         </AuthProvider>
       </BrowserRouter>
