@@ -8,21 +8,25 @@ if (!API_BASE_URL) {
 
 const API = `${API_BASE_URL}/api`;
 
-// --------------------------------------------------
-// Axios Client
-// --------------------------------------------------
+// ==================================================
+// AXIOS CLIENT
+// ==================================================
 
 const client = axios.create({
   baseURL: API,
   withCredentials: true,
 });
 
-// Add JWT token automatically if available
+// ==================================================
+// JWT TOKEN INTERCEPTOR
+// ==================================================
+
 client.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("dp_token");
+    const token = localStorage.getItem("access_token");
 
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -31,9 +35,24 @@ client.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --------------------------------------------------
-// Authentication
-// --------------------------------------------------
+// ==================================================
+// OPTIONAL RESPONSE INTERCEPTOR
+// ==================================================
+
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      console.error("401 Unauthorized:", error?.response?.data);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// ==================================================
+// GOOGLE LOGIN
+// ==================================================
 
 export const googleLogin = () => {
   if (!API_BASE_URL) {
@@ -44,39 +63,38 @@ export const googleLogin = () => {
   window.location.href = `${API_BASE_URL}/api/auth/google`;
 };
 
+// ==================================================
+// CURRENT USER
+// ==================================================
+
 export const getCurrentUser = async () => {
   const response = await client.get("/auth/me");
   return response.data;
 };
 
-// --------------------------------------------------
+// ==================================================
 // API
-// --------------------------------------------------
+// ==================================================
 
 export const api = {
   base: API,
 
-  // Authentication
-  login: (email, password) =>
-    client
-      .post("/auth/login", {
-        email,
-        password,
-      })
-      .then((r) => r.data),
-
-      adminLogin: (email, password) =>
-  client
-    .post("/auth/admin/login", {
-      email,
-      password,
-    })
-    .then((r) => r.data),
+  // ==================================================
+  // AUTHENTICATION
+  // ==================================================
 
   register: (name, email, password) =>
     client
       .post("/auth/register", {
         name,
+        email,
+        password,
+      })
+      .then((r) => r.data),
+
+  login: (email, password) =>
+    client
+      .post("/auth/login", {
         email,
         password,
       })
@@ -109,9 +127,9 @@ export const api = {
       })
       .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Profile
-  // ------------------------------------------------
+  // ==================================================
+  // PROFILE
+  // ==================================================
 
   onboarding: (name, dob) =>
     client
@@ -121,38 +139,60 @@ export const api = {
       })
       .then((r) => r.data),
 
-getProfile: () =>
-  client
-    .get("/profiles/me")
-    .then((r) => r.data),
+  getProfile: () =>
+    client
+      .get("/profiles/me")
+      .then((r) => r.data),
 
-    createProfile: (body) =>
-  client
-    .post("/profiles/me", body)
-    .then((r) => r.data),
+  createProfile: (body) =>
+    client
+      .post("/profiles/me", body)
+      .then((r) => r.data),
 
-updateProfile: (body) =>
-  client
-    .put("/profiles/me", body)
-    .then((r) => r.data),
+  updateProfile: (body) =>
+    client
+      .put("/profiles/me", body)
+      .then((r) => r.data),
 
-getProfileById: (profileId) =>
-  client
-    .get(`/profiles/${profileId}`)
-    .then((r) => r.data),
+  getProfileById: (profileId) =>
+    client
+      .get(`/profiles/${profileId}`)
+      .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Career
-  // ------------------------------------------------
+  // ==================================================
+  // CAREER
+  // ==================================================
 
   careerGenerate: (payload) =>
     client
       .post("/career/generate", payload)
       .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Mentors
-  // ------------------------------------------------
+  // ==================================================
+  // CAREER PERSONA
+  // ==================================================
+
+  careerPersonaMe: () =>
+    client
+      .get("/career-personas/me")
+      .then((r) => r.data),
+
+  careerPersonaById: (personaId) =>
+    client
+      .get(`/career-personas/${personaId}`)
+      .then((r) => r.data),
+
+  careerPersonaCreate: ({ goal, answers }) =>
+    client
+      .post("/career-personas", {
+        goal,
+        answers,
+      })
+      .then((r) => r.data),
+
+  // ==================================================
+  // MENTORS
+  // ==================================================
 
   mentorsList: (industry) =>
     client
@@ -192,16 +232,15 @@ getProfileById: (profileId) =>
           : {},
       })
       .then((r) => r.data),
-      
 
   generateReport: (bookingId) =>
     client
       .post(`/bookings/${bookingId}/report/demo`)
       .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Organisations
-  // ------------------------------------------------
+  // ==================================================
+  // ORGANISATIONS
+  // ==================================================
 
   companiesList: () =>
     client
@@ -213,9 +252,9 @@ getProfileById: (profileId) =>
       .post("/companies/join", body)
       .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Jobs
-  // ------------------------------------------------
+  // ==================================================
+  // JOBS
+  // ==================================================
 
   jobsList: (params) =>
     client
@@ -237,9 +276,9 @@ getProfileById: (profileId) =>
       .post(`/jobs/${id}/apply`, body)
       .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Courses / SkillHub
-  // ------------------------------------------------
+  // ==================================================
+  // COURSES / SKILLHUB
+  // ==================================================
 
   courses: () =>
     client
@@ -291,23 +330,23 @@ getProfileById: (profileId) =>
       .get("/me/profile-score")
       .then((r) => r.data),
 
-      // ------------------------------------------------
-// Student Dashboard / SkillHub
-// ------------------------------------------------
+  // ==================================================
+  // STUDENT DASHBOARD
+  // ==================================================
 
-studentSkillHubDashboard: () =>
-  client
-    .get("/dashboard/student/skillhub")
-    .then((r) => r.data),
+  studentSkillHubDashboard: () =>
+    client
+      .get("/dashboard/student/skillhub")
+      .then((r) => r.data),
 
-  // ------------------------------------------------
-  // Admin
-  // ------------------------------------------------
+  // ==================================================
+  // ADMIN
+  // ==================================================
 
   skillHubDashboard: () =>
-  client
-    .get("/dashboard/admin/skillhub")
-    .then((r) => r.data),
+    client
+      .get("/dashboard/admin/skillhub")
+      .then((r) => r.data),
 
   analytics: () =>
     client
@@ -361,11 +400,9 @@ studentSkillHubDashboard: () =>
       .then((r) => r.data);
   },
 };
-// const token = localStorage.getItem("dp_token");
 
-// if (token) {
-//   config.headers.Authorization = `Bearer ${token}`;
-// }
+// ==================================================
+// DEFAULT AXIOS CLIENT
+// ==================================================
 
-// Default axios client
 export default client;

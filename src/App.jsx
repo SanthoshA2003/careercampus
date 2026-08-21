@@ -14,6 +14,7 @@ import JobsPage from "@/features/jobs/pages/JobsPage";
 import GoogleCallback from "@/features/auth/pages/GoogleCallback";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
+import LoginPage from "@/features/auth/pages/LoginPage";
 
 function LandingPage() {
   useEffect(() => {
@@ -54,7 +55,9 @@ function App() {
             <Route
               path="/register"
               element={<RegisterPage />}
-            />          </Routes>
+            />
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
       <Toaster position="top-center" richColors />

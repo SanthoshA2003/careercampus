@@ -13,6 +13,7 @@ const ageFromDob = (dob) => {
   return Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000));
 };
 
+
 const Bubble = ({ children }) => (
   <div className="flex items-start gap-3">
     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500"><Sparkles className="h-4 w-4 text-white" /></span>
@@ -36,21 +37,58 @@ export default function Onboarding({ goal, user, onContinueDashboard }) {
   const progress = Math.min((step / 3) * 100, 100);
 
   const genRef = useRef(false);
-  useEffect(() => {
-    if (step !== 2 || genRef.current) return;
-    genRef.current = true;
-    const started = Date.now();
-    const iv = setInterval(() => setThinkIdx((i) => Math.min(i + 1, THINKING.length - 1)), 800);
-    api.careerGenerate({ goal, name, dob, klass, answers: {} })
-      .then(async (r) => {
-        const elapsed = Date.now() - started;
-        if (elapsed < 4500) await new Promise((res) => setTimeout(res, 4500 - elapsed));
-        clearInterval(iv); setResult(r); setStep(3);
-      })
-      .catch(() => { clearInterval(iv); setStep(3); });
-    return () => clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+ 
+
+useEffect(() => {
+  if (step !== 2 || genRef.current) return;
+
+  genRef.current = true;
+
+  const started = Date.now();
+
+  const iv = setInterval(() => {
+    setThinkIdx((i) =>
+      Math.min(i + 1, THINKING.length - 1)
+    );
+  }, 800);
+
+  api
+    .careerPersonaCreate(goal, {
+      name,
+      dob,
+      klass,
+    })
+    .then(async (r) => {
+      const elapsed = Date.now() - started;
+
+      if (elapsed < 4500) {
+        await new Promise((res) =>
+          setTimeout(res, 4500 - elapsed)
+        );
+      }
+
+      clearInterval(iv);
+
+      console.log("Career Persona Created:", r);
+
+      setResult(r);
+      setStep(3);
+    })
+    .catch((error) => {
+      clearInterval(iv);
+
+      console.error(
+        "Career Persona creation failed:",
+        error?.response?.data || error
+      );
+
+      setStep(3);
+    });
+
+  return () => clearInterval(iv);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [step]);
 
   return (
     <div className="relative z-10 mx-auto flex min-h-screen max-w-2xl flex-col px-4 pt-24 pb-16">
