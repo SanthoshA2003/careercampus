@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Clock, Star, ArrowRight } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, Check } from "lucide-react";
 import { Reveal, SectionTag } from "@/features/career/components/landing/primitives";
 import { skillCategories } from "@/features/career/services/landingData";
 import { useAuth } from "@/features/auth/components/AuthModal";
+import { api } from "@/services/api";
 
 const THUMBS = {
   "Programming": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?crop=entropy&cs=srgb&fm=jpg&q=80&w=600",
@@ -30,15 +31,87 @@ const coursesByCat = {
 
 export default function LearningSection() {
   const [active, setActive] = useState(skillCategories[0].label);
-  const courses = coursesByCat[active] || [];
+
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
+
   const { isAuthed, openAuth } = useAuth();
   const navigate = useNavigate();
 
-  const enroll = () => {
-    // Preserve course context through auth: after login, continue to SkillHub.
-    if (isAuthed) navigate("/skillhub");
-    else openAuth(() => navigate("/skillhub"));
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const coursesResponse = await api.courses();
+
+      console.log("Courses:", coursesResponse);
+
+      setCourses(coursesResponse || []);
+
+      if (isAuthed) {
+        const enrolledResponse = await api.enrolledCourses();
+
+        const enrolledIds = enrolledResponse.map(
+          (course) => course.course_id
+        );
+
+        setEnrolledCourseIds(enrolledIds);
+      }
+    } catch (error) {
+      console.error("Failed to fetch courses:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  fetchData();
+}, [isAuthed]);
+
+ const enroll = async (courseId) => {
+  if (!isAuthed) {
+    openAuth(() => navigate("/skillhub"));
+    return;
+  }
+
+  try {
+    await api.enrollCourse(courseId);
+
+    // Immediately update button state
+    setEnrolledCourseIds((prev) => [
+      ...prev,
+      courseId,
+    ]);
+
+    // Navigate to selected course journey
+    navigate(`/skillhub/journey/${courseId}`);
+  } catch (error) {
+    console.error(
+      "Enrollment failed:",
+      error.response?.data || error.message
+    );
+
+    // If already enrolled, still go to journey
+    if (
+      error.response?.data?.detail ===
+      "You are already enrolled in this course."
+    ) {
+      navigate(`/skillhub/journey/${courseId}`);
+    }
+  }
+};
+
+const filteredCourses = courses.filter((course) => {
+  const courseCategory =
+    course.category?.name ||
+    course.category_name ||
+    course.category ||
+    course.skill_category ||
+    "";
+
+  return courseCategory.trim().toLowerCase() === active.trim().toLowerCase();
+});
 
   return (
     <section id="skillhub" className="relative py-24 lg:py-32" data-testid="learning-section">
@@ -73,38 +146,109 @@ export default function LearningSection() {
             </div>
           </Reveal>
 
-          {/* Course cards */}
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {courses.map((c, i) => (
-              <motion.div
-                key={c[0]}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -6 }}
-                className="group flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-soft transition-shadow hover:shadow-large"
-                data-testid={`course-card-${i}`}
-              >
-                <div className="relative h-32 overflow-hidden">
-                  <img src={THUMBS[active]} alt={c[0]} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
-                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-700 backdrop-blur">{active}</span>
-                </div>
-                <div className="flex flex-1 flex-col p-6">
-                  <h3 className="text-[17px] font-bold leading-snug text-slate-900">{c[0]}</h3>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500">{c[3]}</p>
-                  <div className="mt-3 flex items-center justify-between text-[13px] text-slate-500">
-                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {c[1]}</span>
-                    <span className="flex items-center gap-1 font-semibold text-amber-500"><Star className="h-4 w-4 fill-current" /> {c[2]}</span>
-                  </div>
-                  <button onClick={enroll} data-testid={`enroll-btn-${i}`}
-                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-glow">
-                    Enroll Now <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+         {/* Course cards */}
+<div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+
+  {loading ? (
+    <p className="text-slate-500">Loading courses...</p>
+  ) : filteredCourses.length === 0 ? (
+    <p className="text-slate-500">
+      No courses available in this category.
+    </p>
+  ) : (
+    filteredCourses.map((course, i) => {
+      const isEnrolled = enrolledCourseIds.includes(course.id);
+
+      return (
+        <motion.div
+          key={course.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.06 }}
+          whileHover={{ y: -6 }}
+          className="group flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-soft"
+        >
+          {/* Image */}
+          <div className="relative h-36 overflow-hidden">
+
+    <img
+  src={
+    course.thumbnail ||
+    course.thumbnail_url ||
+    THUMBS[active]
+  }
+  alt={course.title}
+  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+  onError={(e) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = THUMBS[active];
+  }}
+/>
+
+           <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 backdrop-blur">
+  {course.category?.name ||
+    course.category_name ||
+    course.category ||
+    active}
+</span>
+
           </div>
+
+          {/* Content */}
+          <div className="flex flex-1 flex-col p-6">
+
+            <h3 className="text-[17px] font-bold text-slate-900">
+              {course.title}
+            </h3>
+
+            <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-slate-500">
+              {course.description}
+            </p>
+
+            <div className="mt-4 flex items-center justify-between text-[13px] text-slate-500">
+
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {course.duration || "N/A"}
+              </span>
+
+              <span className="flex items-center gap-1">
+                <BookOpen className="h-4 w-4" />
+                {course.difficulty || "Beginner"}
+              </span>
+
+            </div>
+
+            <button
+              onClick={() => {
+                if (isEnrolled) {
+                  navigate(`/skillhub/journey/${course.id}`);
+                } else {
+                  enroll(course.id);
+                }
+              }}
+              className={`mt-5 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition ${
+                isEnrolled
+                  ? "bg-emerald-500 hover:bg-emerald-600"
+                  : "bg-gradient-to-r from-blue-600 to-cyan-500"
+              }`}
+            >
+              {isEnrolled ? "Enrolled" : "Enroll Now"}
+
+              {isEnrolled ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ArrowRight className="h-4 w-4" />
+              )}
+            </button>
+
+          </div>
+        </motion.div>
+      );
+    })
+  )}
+
+</div>
         </div>
       </div>
     </section>

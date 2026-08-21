@@ -20,8 +20,18 @@ export default function AdminBuilder() {
   const [levels, setLevels] = useState([]);
   const [levelId, setLevelId] = useState("");
 
-  const [course, setCourse] = useState({ title: "", description: "", language: "Python", difficulty: "Beginner", duration: "", thumbnail: "", status: "published" });
-  const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "", description: "", xp: 100, video: { url: "" } });
+const [course, setCourse] = useState({
+  title: "",
+  description: "",
+  language: "Python",
+  difficulty: "Beginner",
+  duration: "",
+  thumbnail: "",
+  status: "draft",
+  certificate_template: "",
+});
+
+const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "", description: "", xp: 100, video: { url: "" } });
   const [cp, setCp] = useState({ order: 1, atSeconds: 5, title: "", scenario: "", problemStatement: "", difficulty: "Easy", xp: 25, starter: "# write your code\n", vin: "", vout: "", hin: "", hout: "" });
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,15 +47,67 @@ export default function AdminBuilder() {
     catch { toast.error("Failed"); } finally { setBusy(false); }
   };
 
-  const createLevel = async () => {
-    if (!courseId) return toast.error("Select a course");
-    setBusy(true);
-    try {
-      const l = await api.createLevel(courseId, { ...level, objectives: [], passPercentage: 100, duration: "45 min", theory: { objectives: [], explanation: level.description, codeExamples: [], bestPractices: [], commonMistakes: [] } });
-      toast.success("Level created");
-      const list = await api.courseLevels(courseId); setLevels(list); setLevelId(l.id);
-    } catch { toast.error("Failed"); } finally { setBusy(false); }
-  };
+const createLevel = async () => {
+  if (!courseId) {
+    return toast.error("Select a course");
+  }
+
+  if (!level.title.trim()) {
+    return toast.error("Level title required");
+  }
+
+  setBusy(true);
+
+  try {
+    const l = await api.createLevel({
+      course_id: courseId,
+      stage: level.stage,
+      stage_order: 1,
+      level_number: Number(level.levelNumber),
+      global_order: Number(level.levelNumber),
+      title: level.title,
+      description: level.description || "",
+      objectives: [],
+      xp: Number(level.xp),
+      pass_percentage: 100,
+      duration: "30 minutes",
+
+      video: level.video.url
+        ? {
+            url: level.video.url,
+          }
+        : {},
+
+      theory: {},
+    });
+
+    toast.success("Level created");
+
+    const list = await api.courseLevels(courseId);
+
+    setLevels(list);
+
+    setLevelId(l.id);
+
+    setLevel({
+      stage: "Beginner",
+      levelNumber: Number(level.levelNumber) + 1,
+      title: "",
+      description: "",
+      xp: 100,
+      video: { url: "" },
+    });
+
+  } catch (error) {
+    console.error("Create level error:", error.response?.data || error);
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to create level"
+    );
+  } finally {
+    setBusy(false);
+  }
+};
 
   const uploadVideo = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -55,22 +117,114 @@ export default function AdminBuilder() {
   };
 
   const addCheckpoint = async () => {
-    if (!levelId) return toast.error("Select a level");
-    setBusy(true);
-    try {
-      await api.addCheckpoint(levelId, {
-        order: Number(cp.order), atSeconds: Number(cp.atSeconds), title: cp.title, scenario: cp.scenario,
-        problemStatement: cp.problemStatement, objective: "", difficulty: cp.difficulty, marks: Number(cp.xp), xp: Number(cp.xp),
-        retryLimit: 5, language: "python", starterCode: { python: cp.starter, javascript: "// write your code\n" },
-        constraints: "Read from stdin, print exact output.", hints: [], solution: "", explanation: "",
-        visibleTestCases: cp.vin ? [{ input: cp.vin, expectedOutput: cp.vout }] : [],
-        hiddenTestCases: cp.hin ? [{ input: cp.hin, expectedOutput: cp.hout }] : [],
-      });
-      toast.success("Checkpoint added");
-      const list = await api.courseLevels(courseId); setLevels(list);
-      setCp({ ...cp, order: cp.order + 1, atSeconds: cp.atSeconds + 5, title: "", problemStatement: "", vin: "", vout: "", hin: "", hout: "" });
-    } catch { toast.error("Failed"); } finally { setBusy(false); }
-  };
+  if (!levelId) {
+    return toast.error("Select a level");
+  }
+
+  if (!cp.title.trim()) {
+    return toast.error("Challenge title required");
+  }
+
+  if (!cp.problemStatement.trim()) {
+    return toast.error("Problem statement required");
+  }
+
+  setBusy(true);
+
+  try {
+    await api.addCheckpoint({
+      level_id: levelId,
+
+      checkpoint_order: Number(cp.order),
+
+      at_seconds: Number(cp.atSeconds),
+
+      title: cp.title,
+
+      scenario: cp.scenario || "",
+
+      problem_statement: cp.problemStatement,
+
+      objective: "",
+
+      difficulty: cp.difficulty,
+
+      marks: 25,
+
+      xp: Number(cp.xp),
+
+      retry_limit: 5,
+
+      language: "python",
+
+      starter_code: {
+        code: cp.starter,
+      },
+
+      constraints: "",
+
+      hints: [],
+
+      solution: "",
+
+      explanation: "",
+
+      visible_test_cases:
+        cp.vin || cp.vout
+          ? [
+              {
+                input: cp.vin,
+                expected_output: cp.vout,
+              },
+            ]
+          : [],
+
+      hidden_test_cases:
+        cp.hin || cp.hout
+          ? [
+              {
+                input: cp.hin,
+                expected_output: cp.hout,
+              },
+            ]
+          : [],
+    });
+
+    toast.success("Checkpoint added");
+
+    const list = await api.courseLevels(courseId);
+
+    setLevels(list);
+
+    setCp({
+      ...cp,
+      order: Number(cp.order) + 1,
+      atSeconds: Number(cp.atSeconds) + 5,
+      title: "",
+      scenario: "",
+      problemStatement: "",
+      starter: "# write your code\n",
+      vin: "",
+      vout: "",
+      hin: "",
+      hout: "",
+    });
+
+  } catch (error) {
+    console.error(
+      "Checkpoint error:",
+      error.response?.data || error
+    );
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to add checkpoint"
+    );
+
+  } finally {
+    setBusy(false);
+  }
+};
 
   const selectedLevel = levels.find((l) => l.id === levelId);
 

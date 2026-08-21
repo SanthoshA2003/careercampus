@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Loader2,
   Compass,
+  Award,
   GraduationCap,
   UserCheck,
   Flame,
@@ -16,6 +17,7 @@ import {
   Circle,
   Lock,
   LogOut,
+  Zap,
 } from "lucide-react";
 
 import { api } from "@/services/api";
@@ -45,9 +47,18 @@ const ICONS = {
 
 const TIER_COLORS = {
   Explorer: "from-slate-500 to-slate-600",
-  "Rising Star": "from-blue-500 to-cyan-500",
-  Achiever: "from-violet-500 to-blue-600",
-  Elite: "from-amber-400 to-orange-500",
+
+  "Rising Star":
+    "from-blue-500 to-cyan-500",
+
+  Achiever:
+    "from-violet-500 to-blue-600",
+
+  Elite:
+    "from-amber-400 to-orange-500",
+
+  "Career Champion":
+    "from-emerald-500 to-teal-600",
 };
 
 
@@ -158,11 +169,6 @@ function ScoreRing({ score = 0, tier = "Explorer" }) {
           / 100
         </span>
 
-        <span
-          className={`mt-2 rounded-full bg-gradient-to-r ${tierClass} px-3 py-1 text-xs font-semibold text-white`}
-        >
-          {tier}
-        </span>
       </div>
     </div>
   );
@@ -178,33 +184,68 @@ export default function ProfilePage() {
     isAuthed,
     openAuth,
     logout,
+     user,
   } = useAuth();
 
   const [data, setData] = useState({
-    score: 0,
+  score: 0,
 
-    tier: "Explorer",
+  tier: "Explorer",
 
-    user: {
-      name: "",
-      careerGoal: "",
-    },
+  user: {
+    name: "",
+    careerGoal: "",
+  },
 
-    stats: {
-      xp: 0,
-      streak: 0,
-      levelsCompleted: 0,
-      applications: 0,
-      hasCareerPlan: false,
-    },
+  stats: {
+    xp: 0,
+    streak: 0,
+    levelsCompleted: 0,
+    totalLevels: 0,
+    applications: 0,
+    hasCareerPlan: false,
+  },
 
-    breakdown: [],
-    journey: [],
-    nextSteps: [],
-  });
+  breakdown: [],
+  journey: [],
+  nextSteps: [],
+});
 
+const [scoreBreakdown, setScoreBreakdown] = useState(null);
+
+const [breakdownLoading, setBreakdownLoading] =
+  useState(false);
   const [scoreLoading, setScoreLoading] =
     useState(false);
+
+    const fetchScoreBreakdown = async () => {
+  try {
+    setBreakdownLoading(true);
+
+    const result = await api.scoreBreakdown();
+
+    console.log(
+      "SCORE BREAKDOWN RESPONSE:",
+      result
+    );
+
+    setScoreBreakdown(result);
+
+  } catch (error) {
+    console.error(
+      "SCORE BREAKDOWN ERROR:",
+      error
+    );
+
+    toast.error(
+      error?.response?.data?.detail ||
+      "Unable to load score breakdown"
+    );
+
+  } finally {
+    setBreakdownLoading(false);
+  }
+};
 
 
   // ==========================================================
@@ -212,120 +253,129 @@ export default function ProfilePage() {
   // ==========================================================
 
   const fetchScore = async () => {
-    try {
-      setScoreLoading(true);
+  try {
+    setScoreLoading(true);
 
-      const result = await api.profileScore();
+    const result = await api.profileScore();
 
-      console.log(
-        "PROFILE SCORE RESPONSE:",
-        result
-      );
+    console.log(
+      "PROFILE SUMMARY RESPONSE:",
+      result
+    );
 
-      setData({
-        score: result?.score ?? 0,
+    setData((prev) => ({
+      ...prev,
 
-        tier:
-          result?.tier ??
-          "Explorer",
+      score: result?.score ?? 0,
 
-        user: {
-          name:
-            result?.user?.name ?? "",
+      tier:
+        result?.badge ??
+        "Explorer",
 
-          careerGoal:
-            result?.user?.careerGoal ?? "",
-        },
+      user: {
+        name:
+          result?.name ?? "",
 
-        stats: {
-          xp:
-            result?.stats?.xp ?? 0,
+        careerGoal:
+          result?.career_goal ?? "",
+      },
 
-          streak:
-            result?.stats?.streak ?? 0,
+      stats: {
+        xp:
+          result?.xp ?? 0,
 
-          levelsCompleted:
-            result?.stats?.levelsCompleted ?? 0,
+        streak:
+          result?.day_streak ?? 0,
 
-          applications:
-            result?.stats?.applications ?? 0,
+        levelsCompleted:
+          result?.completed_levels ?? 0,
 
-          hasCareerPlan:
-            result?.stats?.hasCareerPlan ?? false,
-        },
+        totalLevels:
+          result?.total_levels ?? 0,
 
-        breakdown:
-          Array.isArray(result?.breakdown)
-            ? result.breakdown
-            : [],
+        applications:
+          result?.applications ?? 0,
 
-        journey:
-          Array.isArray(result?.journey)
-            ? result.journey
-            : [],
+        hasCareerPlan:
+          Boolean(result?.career_goal),
+      },
+    }));
 
-        nextSteps:
-          Array.isArray(result?.nextSteps)
-            ? result.nextSteps
-            : [],
-      });
+  } catch (error) {
+    console.error(
+      "PROFILE SUMMARY ERROR:",
+      error
+    );
 
-    } catch (error) {
-      console.error(
-        "PROFILE SCORE ERROR:",
-        error
-      );
+    console.error(
+      "STATUS:",
+      error?.response?.status
+    );
 
-      console.error(
-        "STATUS:",
-        error?.response?.status
-      );
+    console.error(
+      "RESPONSE:",
+      error?.response?.data
+    );
 
-      console.error(
-        "RESPONSE:",
-        error?.response?.data
-      );
+    toast.error(
+      error?.response?.data?.detail ||
+      "Unable to load profile summary."
+    );
 
-      setData({
-        score: 0,
-
-        tier: "Explorer",
-
-        user: {
-          name: "",
-          careerGoal: "",
-        },
-
-        stats: {
-          xp: 0,
-          streak: 0,
-          levelsCompleted: 0,
-          applications: 0,
-          hasCareerPlan: false,
-        },
-
-        breakdown: [],
-        journey: [],
-        nextSteps: [],
-      });
-
-    } finally {
-      setScoreLoading(false);
-    }
-  };
+  } finally {
+    setScoreLoading(false);
+  }
+};
 
 
   // ==========================================================
   // LOAD SCORE AFTER AUTH
   // ==========================================================
 
-  useEffect(() => {
-    if (!ready || !isAuthed) {
-      return;
-    }
+useEffect(() => {
+  if (!ready || !isAuthed) {
+    return;
+  }
 
-    fetchScore();
-  }, [ready, isAuthed]);
+  fetchScore();
+  fetchScoreBreakdown();
+
+}, [ready, isAuthed]);
+
+const breakdownItems = scoreBreakdown
+  ? [
+      {
+        label: "Career Clarity",
+        icon: Compass,
+        value: scoreBreakdown.career_clarity,
+        max: scoreBreakdown.career_clarity_max,
+      },
+      {
+        label: "Learning Progress",
+        icon: GraduationCap,
+        value: scoreBreakdown.learning_progress,
+        max: scoreBreakdown.learning_progress_max,
+      },
+      {
+        label: "Profile Completeness",
+        icon: UserCheck,
+        value: scoreBreakdown.profile_completeness,
+        max: scoreBreakdown.profile_completeness_max,
+      },
+      {
+        label: "Consistency",
+        icon: Flame,
+        value: scoreBreakdown.consistency,
+        max: scoreBreakdown.consistency_max,
+      },
+      {
+        label: "Job Readiness",
+        icon: Briefcase,
+        value: scoreBreakdown.job_readiness,
+        max: scoreBreakdown.job_readiness_max,
+      },
+    ]
+  : [];
 
 
   // ==========================================================
@@ -426,129 +476,115 @@ export default function ProfilePage() {
 
         <div className="mx-auto max-w-6xl px-5 pb-24 pt-10 lg:px-8">
 
-          {/* ==================================================
-              PAGE TITLE
-          ================================================== */}
+{/* ==================================================
+    PROFILE SUMMARY HERO
+================================================== */}
 
-          <div className="mb-8">
+<div className="mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-8 shadow-soft lg:p-12">
 
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">
-              My Profile
-            </h1>
+  <div className="flex flex-col items-center gap-10 lg:flex-row">
 
-            <p className="mt-2 text-slate-600">
-              Complete your profile to get better career recommendations.
-            </p>
+    {/* ================= SCORE RING ================= */}
 
-          </div>
+    <div className="shrink-0">
+
+      {scoreLoading ? (
+
+        <div className="grid h-[208px] w-[208px] place-items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+
+      ) : (
+
+        <ScoreRing
+          score={data.score}
+          tier={data.tier}
+        />
+
+      )}
+
+    </div>
 
 
-          {/* ==================================================
+    {/* ================= PROFILE INFO ================= */}
+
+    <div className="flex-1 text-center lg:text-left">
+
+      {/* Badge */}
+
+     <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#334155] px-4 py-2 text-sm font-semibold text-white shadow-sm">
+  <Award className="h-4 w-4 stroke-[2]" />
+  <span>{data.tier || "Explorer"}</span>
+</div>
+
+
+      {/* Welcome */}
+
+     <h1 className="text-4xl font-black tracking-tight text-slate-900">
+  Hey {user?.name || data.user?.name || "there"} 👋
+</h1>
+
+
+      {/* Description */}
+
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600 lg:text-lg">
+
+        {data.user?.careerGoal
+          ? `You're on your journey to become a ${data.user.careerGoal}. Here's your MyMentor Score and how far you've come with us.`
+          : "Set a career goal to boost your clarity. Here's your MyMentor Score and how far you've come with us."
+        }
+
+      </p>
+
+
+      {/* ================= STATS ================= */}
+
+      <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+        
+
+        <HeroStat
+          icon={Zap}
+          value={data.stats.xp}
+          label="XP"
+        />
+
+        <HeroStat
+          icon={Flame}
+          value={data.stats.streak}
+          label="DAY STREAK"
+        />
+
+        <HeroStat
+          icon={GraduationCap}
+          value={`${data.stats.levelsCompleted}/${data.stats.totalLevels}`}
+          label="LEVELS"
+        />
+
+        <HeroStat
+          icon={Briefcase}
+          value={data.stats.applications}
+          label="APPLICATIONS"
+        />
+
+      </div>
+
+    </div>
+
+  </div>
+  
+
+</div>
+
+
+          
+           {/* ==================================================
               PROFILE EDITOR
           ================================================== */}
 
           <ProfileEditor />
-
-
+          
           {/* ==================================================
-              SCORE SECTION
-          ================================================== */}
-
-          <div className="mt-8 grid gap-8 lg:grid-cols-3">
-
-            <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
-
-              <div className="flex flex-col items-center">
-
-                <h2 className="text-lg font-bold text-slate-900">
-                  MyMentor Score
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Your current career readiness
-                </p>
-
-                <div className="mt-6">
-
-                  {scoreLoading ? (
-                    <div className="grid h-[208px] w-[208px] place-items-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                    </div>
-                  ) : (
-                    <ScoreRing
-                      score={data.score}
-                      tier={data.tier}
-                    />
-                  )}
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            {/* ==================================================
-                STATS
-            ================================================== */}
-
-            <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft lg:col-span-2">
-
-              <h2 className="text-lg font-bold text-slate-900">
-                Your Progress
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Track your learning and career activity.
-              </p>
-
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-                <Stat
-                  icon={Zap}
-                  label="XP"
-                  value={data.stats.xp}
-                />
-
-                <Stat
-                  icon={Flame}
-                  label="Streak"
-                  value={data.stats.streak}
-                />
-
-                <Stat
-                  icon={GraduationCap}
-                  label="Levels"
-                  value={data.stats.levelsCompleted}
-                />
-
-                <Stat
-                  icon={Briefcase}
-                  label="Applications"
-                  value={data.stats.applications}
-                />
-
-              </div>
-
-
-              {data.user?.careerGoal && (
-                <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Career Goal
-                  </p>
-
-                  <p className="mt-2 text-base font-semibold text-slate-900">
-                    {data.user.careerGoal}
-                  </p>
-
-                </div>
-              )}
-
-            </div>
-
-          </div>{/* ==================================================
               BREAKDOWN + JOURNEY
           ================================================== */}
 
@@ -569,37 +605,84 @@ export default function ProfilePage() {
               </p>
 
 
-              <div className="mt-6 space-y-5">
+            <div className="mt-6 space-y-5">
 
-                {data.breakdown.length === 0 ? (
+  {breakdownLoading ? (
 
-                  <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">
-                    Complete your profile and start your career journey to build your score.
-                  </div>
+    <div className="grid h-64 place-items-center">
+      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+    </div>
 
-                ) : (
+  ) : breakdownItems.length === 0 ? (
 
-                  data.breakdown.map((b, i) => {
+    <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">
+      Complete your profile and start your career journey to build your score.
+    </div>
 
-                    const Icon =
-                      ICONS[b.icon] ||
-                      Sparkles;
+  ) : (
 
-                    const value =
-                      Number(b.value) || 0;
+    breakdownItems.map((b, i) => {
 
-                    const max =
-                      Number(b.max) || 1;
+      const Icon = b.icon;
 
-                    const pct =
-                      Math.min(
-                        100,
-                        Math.round(
-                          (value / max) * 100
-                        )
-                      );
+      const value = Number(b.value) || 0;
+      const max = Number(b.max) || 1;
 
-                    return (
+      const pct = Math.min(
+        100,
+        Math.round((value / max) * 100)
+      );
+
+      return (
+        <div
+          key={b.label}
+          data-testid={`breakdown-${i}`}
+        >
+
+          <div className="mb-1.5 flex items-center justify-between text-sm">
+
+            <span className="flex items-center gap-2 font-medium text-slate-700">
+
+              <Icon className="h-4 w-4 text-blue-600" />
+
+              {b.label}
+
+            </span>
+
+            <span className="font-bold text-slate-900">
+
+              {value}
+
+              <span className="font-normal text-slate-400">
+                /{max}
+              </span>
+
+            </span>
+
+          </div>
+
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{
+                delay: 0.2 + i * 0.1,
+                duration: 0.9,
+              }}
+              className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500"
+            />
+
+          </div>
+
+        </div>
+      );
+    })
+
+  )}
+
+</div>
+                    {/* return (
                       <div
                         key={b.label || i}
                         data-testid={`breakdown-${i}`}
@@ -661,7 +744,7 @@ export default function ProfilePage() {
 
                 )}
 
-              </div>
+              </div> */}
 
             </div>
 
@@ -794,9 +877,13 @@ export default function ProfilePage() {
               NEXT STEPS
           ================================================== */}
 
-          {data.nextSteps.length > 0 && (
+        {(
+  !data.stats.hasCareerPlan ||
+  data.stats.levelsCompleted === 0 ||
+  data.stats.applications === 0
+) && (
 
-            <div className="mt-8 rounded-3xl bg-gradient-to-br from-blue-600 via-cyan-500 to-green-500 p-8 sm:p-10">
+  <div className="mt-8 rounded-3xl bg-gradient-to-br from-blue-600 via-cyan-500 to-green-500 p-8 sm:p-10">
 
               <h2 className="text-2xl font-black text-white">
                 Boost your score
@@ -809,13 +896,11 @@ export default function ProfilePage() {
 
               <div className="mt-6 flex flex-wrap gap-3">
 
-                {!data.stats.hasCareerPlan && (
                   <NextCTA
                     to="/career-path"
                     label="Generate career plan"
                   />
-                )}
-
+            
 
                 {data.stats.levelsCompleted === 0 && (
                   <NextCTA
@@ -844,6 +929,39 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+
+// ============================================================
+// HERO STAT COMPONENT
+// ============================================================
+
+const HeroStat = ({
+  icon: Icon,
+  value,
+  label,
+}) => (
+  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+
+    <div className="flex h-9 w-9 items-center justify-center">
+      <Icon className="h-5 w-5 text-blue-600" />
+    </div>
+
+    <div className="min-w-0 text-left">
+
+      <div className="text-lg font-black leading-tight text-slate-900">
+        {value}
+      </div>
+
+      <div className="mt-1 whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        {label}
+      </div>
+
+    </div>
+
+  </div>
+);
+
+
 
 
 // ============================================================
@@ -1205,42 +1323,25 @@ function ProfileEditor() {
       );
 
 
-    } catch (error) {
+      } catch (error) {
 
-      console.error(
-        "PROFILE SAVE ERROR:",
-        error
-      );
+    console.error(
+      "PROFILE SAVE ERROR:",
+      error
+    );
 
-      console.error(
-        "STATUS:",
-        error?.response?.status
-      );
+    const message =
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      "Could not save profile";
 
-      console.error(
-        "RESPONSE:",
-        error?.response?.data
-      );
+    toast.error(message);
 
-
-      const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        "Could not save profile";
-
-
-      toast.error(message);
-
-    } finally {
-
-      setSaving(false);
-
-    }
-
-  } 
+  } finally {
+    setSaving(false);
+  }
 };
-
 // ==========================================================
 // PROFILE LOADING
 // ==========================================================
@@ -1252,6 +1353,23 @@ if (profileLoading || !p) {
     </div>
   );
 }
+const profileFields = [
+  p.dob,
+  p.profileCategory,
+  p.education,
+  p.classYear,
+  p.institution,
+  p.careerGoal,
+  p.careerInterests,
+];
+
+const completedFields = profileFields.filter(
+  (value) => value && String(value).trim() !== ""
+);
+
+const pct = Math.round(
+  (completedFields.length / profileFields.length) * 100
+);
 
   // if (profileLoading || !p) {
 
@@ -1270,15 +1388,17 @@ if (profileLoading || !p) {
   // PROFILE COMPLETION
   // ==========================================================
 
-  const profileFields = [
-    p.dob,
-    p.profileCategory,
-    p.education,
-    p.classYear,
-    p.institution,
-    p.careerGoal,
-    p.careerInterests,
-  ];
+  // const profileFields = [
+  //   p.dob,
+  //   p.profileCategory,
+  //   p.education,
+  //   p.classYear,
+  //   p.institution,
+  //   p.careerGoal,
+  //   p.careerInterests,
+  // ];
+
+  
 
 
   // const completedFields =
@@ -1614,193 +1734,3 @@ if (profileLoading || !p) {
   );
 }
 
-const completedFields = profileFields.filter(
-  (value) => value && String(value).trim() !== ""
-);
-
-const pct = Math.round(
-  (completedFields.length / profileFields.length) * 100
-);
-
-return (
-  <div
-    className="mt-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-soft"
-    data-testid="profile-editor"
-  >
-    {/* ================= HEADER ================= */}
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900">
-          My Profile
-        </h2>
-
-        <p className="text-sm text-slate-500">
-          Complete your profile to unlock better recommendations.
-        </p>
-      </div>
-
-      {/* Completion */}
-      <div className="flex items-center gap-3">
-        <div className="w-40">
-          <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
-            <span>Completion</span>
-
-            <span data-testid="profile-completion">
-              {pct}%
-            </span>
-          </div>
-
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-500"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* ================= PROFILE FIELDS ================= */}
-    <div className="mt-6 grid gap-5 sm:grid-cols-2">
-
-      {/* Full Name */}
-      <div>
-        <PLabel>Full Name</PLabel>
-
-        <input
-          className={pfield}
-          value={p.name || ""}
-          onChange={set("name")}
-          placeholder="Enter your full name"
-          data-testid="profile-name"
-        />
-      </div>
-
-      {/* Date of Birth */}
-      <div>
-        <PLabel>Date of Birth</PLabel>
-
-        <input
-          type="date"
-          className={pfield}
-          value={(p.dob || "").slice(0, 10)}
-          onChange={set("dob")}
-          max={new Date().toISOString().slice(0, 10)}
-          data-testid="profile-dob"
-        />
-      </div>
-
-      {/* Profile Category */}
-      <div>
-        <PLabel>
-          Profile Category{" "}
-          {p.age != null && (
-            <span className="text-slate-300">
-              · age {p.age}
-            </span>
-          )}
-        </PLabel>
-
-        <select
-          className={pfield}
-          value={p.profileCategory || ""}
-          onChange={set("profileCategory")}
-          data-testid="profile-category"
-        >
-          <option value="">Select</option>
-
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Class / Year */}
-      <div>
-        <PLabel>Class / Year</PLabel>
-
-        <input
-          className={pfield}
-          value={p.classYear || ""}
-          onChange={set("classYear")}
-          placeholder="e.g. Class 12 / 2nd Year"
-          data-testid="profile-classyear"
-        />
-      </div>
-
-      {/* School / College */}
-      <div>
-        <PLabel>School / College</PLabel>
-
-        <input
-          className={pfield}
-          value={p.institution || ""}
-          onChange={set("institution")}
-          placeholder="Enter your school or college"
-          data-testid="profile-institution"
-        />
-      </div>
-
-      {/* Education */}
-      <div>
-        <PLabel>Education Level</PLabel>
-
-        <input
-          className={pfield}
-          value={p.education || ""}
-          onChange={set("education")}
-          placeholder="e.g. Higher Secondary"
-          data-testid="profile-education"
-        />
-      </div>
-
-      {/* Career Goal */}
-      <div>
-        <PLabel>Career Goal</PLabel>
-
-        <input
-          className={pfield}
-          value={p.careerGoal || ""}
-          onChange={set("careerGoal")}
-          placeholder="e.g. I want to become a Doctor"
-          data-testid="profile-goal"
-        />
-      </div>
-
-      {/* Career Interests */}
-      <div>
-        <PLabel>Career Interests</PLabel>
-
-        <input
-          className={pfield}
-          value={p.careerInterests || ""}
-          onChange={set("careerInterests")}
-          placeholder="e.g. Medicine, Research"
-          data-testid="profile-interests"
-        />
-      </div>
-    </div>
-
-    {/* ================= SAVE BUTTON ================= */}
-    <button
-      onClick={save}
-      disabled={saving}
-      data-testid="profile-save"
-      className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3 font-semibold text-white shadow-medium transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {saving ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Saving...
-        </>
-      ) : (
-        <>
-          <CheckCircle2 className="h-4 w-4" />
-          Save Profile
-        </>
-      )}
-    </button>
-  </div>
-);}

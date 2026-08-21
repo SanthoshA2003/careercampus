@@ -17,13 +17,14 @@ const client = axios.create({
   withCredentials: true,
 });
 
+
 // ==================================================
 // JWT TOKEN INTERCEPTOR
 // ==================================================
 
 client.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+const token = localStorage.getItem("dp_token");
 
     if (token) {
       config.headers = config.headers || {};
@@ -100,6 +101,14 @@ export const api = {
       })
       .then((r) => r.data),
 
+      adminLogin: (email, password) =>
+  client
+    .post("/auth/login", {
+    email,
+    password,
+  })
+  .then((r) => r.data),
+
   me: () =>
     client
       .get("/auth/me")
@@ -158,6 +167,16 @@ export const api = {
     client
       .get(`/profiles/${profileId}`)
       .then((r) => r.data),
+
+   profileScore: () =>
+    client
+      .get("/profiles/me/summary")
+      .then((r) => r.data),
+
+scoreBreakdown: () =>
+  client
+    .get("/profiles/me/score-breakdown")
+    .then((r) => r.data),
 
   // ==================================================
   // CAREER
@@ -280,6 +299,16 @@ export const api = {
   // COURSES / SKILLHUB
   // ==================================================
 
+enrollCourse: (courseId) =>
+  client
+    .post(`/courses/${courseId}/enroll`)
+    .then((r) => r.data),
+
+    enrolledCourses: () =>
+  client
+    .get("/courses/enrolled")
+    .then((r) => r.data),
+
   courses: () =>
     client
       .get("/courses")
@@ -325,10 +354,10 @@ export const api = {
       .get("/me/progress")
       .then((r) => r.data),
 
-  profileScore: () =>
-    client
-      .get("/me/profile-score")
-      .then((r) => r.data),
+  // profileScore: () =>
+  //   client
+  //     .get("/profiles/me/summary")
+  //     .then((r) => r.data),
 
   // ==================================================
   // STUDENT DASHBOARD
@@ -360,32 +389,29 @@ export const api = {
 
   createCourse: (body) =>
     client
-      .post("/admin/courses", body)
+      .post("/courses", body)
       .then((r) => r.data),
 
-  courseLevels: (courseId) =>
-    client
-      .get(`/admin/courses/${courseId}/levels`)
-      .then((r) => r.data),
+ courseLevels: (courseId) =>
+  client
+    .get(`/levels/course/${courseId}`)
+    .then((r) => r.data),
 
-  createLevel: (courseId, body) =>
-    client
-      .post(`/admin/courses/${courseId}/levels`, body)
-      .then((r) => r.data),
+createLevel: (body) =>
+  client
+    .post("/levels", body)
+    .then((r) => r.data),
 
-  updateLevel: (levelId, body) =>
-    client
-      .put(`/admin/levels/${levelId}`, body)
-      .then((r) => r.data),
+updateLevel: (levelId, body) =>
+  client
+    .put(`/levels/${levelId}`, body)
+    .then((r) => r.data),
 
-  addCheckpoint: (levelId, body) =>
-    client
-      .post(
-        `/admin/levels/${levelId}/checkpoints`,
-        body
-      )
-      .then((r) => r.data),
-
+addCheckpoint: (body) =>
+  client
+    .post("/checkpoints", body)
+    .then((r) => r.data),
+    
   upload: (file) => {
     const fd = new FormData();
 

@@ -45,7 +45,7 @@ export function AcademyAuthProvider({ children }) {
 
   // Normal email/password login
  const login = useCallback(async (email, password) => {
-  const data = await api.adminLogin(email, password);
+  const data = await api.login(email, password);
 
   const token = data.access_token || data.token;
 
