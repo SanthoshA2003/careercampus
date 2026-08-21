@@ -27,7 +27,7 @@ const [course, setCourse] = useState({
   difficulty: "Beginner",
   duration: "",
   thumbnail: "",
-  status: "draft",
+  status: "published", 
   certificate_template: "",
 });
 
@@ -38,7 +38,35 @@ const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "
 
   const loadCourses = () => api.courses().then((c) => { setCourses(c); if (!courseId && c[0]) setCourseId(c[0].id); });
   useEffect(() => { loadCourses(); /* eslint-disable-next-line */ }, []);
-  useEffect(() => { if (courseId) api.courseLevels(courseId).then((l) => { setLevels(l); if (l[0]) setLevelId(l[0].id); }); }, [courseId]);
+useEffect(() => {
+  if (!courseId) return;
+
+  const fetchLevels = async () => {
+    try {
+      const levelsData = await api.courseLevelsDropdown(courseId);
+
+      console.log("Dropdown Levels:", levelsData);
+
+      setLevels(levelsData);
+
+      if (levelsData.length > 0) {
+        setLevelId(levelsData[0].id);
+      } else {
+        setLevelId("");
+      }
+    } catch (error) {
+      console.error(
+        "Failed to fetch levels:",
+        error.response?.data || error
+      );
+
+      setLevels([]);
+      setLevelId("");
+    }
+  };
+
+  fetchLevels();
+}, [courseId]);
 
   const createCourse = async () => {
     if (!course.title) return toast.error("Course title required");
@@ -83,9 +111,9 @@ const createLevel = async () => {
 
     toast.success("Level created");
 
-    const list = await api.courseLevels(courseId);
+    const list = await api.courseLevelsDropdown(courseId);
 
-    setLevels(list);
+setLevels(list);
 
     setLevelId(l.id);
 
@@ -110,11 +138,40 @@ const createLevel = async () => {
 };
 
   const uploadVideo = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setUploading(true);
-    try { const r = await api.upload(file); setLevel((s) => ({ ...s, video: { url: `${process.env.REACT_APP_BACKEND_URL}${r.url}` } })); toast.success("Video uploaded"); }
-    catch { toast.error("Upload failed"); } finally { setUploading(false); }
-  };
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  setUploading(true);
+
+  try {
+    const response = await api.upload(file);
+
+    console.log("Upload response:", response);
+
+    setLevel((prev) => ({
+      ...prev,
+      video: {
+        url: response.file_url,
+      },
+    }));
+
+    toast.success("Video uploaded successfully");
+
+  } catch (error) {
+    console.error(
+      "Video upload error:",
+      error.response?.data || error
+    );
+
+    toast.error(
+      error.response?.data?.message || "Video upload failed"
+    );
+
+  } finally {
+    setUploading(false);
+  }
+};
 
   const addCheckpoint = async () => {
   if (!levelId) {
@@ -192,9 +249,9 @@ const createLevel = async () => {
 
     toast.success("Checkpoint added");
 
-    const list = await api.courseLevels(courseId);
+    const list = await api.courseLevelsDropdown(courseId);
 
-    setLevels(list);
+setLevels(list);
 
     setCp({
       ...cp,
@@ -276,9 +333,19 @@ const createLevel = async () => {
         {/* Interactive timeline + challenge builder */}
         <Section title="Interactive Timeline & Challenge Builder" icon={Flag}>
           <div className="mb-4"><Label>Level</Label>
-            <select value={levelId} onChange={(e) => setLevelId(e.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white">
-              {levels.map((l) => <option key={l.id} value={l.id}>{l.title} ({(l.checkpoints || []).length} checkpoints)</option>)}
-            </select>
+   <select
+  value={levelId}
+  onChange={(e) => setLevelId(e.target.value)}
+  className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white"
+>
+  <option value="">Select Level</option>
+
+  {levels.map((l) => (
+    <option key={l.id} value={l.id}>
+      {l.stage} · Level {l.level_number} ({l.checkpoint_count} checkpoints)
+    </option>
+  ))}
+</select>
           </div>
           {/* timeline visual */}
           <div className="mb-5 rounded-xl border border-white/5 bg-slate-950 p-4">

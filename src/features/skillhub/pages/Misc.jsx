@@ -1,32 +1,105 @@
 import { useEffect, useState } from "react";
-import { Loader2, Award } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Shell from "@/features/skillhub/components/Shell";
 import { api } from "@/services/api";
 
 export function AdminStudents() {
   const [students, setStudents] = useState(null);
-  useEffect(() => { api.students().then(setStudents).catch(() => setStudents([])); }, []);
-  if (!students) return <Shell><div className="grid h-[60vh] place-items-center"><Loader2 className="h-8 w-8 animate-spin text-cyan-400" /></div></Shell>;
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const data = await api.students();
+
+        console.log("Students:", data);
+
+        setStudents(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error(
+          "Failed to fetch students:",
+          error.response?.data || error
+        );
+
+        setStudents([]);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  if (students === null) {
+    return (
+      <Shell>
+        <div className="grid h-[60vh] place-items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
+      </Shell>
+    );
+  }
+
   return (
     <Shell>
-      <div className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-black tracking-tight text-white">Students</h1>
-        <p className="mt-2 text-slate-400">Manage and track every enrolled student.</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {students.map((s) => (
-            <div key={s.id} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
-              <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 font-black text-white">{s.name[0]}</span>
-                <div><p className="font-semibold text-white">{s.name}</p><p className="text-xs text-slate-400">{s.email}</p></div>
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <h1 className="text-3xl font-black tracking-tight text-white">
+          Students
+        </h1>
+
+        <p className="mt-2 text-slate-400">
+          Manage and track every enrolled student.
+        </p>
+
+        {students.length === 0 ? (
+          <div className="mt-8 rounded-2xl border border-dashed border-white/10 p-10 text-center text-slate-500">
+            No students found.
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {students.map((student) => (
+              <div
+                key={student.id}
+                className="rounded-2xl border border-slate-700/60 bg-slate-900/60 p-6 transition hover:border-slate-600"
+              >
+                {/* Student Details */}
+                <div className="flex items-center gap-4">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-lg font-bold text-white">
+                    {student.name?.charAt(0)?.toUpperCase() || "S"}
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-bold text-white">
+                      {student.name || "Student"}
+                    </h3>
+
+                    <p className="truncate text-sm text-slate-400">
+                      {student.email || "-"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Statistics */}
+                <div className="mt-6 grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <p className="font-bold text-cyan-400">
+                      {student.xp ?? 0} XP
+                    </p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="font-bold text-amber-400">
+                      {student.streak ?? 0} 🔥
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold text-emerald-400">
+                      {student.levels ?? 0} levels
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 flex justify-between text-sm">
-                <span className="text-cyan-400 font-bold">{s.xp} XP</span>
-                <span className="text-amber-400">{s.streak}🔥</span>
-                <span className="text-emerald-400">{s.completedLevels} levels</span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </Shell>
   );

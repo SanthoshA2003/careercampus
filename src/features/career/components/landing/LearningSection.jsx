@@ -104,11 +104,11 @@ export default function LearningSection() {
 
 const filteredCourses = courses.filter((course) => {
   const courseCategory =
-    course.category?.name ||
-    course.category_name ||
-    course.category ||
-    course.skill_category ||
-    "";
+  course.category?.name ||
+  course.category_name ||
+  course.category ||
+  course.skill_category ||
+  "Programming";
 
   return courseCategory.trim().toLowerCase() === active.trim().toLowerCase();
 });

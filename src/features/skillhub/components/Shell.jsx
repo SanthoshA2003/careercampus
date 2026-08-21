@@ -1,11 +1,17 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { api } from "@/services/api";
 import { Terminal, LayoutDashboard, Map, Award, ShieldCheck, Users, Hammer, LogOut, Flame, Zap } from "lucide-react";
 import { useAcademyAuth } from "@/context/AuthContext";
 import { useAuth } from "@/features/auth/components/AuthModal";
 
 const studentNav = [
   { to: "/skillhub", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/skillhub/journey", label: "My Journey", icon: Map },
+  {
+  to: "/skillhub/journey/f90c535c-4a9f-4dae-998a-5cadcb1f7f29",
+  label: "My Journey",
+  icon: Map
+},
   { to: "/skillhub/certificates", label: "Certificates", icon: Award },
 ];
 const adminNav = [

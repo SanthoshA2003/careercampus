@@ -382,10 +382,15 @@ enrollCourse: (courseId) =>
       .get("/admin/analytics")
       .then((r) => r.data),
 
-  students: () =>
-    client
-      .get("/admin/students")
-      .then((r) => r.data),
+ students: () =>
+  client
+    .get("/users/students")
+    .then((r) => r.data),
+
+      courseLevelsDropdown: (courseId) =>
+  client
+    .get(`/levels/course/${courseId}/dropdown`)
+    .then((r) => r.data),
 
   createCourse: (body) =>
     client
@@ -412,19 +417,19 @@ addCheckpoint: (body) =>
     .post("/checkpoints", body)
     .then((r) => r.data),
     
-  upload: (file) => {
-    const fd = new FormData();
+ upload: (file) => {
+  const fd = new FormData();
 
-    fd.append("file", file);
+  fd.append("file", file);
 
-    return client
-      .post("/admin/upload", fd, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((r) => r.data);
-  },
+  return client
+    .post("/files/upload", fd, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((r) => r.data);
+},
 };
 
 // ==================================================

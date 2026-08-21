@@ -84,6 +84,8 @@ export default function Journey() {
   const [error, setError] = useState(null);
 
   const nav = useNavigate();
+
+  
   const { courseId } = useParams();
 
   useEffect(() => {
