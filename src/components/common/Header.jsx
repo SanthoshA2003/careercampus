@@ -94,14 +94,6 @@ export default function Navbar() {
       ) : (
   <div className="flex items-center gap-2">
 
-    {/* Register */}
-    <Link
-      to="/register"
-      className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600"
-      data-testid="nav-register-button"
-    >
-      Register
-    </Link>
 
     {/* Login */}
     <Magnetic strength={0.25}>
