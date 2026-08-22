@@ -260,14 +260,15 @@ export default function Dashboard() {
                   </p>
                 </div>
               ))}
-
-              <Link
-                to="/skillhub/journey"
-                className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-cyan-400 transition-colors hover:bg-white/5"
-              >
-                View Full Journey
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {course && (
+                <Link
+                  to={`/skillhub/journey/${course.course_id}`}
+                  className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-cyan-400 transition-colors hover:bg-white/5"
+                >
+                  View Full Journey
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
 
             </div>
           </Card>

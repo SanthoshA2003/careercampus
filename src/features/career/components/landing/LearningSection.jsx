@@ -6,6 +6,7 @@ import { Reveal, SectionTag } from "@/features/career/components/landing/primiti
 import { skillCategories } from "@/features/career/services/landingData";
 import { useAuth } from "@/features/auth/components/AuthModal";
 import { api } from "@/services/api";
+import { toast } from "sonner";
 
 const THUMBS = {
   "Programming": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?crop=entropy&cs=srgb&fm=jpg&q=80&w=600",
@@ -78,27 +79,39 @@ export default function LearningSection() {
   try {
     await api.enrollCourse(courseId);
 
-    // Immediately update button state
-    setEnrolledCourseIds((prev) => [
-      ...prev,
-      courseId,
-    ]);
-
-    // Navigate to selected course journey
-    navigate(`/skillhub/journey/${courseId}`);
-  } catch (error) {
-    console.error(
-      "Enrollment failed:",
-      error.response?.data || error.message
+    // Update enrolled state immediately
+    setEnrolledCourseIds((prev) =>
+      prev.includes(courseId)
+        ? prev
+        : [...prev, courseId]
     );
 
-    // If already enrolled, still go to journey
-    if (
-      error.response?.data?.detail ===
-      "You are already enrolled in this course."
-    ) {
+    toast.success("Successfully enrolled!");
+
+    // Go to course journey
+    navigate(`/skillhub/journey/${courseId}`);
+  } catch (error) {
+    const status = error?.response?.status;
+    const detail = error?.response?.data?.detail;
+
+    console.error("Enrollment failed:", error?.response?.data);
+
+    // Already enrolled = not actually an error for the user
+    if (status === 409) {
+      setEnrolledCourseIds((prev) =>
+        prev.includes(courseId)
+          ? prev
+          : [...prev, courseId]
+      );
+
+      toast.info("You are already enrolled in this course.");
+
+      // Still allow user to continue learning
       navigate(`/skillhub/journey/${courseId}`);
+      return;
     }
+
+    toast.error(detail || "Enrollment failed");
   }
 };
 

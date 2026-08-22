@@ -17,14 +17,13 @@ const client = axios.create({
   withCredentials: true,
 });
 
-
 // ==================================================
 // JWT TOKEN INTERCEPTOR
 // ==================================================
 
 client.interceptors.request.use(
   (config) => {
-const token = localStorage.getItem("dp_token");
+    const token = localStorage.getItem("dp_token");
 
     if (token) {
       config.headers = config.headers || {};
@@ -37,7 +36,7 @@ const token = localStorage.getItem("dp_token");
 );
 
 // ==================================================
-// OPTIONAL RESPONSE INTERCEPTOR
+// RESPONSE INTERCEPTOR
 // ==================================================
 
 client.interceptors.response.use(
@@ -101,13 +100,13 @@ export const api = {
       })
       .then((r) => r.data),
 
-      adminLogin: (email, password) =>
-  client
-    .post("/auth/login", {
-    email,
-    password,
-  })
-  .then((r) => r.data),
+  adminLogin: (email, password) =>
+    client
+      .post("/auth/login", {
+        email,
+        password,
+      })
+      .then((r) => r.data),
 
   me: () =>
     client
@@ -168,15 +167,15 @@ export const api = {
       .get(`/profiles/${profileId}`)
       .then((r) => r.data),
 
-   profileScore: () =>
+  profileScore: () =>
     client
       .get("/profiles/me/summary")
       .then((r) => r.data),
 
-scoreBreakdown: () =>
-  client
-    .get("/profiles/me/score-breakdown")
-    .then((r) => r.data),
+  scoreBreakdown: () =>
+    client
+      .get("/profiles/me/score-breakdown")
+      .then((r) => r.data),
 
   // ==================================================
   // CAREER
@@ -299,19 +298,19 @@ scoreBreakdown: () =>
   // COURSES / SKILLHUB
   // ==================================================
 
-enrollCourse: (courseId) =>
-  client
-    .post(`/courses/${courseId}/enroll`)
-    .then((r) => r.data),
-
-    enrolledCourses: () =>
-  client
-    .get("/courses/enrolled")
-    .then((r) => r.data),
-
   courses: () =>
     client
       .get("/courses")
+      .then((r) => r.data),
+
+  enrolledCourses: () =>
+    client
+      .get("/courses/enrolled")
+      .then((r) => r.data),
+
+  enrollCourse: (courseId) =>
+    client
+      .post(`/courses/${courseId}/enroll`)
       .then((r) => r.data),
 
   journey: (courseId) =>
@@ -319,10 +318,53 @@ enrollCourse: (courseId) =>
       .get(`/courses/${courseId}/journey`)
       .then((r) => r.data),
 
+  // ==================================================
+  // LEVELS
+  // ==================================================
+
+  // IMPORTANT:
+  // Use "client", NOT "axios".
+  // This automatically uses:
+  // API_BASE_URL + /api
+  // and also sends JWT token.
+
   level: (levelId) =>
     client
       .get(`/levels/${levelId}`)
       .then((r) => r.data),
+
+  courseLevelsDropdown: (courseId) =>
+    client
+      .get(`/levels/course/${courseId}/dropdown`)
+      .then((r) => r.data),
+
+  courseLevels: (courseId) =>
+    client
+      .get(`/levels/course/${courseId}`)
+      .then((r) => r.data),
+
+  createLevel: (body) =>
+    client
+      .post("/levels", body)
+      .then((r) => r.data),
+
+  updateLevel: (levelId, body) =>
+    client
+      .put(`/levels/${levelId}`, body)
+      .then((r) => r.data),
+
+  // ==================================================
+  // CHECKPOINTS
+  // ==================================================
+
+  addCheckpoint: (body) =>
+    client
+      .post("/checkpoints", body)
+      .then((r) => r.data),
+
+  // ==================================================
+  // CODE EXECUTION
+  // ==================================================
 
   execute: (language, code, stdin) =>
     client
@@ -332,6 +374,10 @@ enrollCourse: (courseId) =>
         stdin,
       })
       .then((r) => r.data),
+
+  // ==================================================
+  // CHECKPOINT SUBMISSION
+  // ==================================================
 
   submit: (levelId, cpId, language, code) =>
     client
@@ -344,20 +390,23 @@ enrollCourse: (courseId) =>
       )
       .then((r) => r.data),
 
+  // ==================================================
+  // VIDEO COMPLETE
+  // ==================================================
+
   videoComplete: (levelId) =>
     client
       .post(`/levels/${levelId}/video-complete`)
       .then((r) => r.data),
 
+  // ==================================================
+  // PROGRESS
+  // ==================================================
+
   myProgress: () =>
     client
       .get("/me/progress")
       .then((r) => r.data),
-
-  // profileScore: () =>
-  //   client
-  //     .get("/profiles/me/summary")
-  //     .then((r) => r.data),
 
   // ==================================================
   // STUDENT DASHBOARD
@@ -382,54 +431,33 @@ enrollCourse: (courseId) =>
       .get("/admin/analytics")
       .then((r) => r.data),
 
- students: () =>
-  client
-    .get("/users/students")
-    .then((r) => r.data),
-
-      courseLevelsDropdown: (courseId) =>
-  client
-    .get(`/levels/course/${courseId}/dropdown`)
-    .then((r) => r.data),
+  students: () =>
+    client
+      .get("/users/students")
+      .then((r) => r.data),
 
   createCourse: (body) =>
     client
       .post("/courses", body)
       .then((r) => r.data),
 
- courseLevels: (courseId) =>
-  client
-    .get(`/levels/course/${courseId}`)
-    .then((r) => r.data),
+  // ==================================================
+  // FILE UPLOAD
+  // ==================================================
 
-createLevel: (body) =>
-  client
-    .post("/levels", body)
-    .then((r) => r.data),
+  upload: (file) => {
+    const fd = new FormData();
 
-updateLevel: (levelId, body) =>
-  client
-    .put(`/levels/${levelId}`, body)
-    .then((r) => r.data),
+    fd.append("file", file);
 
-addCheckpoint: (body) =>
-  client
-    .post("/checkpoints", body)
-    .then((r) => r.data),
-    
- upload: (file) => {
-  const fd = new FormData();
-
-  fd.append("file", file);
-
-  return client
-    .post("/files/upload", fd, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then((r) => r.data);
-},
+    return client
+      .post("/files/upload", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((r) => r.data);
+  },
 };
 
 // ==================================================

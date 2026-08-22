@@ -65,44 +65,6 @@ const CHIPS = [
 // COURSE DATA
 // ============================================================
 
-const COURSES = [
-  {
-    id: 1,
-    title: "Python for Beginners",
-    provider: "MyMentor",
-    duration: "8 Weeks",
-    level: "Beginner",
-    description:
-      "Learn Python programming fundamentals, problem solving and core programming concepts.",
-  },
-  {
-    id: 2,
-    title: "Artificial Intelligence & Machine Learning",
-    provider: "MyMentor",
-    duration: "12 Weeks",
-    level: "Intermediate",
-    description:
-      "Learn machine learning, AI concepts, Python libraries and real-world projects.",
-  },
-  {
-    id: 3,
-    title: "Data Science Fundamentals",
-    provider: "MyMentor",
-    duration: "10 Weeks",
-    level: "Intermediate",
-    description:
-      "Learn statistics, data analysis, Python, visualization and introductory machine learning.",
-  },
-  {
-    id: 4,
-    title: "Full Stack Development",
-    provider: "MyMentor",
-    duration: "16 Weeks",
-    level: "Intermediate",
-    description:
-      "Build modern web applications using frontend, backend, APIs and databases.",
-  },
-];
 
 // ============================================================
 // API BASE URL
@@ -127,7 +89,6 @@ const getToken = () => {
 // ============================================================
 // CAREER PATH PAGE
 // ============================================================
-
 export default function CareerPath() {
   const [goal, setGoal] = useState("");
   const [loading, setLoading] = useState(false);
@@ -135,14 +96,11 @@ export default function CareerPath() {
   const [careerPersona, setCareerPersona] = useState(null);
   const [error, setError] = useState("");
 
-  // ==========================================================
   // COURSE STATE
-  // ==========================================================
-
   const [showCourses, setShowCourses] = useState(false);
   const [courseLoading, setCourseLoading] = useState(false);
   const [courseError, setCourseError] = useState("");
-
+  const [courses, setCourses] = useState([]);
   // ==========================================================
   // GET TOKEN
   // ==========================================================
@@ -150,9 +108,111 @@ export default function CareerPath() {
   const token = getToken();
 
   // ==========================================================
-  // POST CAREER PERSONA
-  // POST /api/career-personas/me
+  // COURSE YES / NO + GET COURSE SUGGESTIONS
+  // IMPORTANT: This function must stay INSIDE CareerPath().
   // ==========================================================
+  const updateCoursePreference = async (wantCourses) => {
+  if (!token) {
+    setCourseError("Please login first.");
+    return;
+  }
+
+  try {
+    setCourseLoading(true);
+    setCourseError("");
+
+    const url = `${API_BASE_URL}/api/career-persona/calendar`;
+
+    console.log("COURSE PREFERENCE API:", url);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+  career_persona_id: careerPersona?.id,
+  show_courses: wantCourses,
+  add_to_calendar: false,
+}),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    console.log("COURSE PREFERENCE RESPONSE:", data);
+
+  if (!response.ok) {
+  const message =
+    typeof data?.detail === "string"
+      ? data.detail
+      : Array.isArray(data?.detail)
+        ? data.detail
+            .map((item) => item?.msg || JSON.stringify(item))
+            .join(", ")
+        : data?.message ||
+          data?.error ||
+          `Course preference API failed with status ${response.status}`;
+
+  throw new Error(message);
+}
+
+    // NO
+    if (!wantCourses) {
+      setShowCourses(false);
+      setCourses([]);
+      return;
+    }
+
+    // YES → Get recommended courses
+    const courseUrl =
+      `${API_BASE_URL}/api/career-persona/course-suggestions`;
+
+    console.log("GET COURSE SUGGESTIONS:", courseUrl);
+
+    const courseResponse = await fetch(courseUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const courseData = await courseResponse.json().catch(() => null);
+
+    console.log("COURSE SUGGESTIONS RESPONSE:", courseData);
+
+   if (!courseResponse.ok) {
+  const message =
+    typeof courseData?.detail === "string"
+      ? courseData.detail
+      : Array.isArray(courseData?.detail)
+        ? courseData.detail
+            .map((item) => item?.msg || JSON.stringify(item))
+            .join(", ")
+        : courseData?.message ||
+          courseData?.error ||
+          `Course suggestions API failed with status ${courseResponse.status}`;
+
+  throw new Error(message);
+}
+    // Your API directly returns an array
+    setCourses(Array.isArray(courseData) ? courseData : []);
+
+    // Show courses after successful API response
+    setShowCourses(true);
+  } catch (err) {
+    console.error("COURSE ERROR:", err);
+
+    setCourseError(
+      err?.message || "Unable to load recommended courses."
+    );
+
+    setShowCourses(false);
+  } finally {
+    setCourseLoading(false);
+  }
+};
 
   const createCareerPersona = async (careerGoal) => {
     if (!token) {
@@ -235,91 +295,6 @@ export default function CareerPath() {
     }
 
     return data;
-  };
-
-  // ==========================================================
-  // COURSE YES / NO API
-  //
-  // POST /api/career-persona/calendar
-  //
-  // YES -> show_courses: true
-  // NO  -> show_courses: false
-  // ==========================================================
-
-  const updateCoursePreference = async (wantCourses) => {
-    if (!token) {
-      setCourseError("Please login first.");
-      return;
-    }
-
-    try {
-      setCourseLoading(true);
-      setCourseError("");
-
-      const url = `${API_BASE_URL}/api/career-persona/calendar`;
-
-      console.log("COURSE PREFERENCE API:", url);
-
-      const response = await fetch(url, {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
-        body: JSON.stringify({
-          show_courses: wantCourses,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      console.log(
-        "COURSE PREFERENCE RESPONSE:",
-        data
-      );
-
-      if (!response.ok) {
-        const message =
-          data?.detail ||
-          data?.message ||
-          data?.error ||
-          `Course preference API failed with status ${response.status}`;
-
-        throw new Error(message);
-      }
-
-      // ======================================================
-      // YES
-      // ======================================================
-
-      if (wantCourses) {
-        setShowCourses(true);
-      }
-
-      // ======================================================
-      // NO
-      // ======================================================
-
-      else {
-        setShowCourses(false);
-      }
-
-      return data;
-    } catch (err) {
-      console.error(
-        "COURSE PREFERENCE ERROR:",
-        err
-      );
-
-      setCourseError(
-        err?.message ||
-          "Unable to save your course preference."
-      );
-    } finally {
-      setCourseLoading(false);
-    }
   };
 
   // ==========================================================
@@ -422,7 +397,7 @@ export default function CareerPath() {
 
       setError(
         err?.message ||
-          "Unable to generate your career path. Please try again."
+        "Unable to generate your career path. Please try again."
       );
     } finally {
       setLoading(false);
@@ -849,8 +824,8 @@ export default function CareerPath() {
 
                         {index <
                           roadmap.length - 1 && (
-                          <div className="absolute left-5 top-12 h-full w-px bg-gradient-to-b from-cyan-400/40 to-violet-500/10" />
-                        )}
+                            <div className="absolute left-5 top-12 h-full w-px bg-gradient-to-b from-cyan-400/40 to-violet-500/10" />
+                          )}
 
                         <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 text-sm font-bold text-white shadow-lg shadow-cyan-500/10">
                           {item.step ||
@@ -1134,83 +1109,101 @@ export default function CareerPath() {
 
                 {/* COURSES */}
 
-                <div className="grid gap-5 md:grid-cols-2">
+                {courses.length > 0 ? (
+                  <div className="grid gap-5 md:grid-cols-2">
 
-                  {COURSES.map(
-                    (course) => (
+                    {courses.map((course) => (
                       <motion.div
                         key={course.id}
-                        whileHover={{
-                          y: -4,
-                        }}
-                        transition={{
-                          duration: 0.2,
-                        }}
-                        className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-cyan-400/30 hover:bg-white/[0.05]"
+                        whileHover={{ y: -4 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:border-cyan-400/30 hover:bg-white/[0.05]"
                       >
+                        {/* THUMBNAIL */}
 
-                        {/* TOP */}
-
-                        <div className="flex items-start justify-between gap-4">
-
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
-                            <BookOpen className="h-5 w-5" />
+                        {course.thumbnail && (
+                          <div className="h-44 w-full overflow-hidden bg-slate-800">
+                            <img
+                              src={course.thumbnail}
+                              alt={course.title || "Course"}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
                           </div>
+                        )}
 
-                          <span className="rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1 text-xs font-medium text-violet-300">
-                            {course.level}
-                          </span>
+                        <div className="p-5">
 
-                        </div>
+                          {/* TOP */}
 
-                        {/* TITLE */}
+                          <div className="flex items-start justify-between gap-4">
 
-                        <h4 className="mt-5 text-lg font-semibold text-white">
-                          {course.title}
-                        </h4>
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+                              <BookOpen className="h-5 w-5" />
+                            </div>
 
-                        {/* DESCRIPTION */}
+                            <div className="text-xs text-slate-500">
+  <span>{course.language}</span>
 
-                        <p className="mt-2 text-sm leading-6 text-slate-400">
-                          {course.description}
-                        </p>
+  <span className="mx-2">•</span>
 
-                        {/* DETAILS */}
-
-                        <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
-
-                          <div className="text-xs text-slate-500">
-
-                            <span>
-                              {course.provider}
-                            </span>
-
-                            <span className="mx-2">
-                              •
-                            </span>
-
-                            <span>
-                              {course.duration}
-                            </span>
+  <span>{course.duration}</span>
+</div>
 
                           </div>
 
-                          <button
-                            type="button"
-                            className="flex items-center gap-1 text-sm font-semibold text-cyan-400 transition hover:text-cyan-300"
-                          >
-                            View Course
+                          {/* TITLE */}
 
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
+                          <h4 className="mt-5 text-lg font-semibold text-white">
+                            {course.title || "Course"}
+                          </h4>
+
+                          {/* DESCRIPTION */}
+
+                          <p className="mt-2 text-sm leading-6 text-slate-400">
+                            {course.description ||
+                              "Recommended course for your career path."}
+                          </p>
+
+                          {/* DETAILS */}
+
+                          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+
+                            <div className="text-xs text-slate-500">
+                              <span>
+                                {course.language || "Course"}
+                              </span>
+
+                              <span className="mx-2">
+                                •
+                              </span>
+
+                              <span>
+                                {course.duration || "Self paced"}
+                              </span>
+                            </div>
+
+                            {course.enrolled && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Enrolled
+                              </span>
+                            )}
+
+                          </div>
 
                         </div>
-
                       </motion.div>
-                    )
-                  )}
+                    ))}
 
-                </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center text-sm text-slate-400">
+                    No recommended courses found for your career path.
+                  </div>
+                )}
 
               </motion.div>
             )}
