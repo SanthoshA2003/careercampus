@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Award } from "lucide-react";
 import Shell from "@/features/skillhub/components/Shell";
 import { api } from "@/services/api";
 
@@ -107,31 +107,101 @@ export function AdminStudents() {
 
 export function Certificates() {
   const [data, setData] = useState(null);
-  useEffect(() => { api.myProgress().then(setData).catch(() => {}); }, []);
-  if (!data) return <Shell><div className="grid h-[60vh] place-items-center"><Loader2 className="h-8 w-8 animate-spin text-cyan-400" /></div></Shell>;
+
+useEffect(() => {
+  const fetchCertificates = async () => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const mockData = {
+        certificates: [],
+      };
+
+      setData(mockData);
+
+    } catch (error) {
+      console.error("Failed to fetch certificates:", error);
+
+      setData({
+        certificates: [],
+      });
+    }
+  };
+
+  fetchCertificates();
+}, []);
+
+  if (!data) {
+    return (
+      <Shell>
+        <div className="grid h-[60vh] place-items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
+      </Shell>
+    );
+  }
+
   return (
     <Shell>
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-3xl font-black tracking-tight text-white">Certificates</h1>
-        <p className="mt-2 text-slate-400">Earn a certificate by completing every level in a stage.</p>
+      <div className="mx-auto max-w-4xl px-6 py-8">
+
+        <h1 className="text-3xl font-black tracking-tight text-white">
+          Certificates
+        </h1>
+
+        <p className="mt-2 text-slate-400">
+          Earn a certificate by completing every level in a stage.
+        </p>
+
         {data.certificates.length === 0 ? (
+
           <div className="mt-8 rounded-2xl border border-dashed border-white/10 p-12 text-center text-slate-500">
+
             <Award className="mx-auto h-10 w-10 text-slate-600" />
-            <p className="mt-3">No certificates yet. Complete a full stage to unlock one.</p>
+
+            <p className="mt-3">
+              No certificates yet. Complete a full stage to unlock one.
+            </p>
+
           </div>
+
         ) : (
+
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            {data.certificates.map((c, i) => (
-              <div key={i} className="relative overflow-hidden rounded-3xl border border-violet-400/30 bg-gradient-to-br from-violet-500/15 via-slate-900 to-cyan-500/15 p-8 text-center">
+
+            {data.certificates.map((c) => (
+
+              <div
+                key={c.id}
+                className="relative overflow-hidden rounded-3xl border border-violet-400/30 bg-gradient-to-br from-violet-500/15 via-slate-900 to-cyan-500/15 p-8 text-center"
+              >
+
                 <Award className="mx-auto h-12 w-12 text-violet-300" />
-                <p className="mt-4 text-xs uppercase tracking-widest text-slate-400">Certificate of Completion</p>
-                <p className="mt-2 text-2xl font-black text-white">{c.stage} Stage</p>
-                <p className="text-slate-300">{c.course}</p>
-                <p className="mt-4 text-xs text-slate-500">Digipin Academy · 2026</p>
+
+                <p className="mt-4 text-xs uppercase tracking-widest text-slate-400">
+                  Certificate of Completion
+                </p>
+
+                <p className="mt-2 text-2xl font-black text-white">
+                  {c.stage} Stage
+                </p>
+
+                <p className="text-slate-300">
+                  {c.course}
+                </p>
+
+                <p className="mt-4 text-xs text-slate-500">
+                  Digipin Academy · 2026
+                </p>
+
               </div>
+
             ))}
+
           </div>
+
         )}
+
       </div>
     </Shell>
   );

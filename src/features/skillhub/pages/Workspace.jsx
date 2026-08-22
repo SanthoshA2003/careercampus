@@ -374,25 +374,38 @@ export default function Workspace() {
   // RUN CODE
   // ==================================================
 
-  const runCode = async () => {
-    setRunning(true);
-    setTab("output");
+ const runCode = async () => {
+  if (!activeCp) {
+    toast.error("Watch the video to unlock a challenge");
+    return;
+  }
 
-    try {
-      const r = await api.execute(
-        language,
-        activeCode,
-        stdin
-      );
+  setRunning(true);
+  setTab("output");
 
-      setRunOut(r);
-    } catch (e) {
-      console.error("Run failed:", e);
-      toast.error("Run failed");
-    } finally {
-      setRunning(false);
-    }
-  };
+  try {
+    const r = await api.execute(
+      activeCp.id,
+      language,
+      activeCode,
+      stdin
+    );
+
+    console.log("RUN RESPONSE:", r);
+
+    setRunOut(r);
+  } catch (e) {
+    console.error("Run failed:", e);
+
+    toast.error(
+      e?.response?.data?.detail ||
+      e?.response?.data?.message ||
+      "Run failed"
+    );
+  } finally {
+    setRunning(false);
+  }
+};
 
   // ==================================================
   // SUBMIT
@@ -409,12 +422,11 @@ export default function Workspace() {
     setSubmitting(true);
 
     try {
-      const r = await api.submit(
-        levelId,
-        activeCp.id,
-        language,
-        activeCode
-      );
+     const r = await api.submit(
+  activeCp.id,
+  language,
+  activeCode
+);
 
       console.log("SUBMIT RESPONSE:", r);
 
