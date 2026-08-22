@@ -166,7 +166,7 @@ export default function CareerPath() {
 
     // YES → Get recommended courses
     const courseUrl =
-      `${API_BASE_URL}/api/career-persona/course-suggestions`;
+      `${API_BASE_URL}/api/courses`;
 
     console.log("GET COURSE SUGGESTIONS:", courseUrl);
 
