@@ -80,6 +80,7 @@ const API_BASE_URL =
 
 const getToken = () => {
   return (
+    localStorage.getItem("dp_token") ||
     localStorage.getItem("access_token") ||
     localStorage.getItem("accessToken") ||
     localStorage.getItem("token")
@@ -166,7 +167,7 @@ export default function CareerPath() {
 
     // YES → Get recommended courses
     const courseUrl =
-      `${API_BASE_URL}/api/career-persona/course-suggestions`;
+      `${API_BASE_URL}/api/courses`;
 
     console.log("GET COURSE SUGGESTIONS:", courseUrl);
 
@@ -389,17 +390,21 @@ export default function CareerPath() {
       setCareerPersona(
         getResponse
       );
-    } catch (err) {
-      console.error(
-        "CAREER PERSONA ERROR:",
-        err
-      );
+   } catch (err) {
+  console.error("CAREER PERSONA ERROR:", err);
 
-      setError(
-        err?.message ||
-        "Unable to generate your career path. Please try again."
-      );
-    } finally {
+  const message = err?.message || "";
+
+  if (message.includes("503") || message.includes("high demand")) {
+    setError(
+      "The AI service is currently experiencing high demand. Please try again in a few moments."
+    );
+  } else {
+    setError(
+      message || "Unable to generate your career path. Please try again."
+    );
+  }
+} finally {
       setLoading(false);
     }
   };

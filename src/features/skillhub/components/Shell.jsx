@@ -100,10 +100,11 @@ export default function Shell({ children }) {
       : loc.pathname.startsWith(item.to);
 
   const handleLogout = () => {
-    logout();
-    mainLogout();
-    nav("/", { replace: true });
-  };
+  logout();
+  mainLogout();
+
+  window.location.href = "/";
+};
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-200">

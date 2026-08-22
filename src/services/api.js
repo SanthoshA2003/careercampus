@@ -177,6 +177,11 @@ export const api = {
       .get("/profiles/me/score-breakdown")
       .then((r) => r.data),
 
+     journeyWithMyMentor: () =>
+  client
+    .get("/journey")
+    .then((r) => r.data),
+
   // ==================================================
   // CAREER
   // ==================================================
@@ -318,6 +323,17 @@ export const api = {
       .get(`/courses/${courseId}/journey`)
       .then((r) => r.data),
 
+      getLevelByCourseAndNumber: async (
+  courseId,
+  levelNumber
+) => {
+  const response = await axios.get(
+    `/api/levels/course/${courseId}/number/${levelNumber}`
+  );
+
+  return response.data;
+},
+
   // ==================================================
   // LEVELS
   // ==================================================
@@ -366,29 +382,28 @@ export const api = {
   // CODE EXECUTION
   // ==================================================
 
-  execute: (language, code, stdin) =>
-    client
-      .post("/execute", {
-        language,
-        code,
-        stdin,
-      })
-      .then((r) => r.data),
+execute: (checkpointId, language, code, stdin) =>
+  client
+    .post("/code/run", {
+      checkpoint_id: checkpointId,
+      language,
+      code,
+      stdin,
+    })
+    .then((r) => r.data),
 
   // ==================================================
   // CHECKPOINT SUBMISSION
   // ==================================================
 
-  submit: (levelId, cpId, language, code) =>
-    client
-      .post(
-        `/levels/${levelId}/checkpoints/${cpId}/submit`,
-        {
-          language,
-          code,
-        }
-      )
-      .then((r) => r.data),
+submit: (checkpointId, language, code) =>
+  client
+    .post("/code/submit", {
+      checkpoint_id: checkpointId,
+      language,
+      code,
+    })
+    .then((r) => r.data),
 
   // ==================================================
   // VIDEO COMPLETE

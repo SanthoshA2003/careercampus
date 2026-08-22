@@ -217,6 +217,7 @@ const [breakdownLoading, setBreakdownLoading] =
   useState(false);
   const [scoreLoading, setScoreLoading] =
     useState(false);
+const [journeyLoading, setJourneyLoading] = useState(false);
 
     const fetchScoreBreakdown = async () => {
   try {
@@ -327,6 +328,53 @@ const [breakdownLoading, setBreakdownLoading] =
   }
 };
 
+// ==========================================================
+// FETCH JOURNEY
+// ==========================================================
+
+const fetchJourney = async () => {
+  try {
+    setJourneyLoading(true);
+
+    const result = await api.journeyWithMyMentor();
+
+    console.log(
+      "JOURNEY RESPONSE:",
+      result
+    );
+
+    setData((prev) => ({
+      ...prev,
+      journey: result?.journey || [],
+    }));
+
+  } catch (error) {
+
+    console.error(
+      "JOURNEY ERROR:",
+      error
+    );
+
+    console.error(
+      "STATUS:",
+      error?.response?.status
+    );
+
+    console.error(
+      "RESPONSE:",
+      error?.response?.data
+    );
+
+    toast.error(
+      error?.response?.data?.detail ||
+      "Unable to load your journey."
+    );
+
+  } finally {
+    setJourneyLoading(false);
+  }
+};
+
 
   // ==========================================================
   // LOAD SCORE AFTER AUTH
@@ -339,6 +387,7 @@ useEffect(() => {
 
   fetchScore();
   fetchScoreBreakdown();
+  fetchJourney();
 
 }, [ready, isAuthed]);
 
@@ -753,30 +802,115 @@ const breakdownItems = scoreBreakdown
                 JOURNEY
             ================================================== */}
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
+          <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
 
-              <h2 className="text-lg font-bold text-slate-900">
-                Your Journey with MyMentor
-              </h2>
+  <h2 className="text-lg font-bold text-slate-900">
+    Your Journey with MyMentor
+  </h2>
+
+  <p className="text-sm text-slate-500">
+    Milestones you've reached and what's next.
+  </p>
+
+  <div className="mt-6 space-y-1">
+
+    {journeyLoading ? (
+
+      <div className="grid h-64 place-items-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+
+    ) : data.journey.length === 0 ? (
+
+      <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">
+        Your journey milestones will appear here as you progress.
+      </div>
+
+    ) : (
+
+      data.journey.map((j, i) => {
+
+        const Icon = ICONS[j.icon] || Sparkles;
+
+        return (
+          <motion.div
+            key={j.key || i}
+            initial={{
+              opacity: 0,
+              x: -12,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              delay: 0.15 + i * 0.08,
+            }}
+            className="relative flex gap-4 pb-6 last:pb-0"
+            data-testid={`journey-${i}`}
+          >
+
+            {/* CONNECTING LINE */}
+            {i < data.journey.length - 1 && (
+              <span
+                className={`absolute left-[19px] top-10 h-full w-0.5 ${
+                  j.done
+                    ? "bg-blue-200"
+                    : "bg-slate-100"
+                }`}
+              />
+            )}
+
+            {/* ICON */}
+            <span
+              className={`relative z-10 grid h-10 w-10 shrink-0 place-items-center rounded-full ${
+                j.done
+                  ? "bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-soft"
+                  : "border-2 border-dashed border-slate-200 bg-white text-slate-300"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+            </span>
+
+            {/* CONTENT */}
+            <div className="pt-0.5">
+
+              <div className="flex items-center gap-2">
+
+                <h3
+                  className={`font-semibold ${
+                    j.done
+                      ? "text-slate-900"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {j.title}
+                </h3>
+
+                {j.done ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <Circle className="h-4 w-4 text-slate-300" />
+                )}
+
+              </div>
 
               <p className="text-sm text-slate-500">
-                Milestones you've reached and what's next.
+                {j.description}
               </p>
 
+            </div>
 
-              <div className="mt-6 space-y-1">
+          </motion.div>
+        );
+      })
 
-                {data.journey.length === 0 ? (
+    )}
 
-                  <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">
-                    Your journey milestones will appear here as you progress.
-                  </div>
+  </div>
 
-                ) : (
-
-                  data.journey.map((j, i) => {
-
-                    const Icon =
+</div>
+                    {/* const Icon =
                       ICONS[j.icon] ||
                       Sparkles;
 
@@ -855,7 +989,7 @@ const breakdownItems = scoreBreakdown
 
 
                           <p className="text-sm text-slate-500">
-                            {j.desc}
+                            {j.description}
                           </p>
 
                         </div>
@@ -864,13 +998,11 @@ const breakdownItems = scoreBreakdown
                     );
                   })
 
-                )}
+                )} */}
 
               </div>
 
-            </div>
-
-          </div>
+          
 
 
           {/* ==================================================

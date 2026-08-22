@@ -111,9 +111,9 @@ const createLevel = async () => {
 
     toast.success("Level created");
 
-    const list = await api.courseLevelsDropdown(courseId);
+//     const list = await api.courseLevelsDropdown(courseId);
 
-setLevels(list);
+// setLevels(list);
 
     setLevelId(l.id);
 
@@ -189,96 +189,116 @@ setLevels(list);
   setBusy(true);
 
   try {
-    await api.addCheckpoint({
-      level_id: levelId,
+  const newCheckpoint = await api.addCheckpoint({
+    level_id: levelId,
 
-      checkpoint_order: Number(cp.order),
+    checkpoint_order: Number(cp.order),
 
-      at_seconds: Number(cp.atSeconds),
+    at_seconds: Number(cp.atSeconds),
 
-      title: cp.title,
+    title: cp.title,
 
-      scenario: cp.scenario || "",
+    scenario: cp.scenario || "",
 
-      problem_statement: cp.problemStatement,
+    problem_statement: cp.problemStatement,
 
-      objective: "",
+    objective: "",
 
-      difficulty: cp.difficulty,
+    difficulty: cp.difficulty,
 
-      marks: 25,
+    marks: 25,
 
-      xp: Number(cp.xp),
+    xp: Number(cp.xp),
 
-      retry_limit: 5,
+    retry_limit: 5,
 
-      language: "python",
+    language: "python",
 
-      starter_code: {
-        code: cp.starter,
-      },
+    starter_code: {
+      code: cp.starter,
+    },
 
-      constraints: "",
+    constraints: "",
 
-      hints: [],
+    hints: [],
 
-      solution: "",
+    solution: "",
 
-      explanation: "",
+    explanation: "",
 
-      visible_test_cases:
-        cp.vin || cp.vout
-          ? [
-              {
-                input: cp.vin,
-                expected_output: cp.vout,
-              },
-            ]
-          : [],
+    visible_test_cases:
+      cp.vin || cp.vout
+        ? [
+            {
+              input: cp.vin,
+              expected_output: cp.vout,
+            },
+          ]
+        : [],
 
-      hidden_test_cases:
-        cp.hin || cp.hout
-          ? [
-              {
-                input: cp.hin,
-                expected_output: cp.hout,
-              },
-            ]
-          : [],
-    });
+    hidden_test_cases:
+      cp.hin || cp.hout
+        ? [
+            {
+              input: cp.hin,
+              expected_output: cp.hout,
+            },
+          ]
+        : [],
+  });
 
-    toast.success("Checkpoint added");
+  toast.success("Checkpoint added");
 
-    const list = await api.courseLevelsDropdown(courseId);
+  // ADD THIS HERE
+  const checkpointData = {
+    id: newCheckpoint?.id || Date.now(),
+    order: Number(cp.order),
+    atSeconds: Number(cp.atSeconds),
+    title: cp.title,
+  };
 
-setLevels(list);
+  setLevels((prevLevels) =>
+    prevLevels.map((level) =>
+      level.id === levelId
+        ? {
+            ...level,
+            checkpoints: [
+              ...(level.checkpoints || []),
+              checkpointData,
+            ],
+            checkpoint_count:
+              (level.checkpoint_count || 0) + 1,
+          }
+        : level
+    )
+  );
 
-    setCp({
-      ...cp,
-      order: Number(cp.order) + 1,
-      atSeconds: Number(cp.atSeconds) + 5,
-      title: "",
-      scenario: "",
-      problemStatement: "",
-      starter: "# write your code\n",
-      vin: "",
-      vout: "",
-      hin: "",
-      hout: "",
-    });
+  // Reset checkpoint form
+  setCp((prev) => ({
+    ...prev,
+    order: Number(prev.order) + 1,
+    atSeconds: Number(prev.atSeconds) + 5,
+    title: "",
+    scenario: "",
+    problemStatement: "",
+    starter: "# write your code\n",
+    vin: "",
+    vout: "",
+    hin: "",
+    hout: "",
+  }));
 
-  } catch (error) {
-    console.error(
-      "Checkpoint error:",
-      error.response?.data || error
-    );
+} catch (error) {
+  console.error(
+    "Checkpoint error:",
+    error.response?.data || error
+  );
 
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to add checkpoint"
-    );
-
-  } finally {
+  toast.error(
+    error.response?.data?.message ||
+    "Failed to add checkpoint"
+  );
+} finally {
     setBusy(false);
   }
 };
