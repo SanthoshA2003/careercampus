@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowUp,
   ArrowLeft,
+  ArrowRight,
+  Check,
   CheckCircle2,
   GraduationCap,
   Target,
@@ -11,9 +12,10 @@ import {
   Award,
   Building2,
   ChevronRight,
+  Clock,
   Loader2,
 } from "lucide-react";
-
+import { Link, useNavigate } from "react-router-dom";
 import Background from "@/features/career/components/Background";
 import TypeRotator from "@/features/career/components/TypeRotator";
 
@@ -96,6 +98,8 @@ export default function CareerPath() {
 
   const [careerPersona, setCareerPersona] = useState(null);
   const [error, setError] = useState("");
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
+  const [enrollingCourseId, setEnrollingCourseId] = useState(null);
 
   // COURSE STATE
   const [showCourses, setShowCourses] = useState(false);
@@ -107,113 +111,248 @@ export default function CareerPath() {
   // ==========================================================
 
   const token = getToken();
+  const navigate = useNavigate();
 
+
+  const loadMyEnrollments = async () => {
+    if (!token) return;
+
+    try {
+      const url = `${API_BASE_URL}/api/courses/my-enrollments`;
+
+      console.log("MY ENROLLMENTS API:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      console.log("MY ENROLLMENTS RESPONSE:", data);
+
+      if (!response.ok) {
+        console.error("Failed to load enrollments:", data);
+        return;
+      }
+
+      // API may return an array directly
+      const enrollments = Array.isArray(data)
+        ? data
+        : data?.enrollments || data?.data || [];
+
+      const ids = enrollments
+        .map((item) => {
+          return (
+            item.course_id ||
+            item.courseId ||
+            item.course?.id ||
+            item.id
+          );
+        })
+        .filter(Boolean);
+
+      console.log("ENROLLED COURSE IDS:", ids);
+
+      setEnrolledCourseIds(ids);
+    } catch (err) {
+      console.error("MY ENROLLMENTS ERROR:", err);
+    }
+  };
+
+  const enroll = async (courseId) => {
+    if (!token) {
+      setCourseError("Please login first to enroll in a course.");
+      return;
+    }
+
+    try {
+      setEnrollingCourseId(courseId);
+      setCourseError("");
+
+      const url = `${API_BASE_URL}/api/courses/${courseId}/enroll`;
+
+      console.log("ENROLL API:", url);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      console.log("ENROLLMENT RESPONSE:", data);
+
+      // =====================================================
+      // ALREADY ENROLLED
+      // =====================================================
+
+      if (
+        response.status === 409 &&
+        data?.detail === "You are already enrolled in this course."
+      ) {
+        console.log("Already enrolled. Opening course...");
+
+        setEnrolledCourseIds((prev) =>
+          prev.includes(courseId)
+            ? prev
+            : [...prev, courseId]
+        );
+
+        navigate(`/skillhub/journey/${courseId}`);
+
+        return;
+      }
+
+      // =====================================================
+      // OTHER ERRORS
+      // =====================================================
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+          data?.message ||
+          data?.error ||
+          "Unable to enroll in course."
+        );
+      }
+
+      // =====================================================
+      // NEW ENROLLMENT SUCCESS
+      // =====================================================
+
+      setEnrolledCourseIds((prev) =>
+        prev.includes(courseId)
+          ? prev
+          : [...prev, courseId]
+      );
+
+      navigate(`/skillhub/journey/${courseId}`);
+
+    } catch (err) {
+      console.error("ENROLL ERROR:", err);
+
+      setCourseError(
+        err?.message || "Unable to enroll in this course."
+      );
+    } finally {
+      setEnrollingCourseId(null);
+    }
+  };
   // ==========================================================
   // COURSE YES / NO + GET COURSE SUGGESTIONS
   // IMPORTANT: This function must stay INSIDE CareerPath().
   // ==========================================================
   const updateCoursePreference = async (wantCourses) => {
-  if (!token) {
-    setCourseError("Please login first.");
-    return;
-  }
-
-  try {
-    setCourseLoading(true);
-    setCourseError("");
-
-    const url = `${API_BASE_URL}/api/career-persona/calendar`;
-
-    console.log("COURSE PREFERENCE API:", url);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-  career_persona_id: careerPersona?.id,
-  show_courses: wantCourses,
-  add_to_calendar: false,
-}),
-    });
-
-    const data = await response.json().catch(() => null);
-
-    console.log("COURSE PREFERENCE RESPONSE:", data);
-
-  if (!response.ok) {
-  const message =
-    typeof data?.detail === "string"
-      ? data.detail
-      : Array.isArray(data?.detail)
-        ? data.detail
-            .map((item) => item?.msg || JSON.stringify(item))
-            .join(", ")
-        : data?.message ||
-          data?.error ||
-          `Course preference API failed with status ${response.status}`;
-
-  throw new Error(message);
-}
-
-    // NO
-    if (!wantCourses) {
-      setShowCourses(false);
-      setCourses([]);
+    if (!token) {
+      setCourseError("Please login first.");
       return;
     }
 
-    // YES → Get recommended courses
-    const courseUrl =
-      `${API_BASE_URL}/api/courses`;
+    try {
+      setCourseLoading(true);
+      setCourseError("");
 
-    console.log("GET COURSE SUGGESTIONS:", courseUrl);
+      const url = `${API_BASE_URL}/api/career-persona/calendar`;
 
-    const courseResponse = await fetch(courseUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+      console.log("COURSE PREFERENCE API:", url);
 
-    const courseData = await courseResponse.json().catch(() => null);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          career_persona_id: careerPersona?.id,
+          show_courses: wantCourses,
+          add_to_calendar: false,
+        }),
+      });
 
-    console.log("COURSE SUGGESTIONS RESPONSE:", courseData);
+      const data = await response.json().catch(() => null);
 
-   if (!courseResponse.ok) {
-  const message =
-    typeof courseData?.detail === "string"
-      ? courseData.detail
-      : Array.isArray(courseData?.detail)
-        ? courseData.detail
-            .map((item) => item?.msg || JSON.stringify(item))
-            .join(", ")
-        : courseData?.message ||
-          courseData?.error ||
-          `Course suggestions API failed with status ${courseResponse.status}`;
+      console.log("COURSE PREFERENCE RESPONSE:", data);
 
-  throw new Error(message);
-}
-    // Your API directly returns an array
-    setCourses(Array.isArray(courseData) ? courseData : []);
+      if (!response.ok) {
+        const message =
+          typeof data?.detail === "string"
+            ? data.detail
+            : Array.isArray(data?.detail)
+              ? data.detail
+                .map((item) => item?.msg || JSON.stringify(item))
+                .join(", ")
+              : data?.message ||
+              data?.error ||
+              `Course preference API failed with status ${response.status}`;
 
-    // Show courses after successful API response
-    setShowCourses(true);
-  } catch (err) {
-    console.error("COURSE ERROR:", err);
+        throw new Error(message);
+      }
 
-    setCourseError(
-      err?.message || "Unable to load recommended courses."
-    );
+      // NO
+      if (!wantCourses) {
+        setShowCourses(false);
+        setCourses([]);
+        return;
+      }
 
-    setShowCourses(false);
-  } finally {
-    setCourseLoading(false);
-  }
-};
+      // YES → Get recommended courses
+      const courseUrl =
+        `${API_BASE_URL}/api/courses`;
+
+      console.log("GET COURSE SUGGESTIONS:", courseUrl);
+
+      const courseResponse = await fetch(courseUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const courseData = await courseResponse.json().catch(() => null);
+
+      console.log("COURSE SUGGESTIONS RESPONSE:", courseData);
+
+      if (!courseResponse.ok) {
+        const message =
+          typeof courseData?.detail === "string"
+            ? courseData.detail
+            : Array.isArray(courseData?.detail)
+              ? courseData.detail
+                .map((item) => item?.msg || JSON.stringify(item))
+                .join(", ")
+              : courseData?.message ||
+              courseData?.error ||
+              `Course suggestions API failed with status ${courseResponse.status}`;
+
+        throw new Error(message);
+      }
+      setCourses(Array.isArray(courseData) ? courseData : []);
+
+      // Get user's existing enrollments
+      await loadMyEnrollments();
+
+      // Show courses after successful API response
+      setShowCourses(true);
+    } catch (err) {
+      console.error("COURSE ERROR:", err);
+
+      setCourseError(
+        err?.message || "Unable to load recommended courses."
+      );
+
+      setShowCourses(false);
+    } finally {
+      setCourseLoading(false);
+    }
+  };
 
   const createCareerPersona = async (careerGoal) => {
     if (!token) {
@@ -390,21 +529,21 @@ export default function CareerPath() {
       setCareerPersona(
         getResponse
       );
-   } catch (err) {
-  console.error("CAREER PERSONA ERROR:", err);
+    } catch (err) {
+      console.error("CAREER PERSONA ERROR:", err);
 
-  const message = err?.message || "";
+      const message = err?.message || "";
 
-  if (message.includes("503") || message.includes("high demand")) {
-    setError(
-      "The AI service is currently experiencing high demand. Please try again in a few moments."
-    );
-  } else {
-    setError(
-      message || "Unable to generate your career path. Please try again."
-    );
-  }
-} finally {
+      if (message.includes("503") || message.includes("high demand")) {
+        setError(
+          "The AI service is currently experiencing high demand. Please try again in a few moments."
+        );
+      } else {
+        setError(
+          message || "Unable to generate your career path. Please try again."
+        );
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -1075,6 +1214,10 @@ export default function CareerPath() {
                 RECOMMENDED COURSES
             ================================================== */}
 
+            {/* ==================================================
+    RECOMMENDED COURSES
+================================================== */}
+
             {showCourses && (
               <motion.div
                 initial={{
@@ -1090,11 +1233,8 @@ export default function CareerPath() {
                 }}
                 className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl backdrop-blur-xl sm:p-8"
               >
-
                 {/* COURSE HEADER */}
-
                 <div className="mb-7">
-
                   <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1 text-xs font-semibold text-violet-300">
                     <BookOpen className="h-4 w-4" />
                     Recommended Courses
@@ -1105,113 +1245,183 @@ export default function CareerPath() {
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Build the skills you need to move
-                    closer to your career goal with these
-                    recommended courses.
+                    Build the skills you need to move closer to your career goal with
+                    these recommended courses.
                   </p>
-
                 </div>
 
-                {/* COURSES */}
+                {/* COURSE CARDS */}
 
                 {courses.length > 0 ? (
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {courses.map((course, i) => {
+                      /*
+                       * Check enrollment from both:
+                       * 1. enrolledCourseIds state
+                       * 2. course.enrolled returned by API
+                       */
+                      const isEnrolled =
+                        enrolledCourseIds.includes(course.id) ||
+                        course.enrolled === true;
 
-                    {courses.map((course) => (
-                      <motion.div
-                        key={course.id}
-                        whileHover={{ y: -4 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:border-cyan-400/30 hover:bg-white/[0.05]"
-                      >
-                        {/* THUMBNAIL */}
+                      return (
+                        <motion.div
+                          key={course.id}
+                          initial={{
+                            opacity: 0,
+                            y: 20,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          transition={{
+                            delay: i * 0.06,
+                          }}
+                          whileHover={{
+                            y: -6,
+                          }}
+                          className="group flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] shadow-xl transition hover:border-cyan-400/30 hover:bg-white/[0.05]"
+                        >
+                          {/* ==================================================
+                  IMAGE
+              ================================================== */}
 
-                        {course.thumbnail && (
-                          <div className="h-44 w-full overflow-hidden bg-slate-800">
-                            <img
-                              src={course.thumbnail}
-                              alt={course.title || "Course"}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          </div>
-                        )}
+                          <div className="relative h-44 overflow-hidden bg-slate-800">
+                            {course.thumbnail ? (
+                              <img
+                                src={course.thumbnail}
+                                alt={course.title || "Course"}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-cyan-500/20 to-violet-500/20">
+                                <BookOpen className="h-12 w-12 text-cyan-400/70" />
+                              </div>
+                            )}
 
-                        <div className="p-5">
+                            {/* CATEGORY */}
 
-                          {/* TOP */}
+                            <span className="absolute left-4 top-4 rounded-full border border-white/20 bg-slate-950/80 px-3 py-1 text-xs font-bold text-slate-200 backdrop-blur">
+                              {course.category?.name ||
+                                course.category_name ||
+                                course.category ||
+                                "Course"}
+                            </span>
 
-                          <div className="flex items-start justify-between gap-4">
+                            {/* ENROLLED BADGE */}
 
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
-                              <BookOpen className="h-5 w-5" />
-                            </div>
-
-                            <div className="text-xs text-slate-500">
-  <span>{course.language}</span>
-
-  <span className="mx-2">•</span>
-
-  <span>{course.duration}</span>
-</div>
-
-                          </div>
-
-                          {/* TITLE */}
-
-                          <h4 className="mt-5 text-lg font-semibold text-white">
-                            {course.title || "Course"}
-                          </h4>
-
-                          {/* DESCRIPTION */}
-
-                          <p className="mt-2 text-sm leading-6 text-slate-400">
-                            {course.description ||
-                              "Recommended course for your career path."}
-                          </p>
-
-                          {/* DETAILS */}
-
-                          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
-
-                            <div className="text-xs text-slate-500">
-                              <span>
-                                {course.language || "Course"}
-                              </span>
-
-                              <span className="mx-2">
-                                •
-                              </span>
-
-                              <span>
-                                {course.duration || "Self paced"}
-                              </span>
-                            </div>
-
-                            {course.enrolled && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
+                            {isEnrolled && (
+                              <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 Enrolled
                               </span>
                             )}
-
                           </div>
 
-                        </div>
-                      </motion.div>
-                    ))}
+                          {/* ==================================================
+                  CONTENT
+              ================================================== */}
 
+                          <div className="flex flex-1 flex-col p-6">
+                            {/* TITLE */}
+
+                            <h4 className="text-[17px] font-bold text-white">
+                              {course.title || "Course"}
+                            </h4>
+
+                            {/* DESCRIPTION */}
+
+                            <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-slate-400">
+                              {course.description ||
+                                "Recommended course for your career path."}
+                            </p>
+
+                            {/* DETAILS */}
+
+                            <div className="mt-4 flex items-center justify-between text-[13px] text-slate-400">
+                              {/* DURATION */}
+
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+
+                                {course.duration || "Self paced"}
+                              </span>
+
+                              {/* DIFFICULTY */}
+
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="h-4 w-4" />
+
+                                {course.difficulty || "Beginner"}
+                              </span>
+                            </div>
+
+                            {/* LANGUAGE */}
+
+                            {course.language && (
+                              <div className="mt-3 text-xs text-slate-500">
+                                Language:{" "}
+                                <span className="text-slate-400">
+                                  {course.language}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* ==================================================
+                    BUTTON
+                ================================================== */}
+
+                            <button
+                              type="button"
+                              disabled={enrollingCourseId === course.id}
+                              onClick={() => {
+                                if (isEnrolled) {
+                                  navigate(`/skillhub/journey/${course.id}`);
+                                } else {
+                                  enroll(course.id);
+                                }
+                              }}
+                              className={`mt-5 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition ${isEnrolled
+                                ? "bg-emerald-500 hover:bg-emerald-600"
+                                : "bg-gradient-to-r from-blue-600 to-cyan-500"
+                                } disabled:cursor-not-allowed disabled:opacity-60`}
+                            >
+                              {enrollingCourseId === course.id ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Enrolling...
+                                </>
+                              ) : isEnrolled ? (
+                                <>
+                                  Continue
+                                  <ArrowRight className="h-4 w-4" />
+                                </>
+                              ) : (
+                                <>
+                                  Enroll Now
+                                  <ChevronRight className="h-4 w-4" />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center text-sm text-slate-400">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
                     No recommended courses found for your career path.
                   </div>
                 )}
-
               </motion.div>
             )}
+
+
+
 
           </motion.div>
         )}
