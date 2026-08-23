@@ -423,6 +423,27 @@ submit: (checkpointId, language, code) =>
       .get("/me/progress")
       .then((r) => r.data),
 
+
+      
+
+      // Get progress for a specific level
+getLevelProgress: (levelId) =>
+  client
+    .get(`/progress/level/${levelId}`)
+    .then((r) => r.data),
+
+// Create progress
+createProgress: (body) =>
+  client
+    .post("/progress", body)
+    .then((r) => r.data),
+
+// Update existing progress
+updateProgress: (progressId, body) =>
+  client
+    .put(`/progress/${progressId}`, body)
+    .then((r) => r.data),
+
   // ==================================================
   // STUDENT DASHBOARD
   // ==================================================

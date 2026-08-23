@@ -70,16 +70,25 @@ export default function LearningSection() {
   fetchData();
 }, [isAuthed]);
 
- const enroll = async (courseId) => {
+ const enroll = async (course) => {
   if (!isAuthed) {
     openAuth(() => navigate("/skillhub"));
+    return;
+  }
+
+  const courseId = course.id;
+
+  console.log("FULL COURSE:", course);
+  console.log("COURSE ID SENT:", courseId);
+
+  if (!courseId) {
+    toast.error("Course ID not found");
     return;
   }
 
   try {
     await api.enrollCourse(courseId);
 
-    // Update enrolled state immediately
     setEnrolledCourseIds((prev) =>
       prev.includes(courseId)
         ? prev
@@ -88,30 +97,17 @@ export default function LearningSection() {
 
     toast.success("Successfully enrolled!");
 
-    // Go to course journey
     navigate(`/skillhub/journey/${courseId}`);
   } catch (error) {
-    const status = error?.response?.status;
-    const detail = error?.response?.data?.detail;
+    console.error(
+      "Enrollment failed:",
+      error?.response?.data || error
+    );
 
-    console.error("Enrollment failed:", error?.response?.data);
-
-    // Already enrolled = not actually an error for the user
-    if (status === 409) {
-      setEnrolledCourseIds((prev) =>
-        prev.includes(courseId)
-          ? prev
-          : [...prev, courseId]
-      );
-
-      toast.info("You are already enrolled in this course.");
-
-      // Still allow user to continue learning
-      navigate(`/skillhub/journey/${courseId}`);
-      return;
-    }
-
-    toast.error(detail || "Enrollment failed");
+    toast.error(
+      error?.response?.data?.detail ||
+      "Enrollment failed"
+    );
   }
 };
 
@@ -237,7 +233,7 @@ const filteredCourses = courses.filter((course) => {
                 if (isEnrolled) {
                   navigate(`/skillhub/journey/${course.id}`);
                 } else {
-                  enroll(course.id);
+                  enroll(course);
                 }
               }}
               className={`mt-5 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition ${

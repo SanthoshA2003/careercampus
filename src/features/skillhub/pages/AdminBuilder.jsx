@@ -19,6 +19,7 @@ export default function AdminBuilder() {
   const [courseId, setCourseId] = useState("");
   const [levels, setLevels] = useState([]);
   const [levelId, setLevelId] = useState("");
+  const [levelCheckpoints, setLevelCheckpoints] = useState([]);
 
 const [course, setCourse] = useState({
   title: "",
@@ -38,6 +39,36 @@ const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "
 
   const loadCourses = () => api.courses().then((c) => { setCourses(c); if (!courseId && c[0]) setCourseId(c[0].id); });
   useEffect(() => { loadCourses(); /* eslint-disable-next-line */ }, []);
+
+useEffect(() => {
+  if (!levelId) {
+    setLevelCheckpoints([]);
+    return;
+  }
+
+  const fetchCheckpoints = async () => {
+    try {
+      const data = await api.level(levelId);
+
+      console.log("LEVEL WITH CHECKPOINTS:", data);
+
+      setLevelCheckpoints(
+        data?.checkpoints || []
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load checkpoints:",
+        error
+      );
+
+      setLevelCheckpoints([]);
+    }
+  };
+
+  fetchCheckpoints();
+}, [levelId]);
+
+
 useEffect(() => {
   if (!courseId) return;
 
@@ -249,6 +280,20 @@ const createLevel = async () => {
 
   toast.success("Checkpoint added");
 
+
+  setLevelCheckpoints((prev) => [
+  ...prev,
+  {
+    id: newCheckpoint?.id || Date.now(),
+    order: newCheckpoint?.order ?? Number(cp.order),
+    atSeconds:
+      newCheckpoint?.atSeconds ??
+      newCheckpoint?.at_seconds ??
+      Number(cp.atSeconds),
+    title: newCheckpoint?.title ?? cp.title,
+  },
+]);
+
   // ADD THIS HERE
   const checkpointData = {
     id: newCheckpoint?.id || Date.now(),
@@ -371,12 +416,12 @@ const createLevel = async () => {
           <div className="mb-5 rounded-xl border border-white/5 bg-slate-950 p-4">
             <div className="mb-2 flex items-center gap-2 text-xs text-slate-400"><Film className="h-4 w-4" /> Click positions represent checkpoints on the video</div>
             <div className="relative h-2 w-full rounded-full bg-white/10">
-              {(selectedLevel?.checkpoints || []).map((c) => (
+              {levelCheckpoints.map((c) => (
                 <span key={c.id} title={`${c.atSeconds}s · ${c.title}`} className="absolute -top-1 grid h-4 w-4 -translate-x-1/2 place-items-center rounded-full bg-amber-400" style={{ left: `${Math.min(c.atSeconds / 20 * 100, 100)}%` }} />
               ))}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {(selectedLevel?.checkpoints || []).map((c) => (
+              {levelCheckpoints.map((c) => (
                 <span key={c.id} className="rounded-lg bg-white/5 px-2.5 py-1 text-xs text-slate-300"><CheckCircle2 className="mr-1 inline h-3 w-3 text-emerald-400" />{c.order}. {c.title} @ {c.atSeconds}s</span>
               ))}
             </div>

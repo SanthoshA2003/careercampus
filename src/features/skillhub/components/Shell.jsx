@@ -10,6 +10,7 @@ import {
   LogOut,
   Flame,
   Zap,
+  Home,
 } from "lucide-react";
 
 import { api } from "@/services/api";
@@ -99,6 +100,21 @@ export default function Shell({ children }) {
       ? loc.pathname === item.to
       : loc.pathname.startsWith(item.to);
 
+      const handleHome = () => {
+  // ADMIN: logout and go to landing page
+  if (user?.role === "admin") {
+    logout();
+    mainLogout();
+
+    window.location.href = "/";
+    return;
+  }
+
+  // STUDENT: just go to landing page, stay logged in
+  nav("/");
+};
+
+
   const handleLogout = () => {
   logout();
   mainLogout();
@@ -166,6 +182,14 @@ export default function Shell({ children }) {
             </div>
 
           </div>
+
+          <button
+  onClick={handleHome}
+  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10"
+>
+  <Home className="h-3.5 w-3.5" />
+  Home
+</button>
 
           <button
             onClick={handleLogout}
