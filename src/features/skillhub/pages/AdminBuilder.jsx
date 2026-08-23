@@ -19,86 +19,88 @@ export default function AdminBuilder() {
   const [courseId, setCourseId] = useState("");
   const [levels, setLevels] = useState([]);
   const [levelId, setLevelId] = useState("");
-  const [levelCheckpoints, setLevelCheckpoints] = useState([]);
 
-const [course, setCourse] = useState({
-  title: "",
-  description: "",
-  language: "Python",
-  difficulty: "Beginner",
-  duration: "",
-  thumbnail: "",
-  status: "published", 
-  certificate_template: "",
-});
+  const [course, setCourse] = useState({
+    title: "",
+    description: "",
+    language: "Python",
+    difficulty: "Beginner",
+    duration: "",
+    thumbnail: "",
+    status: "published",
+    certificate_template: "",
+  });
 
-const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "", description: "", xp: 100, video: { url: "" } });
+  const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "", description: "", xp: 100, video: { url: "" } });
   const [cp, setCp] = useState({ order: 1, atSeconds: 5, title: "", scenario: "", problemStatement: "", difficulty: "Easy", xp: 25, starter: "# write your code\n", vin: "", vout: "", hin: "", hout: "" });
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
 
+
   const loadCourses = () => api.courses().then((c) => { setCourses(c); if (!courseId && c[0]) setCourseId(c[0].id); });
   useEffect(() => { loadCourses(); /* eslint-disable-next-line */ }, []);
-
-useEffect(() => {
-  if (!levelId) {
-    setLevelCheckpoints([]);
-    return;
-  }
-
-  const fetchCheckpoints = async () => {
-    try {
-      const data = await api.level(levelId);
-
-      console.log("LEVEL WITH CHECKPOINTS:", data);
-
-      setLevelCheckpoints(
-        data?.checkpoints || []
-      );
-    } catch (error) {
-      console.error(
-        "Failed to load checkpoints:",
-        error
-      );
-
-      setLevelCheckpoints([]);
-    }
-  };
-
-  fetchCheckpoints();
-}, [levelId]);
-
-
 useEffect(() => {
   if (!courseId) return;
 
-  const fetchLevels = async () => {
-    try {
-      const levelsData = await api.courseLevelsDropdown(courseId);
+    const fetchLevels = async () => {
+      try {
+        const levelsData = await api.courseLevelsDropdown(courseId);
 
-      console.log("Dropdown Levels:", levelsData);
+        console.log("Dropdown Levels:", levelsData);
 
-      setLevels(levelsData);
+        setLevels(levelsData);
 
-      if (levelsData.length > 0) {
-        setLevelId(levelsData[0].id);
-      } else {
+        if (levelsData.length > 0) {
+          setLevelId(levelsData[0].id);
+        } else {
+          setLevelId("");
+        }
+      } catch (error) {
+        console.error(
+          "Failed to fetch levels:",
+          error.response?.data || error
+        );
+
+        setLevels([]);
         setLevelId("");
       }
+    };
+
+    fetchLevels();
+  }, [courseId]);
+
+
+  const uploadThumbnail = async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setThumbnailUploading(true);
+
+    try {
+      const response = await api.upload(file);
+
+      console.log("Thumbnail upload response:", response);
+
+      setCourse((prev) => ({
+        ...prev,
+        thumbnail: response.file_url,
+      }));
+
+      toast.success("Thumbnail uploaded successfully");
     } catch (error) {
       console.error(
-        "Failed to fetch levels:",
+        "Thumbnail upload error:",
         error.response?.data || error
       );
 
-      setLevels([]);
-      setLevelId("");
+      toast.error(
+        error.response?.data?.message || "Thumbnail upload failed"
+      );
+    } finally {
+      setThumbnailUploading(false);
     }
   };
-
-  fetchLevels();
-}, [courseId]);
-
   const createCourse = async () => {
     if (!course.title) return toast.error("Course title required");
     setBusy(true);
@@ -106,247 +108,233 @@ useEffect(() => {
     catch { toast.error("Failed"); } finally { setBusy(false); }
   };
 
-const createLevel = async () => {
-  if (!courseId) {
-    return toast.error("Select a course");
-  }
+  const createLevel = async () => {
+    if (!courseId) {
+      return toast.error("Select a course");
+    }
 
-  if (!level.title.trim()) {
-    return toast.error("Level title required");
-  }
+    if (!level.title.trim()) {
+      return toast.error("Level title required");
+    }
 
-  setBusy(true);
+    setBusy(true);
 
-  try {
-    const l = await api.createLevel({
-      course_id: courseId,
-      stage: level.stage,
-      stage_order: 1,
-      level_number: Number(level.levelNumber),
-      global_order: Number(level.levelNumber),
-      title: level.title,
-      description: level.description || "",
-      objectives: [],
-      xp: Number(level.xp),
-      pass_percentage: 100,
-      duration: "30 minutes",
+    try {
+      const l = await api.createLevel({
+        course_id: courseId,
+        stage: level.stage,
+        stage_order: 1,
+        level_number: Number(level.levelNumber),
+        global_order: Number(level.levelNumber),
+        title: level.title,
+        description: level.description || "",
+        objectives: [],
+        xp: Number(level.xp),
+        pass_percentage: 100,
+        duration: "30 minutes",
 
-      video: level.video.url
-        ? {
+        video: level.video.url
+          ? {
             url: level.video.url,
           }
-        : {},
+          : {},
 
-      theory: {},
-    });
+        theory: {},
+      });
 
-    toast.success("Level created");
+      toast.success("Level created");
 
-//     const list = await api.courseLevelsDropdown(courseId);
+      //     const list = await api.courseLevelsDropdown(courseId);
 
-// setLevels(list);
+      // setLevels(list);
 
-    setLevelId(l.id);
+      setLevelId(l.id);
 
-    setLevel({
-      stage: "Beginner",
-      levelNumber: Number(level.levelNumber) + 1,
-      title: "",
-      description: "",
-      xp: 100,
-      video: { url: "" },
-    });
+      setLevel({
+        stage: "Beginner",
+        levelNumber: Number(level.levelNumber) + 1,
+        title: "",
+        description: "",
+        xp: 100,
+        video: { url: "" },
+      });
 
-  } catch (error) {
-    console.error("Create level error:", error.response?.data || error);
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to create level"
-    );
-  } finally {
-    setBusy(false);
-  }
-};
+    } catch (error) {
+      console.error("Create level error:", error.response?.data || error);
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to create level"
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const uploadVideo = async (e) => {
-  const file = e.target.files?.[0];
+    const file = e.target.files?.[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  setUploading(true);
+    setUploading(true);
 
-  try {
-    const response = await api.upload(file);
+    try {
+      const response = await api.upload(file);
 
-    console.log("Upload response:", response);
+      console.log("Upload response:", response);
 
-    setLevel((prev) => ({
-      ...prev,
-      video: {
-        url: response.file_url,
-      },
-    }));
+      setLevel((prev) => ({
+        ...prev,
+        video: {
+          url: response.file_url,
+        },
+      }));
 
-    toast.success("Video uploaded successfully");
+      toast.success("Video uploaded successfully");
 
-  } catch (error) {
-    console.error(
-      "Video upload error:",
-      error.response?.data || error
-    );
+    } catch (error) {
+      console.error(
+        "Video upload error:",
+        error.response?.data || error
+      );
 
-    toast.error(
-      error.response?.data?.message || "Video upload failed"
-    );
+      toast.error(
+        error.response?.data?.message || "Video upload failed"
+      );
 
-  } finally {
-    setUploading(false);
-  }
-};
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const addCheckpoint = async () => {
-  if (!levelId) {
-    return toast.error("Select a level");
-  }
+    if (!levelId) {
+      return toast.error("Select a level");
+    }
 
-  if (!cp.title.trim()) {
-    return toast.error("Challenge title required");
-  }
+    if (!cp.title.trim()) {
+      return toast.error("Challenge title required");
+    }
 
-  if (!cp.problemStatement.trim()) {
-    return toast.error("Problem statement required");
-  }
+    if (!cp.problemStatement.trim()) {
+      return toast.error("Problem statement required");
+    }
 
-  setBusy(true);
+    setBusy(true);
 
-  try {
-  const newCheckpoint = await api.addCheckpoint({
-    level_id: levelId,
+    try {
+      const newCheckpoint = await api.addCheckpoint({
+        level_id: levelId,
 
-    checkpoint_order: Number(cp.order),
+        checkpoint_order: Number(cp.order),
 
-    at_seconds: Number(cp.atSeconds),
+        at_seconds: Number(cp.atSeconds),
 
-    title: cp.title,
+        title: cp.title,
 
-    scenario: cp.scenario || "",
+        scenario: cp.scenario || "",
 
-    problem_statement: cp.problemStatement,
+        problem_statement: cp.problemStatement,
 
-    objective: "",
+        objective: "",
 
-    difficulty: cp.difficulty,
+        difficulty: cp.difficulty,
 
-    marks: 25,
+        marks: 25,
 
-    xp: Number(cp.xp),
+        xp: Number(cp.xp),
 
-    retry_limit: 5,
+        retry_limit: 5,
 
-    language: "python",
+        language: "python",
 
-    starter_code: {
-      code: cp.starter,
-    },
+        starter_code: {
+          code: cp.starter,
+        },
 
-    constraints: "",
+        constraints: "",
 
-    hints: [],
+        hints: [],
 
-    solution: "",
+        solution: "",
 
-    explanation: "",
+        explanation: "",
 
-    visible_test_cases:
-      cp.vin || cp.vout
-        ? [
-            {
-              input: cp.vin,
-              expected_output: cp.vout,
-            },
-          ]
-        : [],
+        visible_test_cases:
+          cp.vin || cp.vout
+            ? [
+              {
+                input: cp.vin,
+                expected_output: cp.vout,
+              },
+            ]
+            : [],
 
-    hidden_test_cases:
-      cp.hin || cp.hout
-        ? [
-            {
-              input: cp.hin,
-              expected_output: cp.hout,
-            },
-          ]
-        : [],
-  });
+        hidden_test_cases:
+          cp.hin || cp.hout
+            ? [
+              {
+                input: cp.hin,
+                expected_output: cp.hout,
+              },
+            ]
+            : [],
+      });
 
   toast.success("Checkpoint added");
 
+      // ADD THIS HERE
+      const checkpointData = {
+        id: newCheckpoint?.id || Date.now(),
+        order: Number(cp.order),
+        atSeconds: Number(cp.atSeconds),
+        title: cp.title,
+      };
 
-  setLevelCheckpoints((prev) => [
-  ...prev,
-  {
-    id: newCheckpoint?.id || Date.now(),
-    order: newCheckpoint?.order ?? Number(cp.order),
-    atSeconds:
-      newCheckpoint?.atSeconds ??
-      newCheckpoint?.at_seconds ??
-      Number(cp.atSeconds),
-    title: newCheckpoint?.title ?? cp.title,
-  },
-]);
+      setLevels((prevLevels) =>
+        prevLevels.map((level) =>
+          level.id === levelId
+            ? {
+              ...level,
+              checkpoints: [
+                ...(level.checkpoints || []),
+                checkpointData,
+              ],
+              checkpoint_count:
+                (level.checkpoint_count || 0) + 1,
+            }
+            : level
+        )
+      );
 
-  // ADD THIS HERE
-  const checkpointData = {
-    id: newCheckpoint?.id || Date.now(),
-    order: Number(cp.order),
-    atSeconds: Number(cp.atSeconds),
-    title: cp.title,
+      // Reset checkpoint form
+      setCp((prev) => ({
+        ...prev,
+        order: Number(prev.order) + 1,
+        atSeconds: Number(prev.atSeconds) + 5,
+        title: "",
+        scenario: "",
+        problemStatement: "",
+        starter: "# write your code\n",
+        vin: "",
+        vout: "",
+        hin: "",
+        hout: "",
+      }));
+
+    } catch (error) {
+      console.error(
+        "Checkpoint error:",
+        error.response?.data || error
+      );
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to add checkpoint"
+      );
+    } finally {
+      setBusy(false);
+    }
   };
-
-  setLevels((prevLevels) =>
-    prevLevels.map((level) =>
-      level.id === levelId
-        ? {
-            ...level,
-            checkpoints: [
-              ...(level.checkpoints || []),
-              checkpointData,
-            ],
-            checkpoint_count:
-              (level.checkpoint_count || 0) + 1,
-          }
-        : level
-    )
-  );
-
-  // Reset checkpoint form
-  setCp((prev) => ({
-    ...prev,
-    order: Number(prev.order) + 1,
-    atSeconds: Number(prev.atSeconds) + 5,
-    title: "",
-    scenario: "",
-    problemStatement: "",
-    starter: "# write your code\n",
-    vin: "",
-    vout: "",
-    hin: "",
-    hout: "",
-  }));
-
-} catch (error) {
-  console.error(
-    "Checkpoint error:",
-    error.response?.data || error
-  );
-
-  toast.error(
-    error.response?.data?.message ||
-    "Failed to add checkpoint"
-  );
-} finally {
-    setBusy(false);
-  }
-};
 
   const selectedLevel = levels.find((l) => l.id === levelId);
 
@@ -358,13 +346,123 @@ const createLevel = async () => {
         {/* Create course */}
         <Section title="Create Course" icon={Plus}>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div><Label>Course Name</Label><Input value={course.title} onChange={(e) => setCourse({ ...course, title: e.target.value })} placeholder="Java Programming" data-testid="course-title" /></div>
-            <div><Label>Programming Language</Label><Input value={course.language} onChange={(e) => setCourse({ ...course, language: e.target.value })} /></div>
-            <div className="sm:col-span-2"><Label>Description</Label><Area rows={2} value={course.description} onChange={(e) => setCourse({ ...course, description: e.target.value })} /></div>
-            <div><Label>Difficulty</Label><Input value={course.difficulty} onChange={(e) => setCourse({ ...course, difficulty: e.target.value })} /></div>
-            <div><Label>Thumbnail URL</Label><Input value={course.thumbnail} onChange={(e) => setCourse({ ...course, thumbnail: e.target.value })} /></div>
+
+            {/* Course Name */}
+            <div>
+              <Label>Course Name</Label>
+
+              <Input
+                value={course.title}
+                onChange={(e) =>
+                  setCourse({
+                    ...course,
+                    title: e.target.value,
+                  })
+                }
+                placeholder="Java Programming"
+                data-testid="course-title"
+              />
+            </div>
+
+            {/* Programming Language */}
+            <div>
+              <Label>Programming Language</Label>
+
+              <Input
+                value={course.language}
+                onChange={(e) =>
+                  setCourse({
+                    ...course,
+                    language: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Description */}
+            <div className="sm:col-span-2">
+              <Label>Description</Label>
+
+              <Area
+                rows={2}
+                value={course.description}
+                onChange={(e) =>
+                  setCourse({
+                    ...course,
+                    description: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Difficulty */}
+            <div>
+              <Label>Difficulty</Label>
+
+              <Input
+                value={course.difficulty}
+                onChange={(e) =>
+                  setCourse({
+                    ...course,
+                    difficulty: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Thumbnail Upload */}
+            <div>
+              <Label>Thumbnail</Label>
+
+              <div className="flex gap-2">
+                {/* Upload Button */}
+                <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5">
+                  {thumbnailUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+
+                  {thumbnailUploading
+                    ? "Uploading..."
+                    : course.thumbnail
+                      ? "Thumbnail Uploaded ✓"
+                      : "Upload Image"}
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={uploadThumbnail}
+                    disabled={thumbnailUploading}
+                  />
+                </label>
+
+              </div>
+
+              <div className="sm:col-span-3">
+                <Label>Thumbnail URL</Label>
+                <Input
+                  value={course.thumbnail}
+                  readOnly
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400"
+                />
+              </div>
+
+
+            </div>
           </div>
-          <button onClick={createCourse} disabled={busy} data-testid="create-course-btn" className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-bold text-white hover:scale-105 transition-transform disabled:opacity-60"><Plus className="h-4 w-4" /> Create Course</button>
+
+          {/* Create Course Button */}
+          <button
+            onClick={createCourse}
+            disabled={busy || thumbnailUploading}
+            data-testid="create-course-btn"
+            className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-105 disabled:opacity-60"
+          >
+            <Plus className="h-4 w-4" />
+            Create Course
+          </button>
         </Section>
 
         {/* Select course + add level */}
@@ -398,19 +496,19 @@ const createLevel = async () => {
         {/* Interactive timeline + challenge builder */}
         <Section title="Interactive Timeline & Challenge Builder" icon={Flag}>
           <div className="mb-4"><Label>Level</Label>
-   <select
-  value={levelId}
-  onChange={(e) => setLevelId(e.target.value)}
-  className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white"
->
-  <option value="">Select Level</option>
+            <select
+              value={levelId}
+              onChange={(e) => setLevelId(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white"
+            >
+              <option value="">Select Level</option>
 
-  {levels.map((l) => (
-    <option key={l.id} value={l.id}>
-      {l.stage} · Level {l.level_number} ({l.checkpoint_count} checkpoints)
-    </option>
-  ))}
-</select>
+              {levels.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.stage} · Level {l.level_number} ({l.checkpoint_count} checkpoints)
+                </option>
+              ))}
+            </select>
           </div>
           {/* timeline visual */}
           <div className="mb-5 rounded-xl border border-white/5 bg-slate-950 p-4">
