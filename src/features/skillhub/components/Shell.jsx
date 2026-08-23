@@ -44,51 +44,60 @@ export default function Shell({ children }) {
   const nav = useNavigate();
 
   const [courseId, setCourseId] = useState(null);
+const [loadingCourse, setLoadingCourse] = useState(true);
 
-  // Get the student's current course dynamically
-  useEffect(() => {
-    if (user?.role !== "admin") {
-      api
-        .studentSkillHubDashboard()
-        .then((response) => {
-          console.log("Shell Student Dashboard:", response);
-
-          const currentCourseId =
-            response?.continue_course?.course_id;
-
-          setCourseId(currentCourseId || null);
-        })
-        .catch((error) => {
-          console.error(
-            "Failed to get current course:",
-            error
-          );
-        });
+useEffect(() => {
+  const fetchEnrolledCourse = async () => {
+    if (user?.role === "admin") {
+      setLoadingCourse(false);
+      return;
     }
-  }, [user?.role]);
 
-  const studentNav = [
-    {
-      to: "/skillhub",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      end: true,
-    },
-    ...(courseId
-      ? [
-          {
-            to: `/skillhub/journey/${courseId}`,
-            label: "My Journey",
-            icon: Map,
-          },
-        ]
-      : []),
-    {
-      to: "/skillhub/certificates",
-      label: "Certificates",
-      icon: Award,
-    },
-  ];
+    try {
+      setLoadingCourse(true);
+
+      const enrolledCourses = await api.enrolledCourses();
+
+      console.log("Enrolled Courses:", enrolledCourses);
+
+      if (enrolledCourses?.length > 0) {
+        setCourseId(enrolledCourses[0].course_id);
+      } else {
+        setCourseId(null);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to get enrolled course:",
+        error
+      );
+      setCourseId(null);
+    } finally {
+      setLoadingCourse(false);
+    }
+  };
+
+  fetchEnrolledCourse();
+}, [user?.role]);
+
+ const studentNav = [
+  {
+    to: "/skillhub",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    end: true,
+  },
+  {
+    to: courseId ? `/skillhub/journey/${courseId}` : "#",
+    label: "My Journey",
+    icon: Map,
+    disabled: !courseId,
+  },
+  {
+    to: "/skillhub/certificates",
+    label: "Certificates",
+    icon: Award,
+  },
+];
 
   const items =
     user?.role === "admin"
@@ -142,26 +151,36 @@ export default function Shell({ children }) {
         </Link>
 
         <nav className="flex-1 space-y-1">
+  {items.map((item) => (
+    <Link
+      key={item.label}
+      to={item.to}
+      onClick={(e) => {
+        if (item.loading) {
+          e.preventDefault();
+        }
+      }}
+      data-testid={`nav-${item.label
+        .toLowerCase()
+        .replace(/\s+/g, "-")}`}
+      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+        item.loading
+          ? "cursor-wait text-slate-500"
+          : isActive(item)
+          ? "bg-gradient-to-r from-cyan-500/20 to-violet-500/20 text-white ring-1 ring-cyan-400/30"
+          : "text-slate-400 hover:bg-white/5 hover:text-white"
+      }`}
+    >
+      <item.icon className="h-5 w-5" />
 
-          {items.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              data-testid={`nav-${item.label
-                .toLowerCase()
-                .replace(/\s+/g, "-")}`}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                isActive(item)
-                  ? "bg-gradient-to-r from-cyan-500/20 to-violet-500/20 text-white ring-1 ring-cyan-400/30"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Link>
-          ))}
+      {item.label}
 
-        </nav>
+      {item.loading && (
+        <span className="ml-auto h-3 w-3 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+      )}
+    </Link>
+  ))}
+</nav>
 
         <div className="mt-auto rounded-2xl border border-white/5 bg-white/5 p-4">
 

@@ -45,21 +45,30 @@ export default function LearningSection() {
     try {
       setLoading(true);
 
+      // Get all courses
       const coursesResponse = await api.courses();
 
-      console.log("Courses:", coursesResponse);
+      console.log("All Courses:", coursesResponse);
 
       setCourses(coursesResponse || []);
 
+      // Get enrolled courses only when logged in
       if (isAuthed) {
         const enrolledResponse = await api.enrolledCourses();
 
-        const enrolledIds = enrolledResponse.map(
+        console.log("Enrolled Courses:", enrolledResponse);
+
+        const enrolledIds = (enrolledResponse || []).map(
           (course) => course.course_id
         );
 
+        console.log("Enrolled Course IDs:", enrolledIds);
+
         setEnrolledCourseIds(enrolledIds);
+      } else {
+        setEnrolledCourseIds([]);
       }
+
     } catch (error) {
       console.error("Failed to fetch courses:", error);
     } finally {
@@ -70,16 +79,13 @@ export default function LearningSection() {
   fetchData();
 }, [isAuthed]);
 
- const enroll = async (course) => {
+const enroll = async (course) => {
   if (!isAuthed) {
     openAuth(() => navigate("/skillhub"));
     return;
   }
 
   const courseId = course.id;
-
-  console.log("FULL COURSE:", course);
-  console.log("COURSE ID SENT:", courseId);
 
   if (!courseId) {
     toast.error("Course ID not found");
@@ -97,7 +103,9 @@ export default function LearningSection() {
 
     toast.success("Successfully enrolled!");
 
+    // Navigate to enrolled course
     navigate(`/skillhub/journey/${courseId}`);
+
   } catch (error) {
     console.error(
       "Enrollment failed:",
@@ -228,28 +236,26 @@ const filteredCourses = courses.filter((course) => {
 
             </div>
 
-            <button
-              onClick={() => {
-                if (isEnrolled) {
-                  navigate(`/skillhub/journey/${course.id}`);
-                } else {
-                  enroll(course);
-                }
-              }}
-              className={`mt-5 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition ${
-                isEnrolled
-                  ? "bg-emerald-500 hover:bg-emerald-600"
-                  : "bg-gradient-to-r from-blue-600 to-cyan-500"
-              }`}
-            >
-              {isEnrolled ? "Enrolled" : "Enroll Now"}
+         <button
+  onClick={() => {
+    if (isEnrolled) {
+      // Already enrolled → continue the course
+      navigate(`/skillhub/journey/${course.id}`);
+    } else {
+      // Not enrolled → enroll first
+      enroll(course);
+    }
+  }}
+  className={`mt-5 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition ${
+    isEnrolled
+      ? "bg-emerald-500 hover:bg-emerald-600"
+      : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-90"
+  }`}
+>
+  {isEnrolled ? "Continue" : "Enroll Now"}
 
-              {isEnrolled ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <ArrowRight className="h-4 w-4" />
-              )}
-            </button>
+  <ArrowRight className="h-4 w-4" />
+</button>
 
           </div>
         </motion.div>

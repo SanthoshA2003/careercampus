@@ -308,10 +308,10 @@ export const api = {
       .get("/courses")
       .then((r) => r.data),
 
-  enrolledCourses: () =>
-    client
-      .get("/courses/enrolled")
-      .then((r) => r.data),
+enrolledCourses: () =>
+  client
+    .get("/courses/my-enrollments")
+    .then((r) => r.data),
 
   enrollCourse: (courseId) =>
     client
