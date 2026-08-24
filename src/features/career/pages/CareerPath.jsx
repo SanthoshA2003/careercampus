@@ -18,6 +18,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Background from "@/features/career/components/Background";
 import TypeRotator from "@/features/career/components/TypeRotator";
+import { api } from "@/services/api";
+
 
 // ============================================================
 // LOGO
@@ -249,110 +251,88 @@ export default function CareerPath() {
   // COURSE YES / NO + GET COURSE SUGGESTIONS
   // IMPORTANT: This function must stay INSIDE CareerPath().
   // ==========================================================
-  const updateCoursePreference = async (wantCourses) => {
-    if (!token) {
-      setCourseError("Please login first.");
-      return;
-    }
+const updateCoursePreference = async (wantCourses) => {
+  if (!token) {
+    setCourseError("Please login first.");
+    return;
+  }
 
-    try {
-      setCourseLoading(true);
-      setCourseError("");
+  // =====================================================
+  // NO → HIDE COURSES
+  // =====================================================
 
-      const url = `${API_BASE_URL}/api/career-persona/calendar`;
+  if (!wantCourses) {
+    setShowCourses(false);
+    setCourses([]);
+    setCourseError("");
+    return;
+  }
 
-      console.log("COURSE PREFERENCE API:", url);
+  try {
+    setCourseLoading(true);
+    setCourseError("");
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          career_persona_id: careerPersona?.id,
-          show_courses: wantCourses,
-          add_to_calendar: false,
-        }),
-      });
+    // =====================================================
+    // YES → GET ONLY CAREER RELATED COURSE SUGGESTIONS
+    // GET /api/career-persona/course-suggestions
+    // =====================================================
 
-      const data = await response.json().catch(() => null);
+    console.log(
+      "Getting career-related course suggestions..."
+    );
 
-      console.log("COURSE PREFERENCE RESPONSE:", data);
+    const data = await api.careerCourseSuggestions();
 
-      if (!response.ok) {
-        const message =
-          typeof data?.detail === "string"
-            ? data.detail
-            : Array.isArray(data?.detail)
-              ? data.detail
-                .map((item) => item?.msg || JSON.stringify(item))
-                .join(", ")
-              : data?.message ||
-              data?.error ||
-              `Course preference API failed with status ${response.status}`;
+    console.log(
+      "CAREER COURSE SUGGESTIONS:",
+      data
+    );
 
-        throw new Error(message);
-      }
+    // =====================================================
+    // HANDLE DIFFERENT API RESPONSE STRUCTURES
+    // =====================================================
 
-      // NO
-      if (!wantCourses) {
-        setShowCourses(false);
-        setCourses([]);
-        return;
-      }
+    const suggestedCourses =
+      Array.isArray(data)
+        ? data
+        : data?.courses ||
+          data?.suggestions ||
+          data?.data ||
+          [];
 
-      // YES → Get recommended courses
-      const courseUrl =
-        `${API_BASE_URL}/api/courses`;
+    setCourses(suggestedCourses);
 
-      console.log("GET COURSE SUGGESTIONS:", courseUrl);
+    // =====================================================
+    // LOAD USER ENROLLMENTS
+    // =====================================================
 
-      const courseResponse = await fetch(courseUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+    await loadMyEnrollments();
 
-      const courseData = await courseResponse.json().catch(() => null);
+    // =====================================================
+    // SHOW COURSE SECTION
+    // =====================================================
 
-      console.log("COURSE SUGGESTIONS RESPONSE:", courseData);
+    setShowCourses(true);
 
-      if (!courseResponse.ok) {
-        const message =
-          typeof courseData?.detail === "string"
-            ? courseData.detail
-            : Array.isArray(courseData?.detail)
-              ? courseData.detail
-                .map((item) => item?.msg || JSON.stringify(item))
-                .join(", ")
-              : courseData?.message ||
-              courseData?.error ||
-              `Course suggestions API failed with status ${courseResponse.status}`;
+  } catch (err) {
+    console.error(
+      "COURSE SUGGESTIONS ERROR:",
+      err
+    );
 
-        throw new Error(message);
-      }
-      setCourses(Array.isArray(courseData) ? courseData : []);
+    setCourseError(
+      err?.response?.data?.detail ||
+      err?.message ||
+      "Unable to load recommended courses."
+    );
 
-      // Get user's existing enrollments
-      await loadMyEnrollments();
+    setShowCourses(false);
+    setCourses([]);
 
-      // Show courses after successful API response
-      setShowCourses(true);
-    } catch (err) {
-      console.error("COURSE ERROR:", err);
-
-      setCourseError(
-        err?.message || "Unable to load recommended courses."
-      );
-
-      setShowCourses(false);
-    } finally {
-      setCourseLoading(false);
-    }
-  };
+  } finally {
+    setCourseLoading(false);
+  }
+};
 
   const createCareerPersona = async (careerGoal) => {
     if (!token) {

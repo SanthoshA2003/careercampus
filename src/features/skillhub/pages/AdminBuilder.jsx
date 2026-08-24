@@ -14,11 +14,14 @@ const Section = ({ title, icon: Icon, children }) => (
   </div>
 );
 
+
 export default function AdminBuilder() {
   const [courses, setCourses] = useState([]);
   const [courseId, setCourseId] = useState("");
   const [levels, setLevels] = useState([]);
   const [levelId, setLevelId] = useState("");
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [showThumbnailUrl, setShowThumbnailUrl] = useState(false);
 
   const [course, setCourse] = useState({
     title: "",
@@ -31,8 +34,22 @@ export default function AdminBuilder() {
     certificate_template: "",
   });
 
-  const [level, setLevel] = useState({ stage: "Beginner", levelNumber: 1, title: "", description: "", xp: 100, video: { url: "" } });
-  const [cp, setCp] = useState({ order: 1, atSeconds: 5, title: "", scenario: "", problemStatement: "", difficulty: "Easy", xp: 25, starter: "# write your code\n", vin: "", vout: "", hin: "", hout: "" });
+const [level, setLevel] = useState({
+  stage: "Beginner",
+  levelNumber: 1,
+  title: "",
+  description: "",
+  xp: 100,
+  video: { url: "" },
+
+  theory: {
+    learningObjectives: "",
+    bestPractices: "",
+    commonMistakes: "",
+  },
+});
+
+const [cp, setCp] = useState({ order: 1, atSeconds: 5, title: "", scenario: "", problemStatement: "", difficulty: "Easy", xp: 25, starter: "# write your code\n", vin: "", vout: "", hin: "", hout: "" });
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -109,66 +126,73 @@ useEffect(() => {
   };
 
   const createLevel = async () => {
-    if (!courseId) {
-      return toast.error("Select a course");
-    }
+  if (!courseId) {
+    return toast.error("Select a course");
+  }
 
-    if (!level.title.trim()) {
-      return toast.error("Level title required");
-    }
+  if (!level.title.trim()) {
+    return toast.error("Level title required");
+  }
 
-    setBusy(true);
+  setBusy(true);
 
-    try {
-      const l = await api.createLevel({
-        course_id: courseId,
-        stage: level.stage,
-        stage_order: 1,
-        level_number: Number(level.levelNumber),
-        global_order: Number(level.levelNumber),
-        title: level.title,
-        description: level.description || "",
-        objectives: [],
-        xp: Number(level.xp),
-        pass_percentage: 100,
-        duration: "30 minutes",
+  try {
+    const l = await api.createLevel({
+      course_id: courseId,
+      stage: level.stage,
+      stage_order: 1,
+      level_number: Number(level.levelNumber),
+      global_order: Number(level.levelNumber),
+      title: level.title,
+      description: level.description || "",
+      objectives: [],
+      xp: Number(level.xp),
+      pass_percentage: 100,
+      duration: "30 minutes",
 
-        video: level.video.url
-          ? {
+      video: level.video.url
+        ? {
             url: level.video.url,
           }
-          : {},
+        : {},
 
-        theory: {},
-      });
+      theory: {},
+    });
 
-      toast.success("Level created");
+    toast.success("Level created");
 
-      //     const list = await api.courseLevelsDropdown(courseId);
+    // Fetch updated levels immediately
+    const updatedLevels = await api.courseLevelsDropdown(courseId);
 
-      // setLevels(list);
+    setLevels(updatedLevels);
 
-      setLevelId(l.id);
+    // Select the newly created level
+    setLevelId(l.id);
 
-      setLevel({
-        stage: "Beginner",
-        levelNumber: Number(level.levelNumber) + 1,
-        title: "",
-        description: "",
-        xp: 100,
-        video: { url: "" },
-      });
+    // Reset level form
+    setLevel({
+      stage: "Beginner",
+      levelNumber: Number(level.levelNumber) + 1,
+      title: "",
+      description: "",
+      xp: 100,
+      video: { url: "" },
+    });
 
-    } catch (error) {
-      console.error("Create level error:", error.response?.data || error);
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to create level"
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
+  } catch (error) {
+    console.error(
+      "Create level error:",
+      error.response?.data || error
+    );
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to create level"
+    );
+  } finally {
+    setBusy(false);
+  }
+};
 
   const uploadVideo = async (e) => {
     const file = e.target.files?.[0];
@@ -337,6 +361,8 @@ useEffect(() => {
   };
 
   const selectedLevel = levels.find((l) => l.id === levelId);
+
+const levelCheckpoints = selectedLevel?.checkpoints || [];
 
   return (
     <Shell>

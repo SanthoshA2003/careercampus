@@ -213,6 +213,11 @@ export const api = {
       })
       .then((r) => r.data),
 
+      careerCourseSuggestions: () =>
+  client
+    .get("/career-persona/course-suggestions")
+    .then((r) => r.data),
+
   // ==================================================
   // MENTORS
   // ==================================================
@@ -391,10 +396,6 @@ execute: (checkpointId, language, code, stdin) =>
       stdin,
     })
     .then((r) => r.data),
-
-  // ==================================================
-  // CHECKPOINT SUBMISSION
-  // ==================================================
 
 submit: (checkpointId, language, code) =>
   client

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Play,
+  Pause,
   Lock,
   Loader2,
   CheckCircle2,
@@ -26,6 +27,10 @@ import { api } from "@/services/api";
 import { useAcademyAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
+/* =========================================================
+   LANGUAGES
+========================================================= */
+
 const LANGS = [
   {
     id: "python",
@@ -41,19 +46,677 @@ const LANGS = [
   },
 ];
 
-const fmt = (s) =>
-  `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+/* =========================================================
+   CHECKPOINT API
+========================================================= */
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://mymentor-api.onrender.com/api"
+).replace(/\/$/, "").endsWith("/api")
+  ? (
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://mymentor-api.onrender.com/api"
+  ).replace(/\/$/, "")
+  : `${(import.meta.env.VITE_API_BASE_URL || "https://mymentor-api.onrender.com").replace(/\/$/, "")}/api`;
+
+const CHECKPOINTS_API_URL = `${API_BASE_URL}/checkpoints`;
+
+const getAuthToken = () =>
+  localStorage.getItem("token") ||
+  localStorage.getItem("access_token") ||
+  localStorage.getItem("accessToken") ||
+  localStorage.getItem("dp_token");
+
+const clearAuthTokens = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("dp_token");
+};
+
+const createHttpError = (message, status) => {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+};
+
+const normalizeProgress = (data) => {
+  if (!data) return null;
+
+  if (Array.isArray(data)) {
+    return data[0] || null;
+  }
+
+  if (data?.progress && typeof data.progress === "object") {
+    return data.progress;
+  }
+
+  if (data?.data && !Array.isArray(data.data) && typeof data.data === "object") {
+    return data.data;
+  }
+
+  return data;
+};
+
+const getProgressId = (progress) =>
+  progress?.id ??
+  progress?.progress_id ??
+  progress?.progressId ??
+  null;
+
+const getPassedCheckpointIds = (progress) => {
+  const value =
+    progress?.checkpointsPassed ??
+    progress?.checkpoints_passed ??
+    [];
+
+  return Array.isArray(value)
+    ? value.map((id) => String(id))
+    : [];
+};
+
+const getVideoCompleted = (progress) =>
+  Boolean(
+    progress?.videoCompleted ??
+    progress?.video_completed ??
+    false
+  );
+
+const normalizeCheckpoint = (checkpoint, index) => ({
+  ...checkpoint,
+  id:
+    checkpoint?.id ??
+    checkpoint?.checkpointId ??
+    checkpoint?.checkpoint_id,
+  order: Number(
+    checkpoint?.order ??
+    checkpoint?.sequence ??
+    checkpoint?.orderNumber ??
+    index + 1
+  ),
+  atSeconds: Number(
+    checkpoint?.atSeconds ??
+    checkpoint?.at_seconds ??
+    checkpoint?.time ??
+    checkpoint?.timestamp ??
+    0
+  ),
+  difficulty: checkpoint?.difficulty ?? "Easy",
+  xp: Number(
+    checkpoint?.xp ??
+    checkpoint?.xpAwarded ??
+    checkpoint?.xp_awarded ??
+    0
+  ),
+  title:
+    checkpoint?.title ??
+    `Checkpoint ${index + 1}`,
+  scenario: checkpoint?.scenario ?? "",
+  problemStatement:
+    checkpoint?.problemStatement ??
+    checkpoint?.problem_statement ??
+    "",
+  hints: Array.isArray(checkpoint?.hints)
+    ? checkpoint.hints
+    : [],
+  starterCode:
+    checkpoint?.starterCode ??
+    checkpoint?.starter_code ??
+    {},
+  visibleTestCases: (
+  checkpoint?.visibleTestCases ??
+  checkpoint?.visible_test_cases ??
+  checkpoint?.testCases ??
+  checkpoint?.test_cases ??
+  []
+).map((testCase) => ({
+  input: testCase?.input ?? "",
+  expectedOutput:
+    testCase?.expectedOutput ??
+    testCase?.expected_output ??
+    "",
+})),
+
+  hiddenCount: Number(
+    checkpoint?.hiddenCount ??
+    checkpoint?.hidden_count ??
+    0
+  ),
+});
+
+const fetchCheckpoints = async ({
+  levelId,
+  language = "python",
+  difficulty,
+}) => {
+  if (!levelId) {
+    throw new Error("Level ID is required to load checkpoints");
+  }
+
+  const params = new URLSearchParams();
+  params.set("level_id", levelId);
+  params.set("language", language);
+  params.set("skip", "0");
+  params.set("limit", "100");
+
+  if (difficulty) {
+    params.set("difficulty", difficulty);
+  }
+
+  const token = getAuthToken();
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const url = `${CHECKPOINTS_API_URL}?${params.toString()}`;
+
+  console.log("CHECKPOINTS API URL:", url);
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+  });
+
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { message: text };
+  }
+
+  console.log("CHECKPOINTS API STATUS:", response.status);
+  console.log("CHECKPOINTS API RESPONSE:", data);
+
+  if (response.status === 401) {
+    clearAuthTokens();
+    throw createHttpError(
+      "Your session has expired. Please login again.",
+      401
+    );
+  }
+
+  if (!response.ok) {
+    throw createHttpError(
+      data?.detail ||
+      data?.message ||
+      `Checkpoint API failed with status ${response.status}`,
+      response.status
+    );
+  }
+
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.checkpoints)
+      ? data.checkpoints
+      : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.results)
+            ? data.results
+            : [];
+
+  return list
+    .map(normalizeCheckpoint)
+    .filter((checkpoint) => checkpoint.id)
+    .sort((a, b) => a.order - b.order);
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const fmt = (seconds = 0) =>
+  `${Math.floor(seconds / 60)}:${String(
+    Math.floor(seconds % 60)
+  ).padStart(2, "0")}`;
+
+/*
+  Decode JWT payload safely.
+
+  We are NOT verifying the token here.
+  We are only reading the payload in the browser to find
+  the user ID if it exists there.
+*/
+const decodeJwtPayload = (token) => {
+  try {
+    if (!token || typeof token !== "string") return null;
+
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    // JWT uses base64url. Add padding before decoding.
+    const base64Url = parts[1]
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const padded =
+      base64Url + "=".repeat((4 - (base64Url.length % 4)) % 4);
+
+    const jsonPayload = decodeURIComponent(
+      atob(padded)
+        .split("")
+        .map(
+          (char) =>
+            `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`
+        )
+        .join("")
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("JWT decode failed:", error);
+    return null;
+  }
+};
+
+/* =========================================================
+   USER ID RESOLUTION
+   ========================================================= */
+const getStoredUserId = () => {
+  const directKeys = [
+    "user_id",
+    "userId",
+    "userID",
+    "id",
+    "studentId",
+    "student_id",
+    "profileId",
+    "profile_id",
+  ];
+
+  // 1. Direct localStorage values.
+  for (const key of directKeys) {
+    const value = localStorage.getItem(key);
+
+    if (
+      value &&
+      value !== "null" &&
+      value !== "undefined" &&
+      value.trim() !== ""
+    ) {
+      return String(value);
+    }
+  }
+
+  // 2. Stored user/profile objects.
+  const objectKeys = [
+    "user",
+    "currentUser",
+    "student",
+    "profile",
+    "academyUser",
+    "authUser",
+  ];
+
+  for (const key of objectKeys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+      const id =
+        parsed?.user_id ??
+        parsed?.userId ??
+        parsed?.userID ??
+        parsed?.id ??
+        parsed?.studentId ??
+        parsed?.student_id ??
+        parsed?.profileId ??
+        parsed?.profile_id ??
+        parsed?.user?.id ??
+        parsed?.user?.user_id ??
+        parsed?.user?.userId;
+
+      if (id) {
+        const resolvedId = String(id);
+        localStorage.setItem("user_id", resolvedId);
+        return resolvedId;
+      }
+    } catch {
+      // Ignore non-JSON values.
+    }
+  }
+
+  // 3. Resolve the user ID from the JWT.
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("dp_token");
+
+  if (token) {
+    const payload = decodeJwtPayload(token);
+
+    console.log("JWT PAYLOAD:", payload);
+
+    const jwtUserId =
+      payload?.user_id ??
+      payload?.userId ??
+      payload?.userID ??
+      payload?.id ??
+      payload?.sub ??
+      payload?.studentId ??
+      payload?.student_id ??
+      payload?.profileId ??
+      payload?.profile_id ??
+      payload?.["nameidentifier"] ??
+      payload?.["nameIdentifier"] ??
+      payload?.[
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+      ] ??
+      payload?.[
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier"
+      ];
+
+    if (jwtUserId) {
+      const resolvedId = String(jwtUserId);
+
+      // Cache the resolved ID so future calls do not need to decode JWT again.
+      localStorage.setItem("user_id", resolvedId);
+
+      console.log("Resolved User ID from JWT:", resolvedId);
+      return resolvedId;
+    }
+  }
+
+  console.error(
+    "USER ID NOT FOUND. Available localStorage keys:",
+    Object.keys(localStorage)
+  );
+
+  return null;
+};
+
+/* =========================================================
+   PROGRESS API
+========================================================= */
+
+const fetchUserLevelProgress = async ({
+  userId,
+  levelId,
+}) => {
+  if (!userId) {
+    throw new Error("User ID is required to load progress");
+  }
+
+  if (!levelId) {
+    throw new Error("Level ID is required to load progress");
+  }
+
+  const url = `${API_BASE_URL}/progress/user/${encodeURIComponent(
+    userId
+  )}/level/${encodeURIComponent(levelId)}`;
+
+  const token = getAuthToken();
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  console.log("USER LEVEL PROGRESS API URL:", url);
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+  });
+
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { message: text };
+  }
+
+  console.log(
+    "USER LEVEL PROGRESS API STATUS:",
+    response.status
+  );
+
+  console.log(
+    "USER LEVEL PROGRESS API RESPONSE:",
+    data
+  );
+
+  if (response.status === 401) {
+    clearAuthTokens();
+    throw createHttpError(
+      "Your session has expired. Please login again.",
+      401
+    );
+  }
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw createHttpError(
+      data?.detail ||
+      data?.message ||
+      `Progress API failed with status ${response.status}`,
+      response.status
+    );
+  }
+
+  return normalizeProgress(data);
+};
+
+const createProgressRecord = async ({
+  userId,
+  courseId,
+  levelId,
+  checkpointsPassed = [],
+  videoCompleted = false,
+  completed = false,
+}) => {
+  const token =
+    localStorage.getItem("dp_token") ||
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token");
+
+  const url = `${API_BASE_URL}/progress`;
+
+  const payload = {
+    user_id: userId,
+    course_id: courseId,
+    level_id: levelId,
+    checkpoints_passed: checkpointsPassed,
+    video_completed: Boolean(videoCompleted),
+    completed: Boolean(completed),
+  };
+
+  console.log("=================================");
+  console.log("CREATE PROGRESS API");
+  console.log("URL:", url);
+  console.log("TOKEN EXISTS:", !!token);
+  console.log("PAYLOAD:", payload);
+  console.log("=================================");
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text();
+
+    let data = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+
+    console.log("CREATE PROGRESS STATUS:", response.status);
+    console.log("CREATE PROGRESS RESPONSE:", data);
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("dp_token");
+
+      throw new Error(
+        "Your session has expired. Please login again."
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        `Progress API failed with status ${response.status}`
+      );
+    }
+
+    return data;
+
+  } catch (error) {
+    console.error("CREATE PROGRESS ERROR:", error);
+
+    if (error instanceof TypeError) {
+      throw new Error(
+        "Unable to connect to Progress API. Please check the backend URL/CORS configuration."
+      );
+    }
+
+    throw error;
+  }
+};
+
+const updateProgressRecord = async ({
+  progressId,
+  userId,
+  courseId,
+  levelId,
+  checkpointsPassed = [],
+  videoCompleted = false,
+  completed = false,
+}) => {
+  if (!progressId) {
+    throw new Error("Progress ID is required to update progress");
+  }
+
+  const url = `${API_BASE_URL}/progress/${encodeURIComponent(
+    progressId
+  )}`;
+
+  const token = getAuthToken();
+
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const payload = {
+    user_id: userId,
+    course_id: courseId,
+    level_id: levelId,
+    checkpoints_passed: checkpointsPassed,
+    video_completed: Boolean(videoCompleted),
+    completed: Boolean(completed),
+  };
+
+  console.log("=================================");
+  console.log("UPDATE PROGRESS API");
+  console.log("URL:", url);
+  console.log("TOKEN EXISTS:", !!token);
+  console.log("PAYLOAD:", payload);
+  console.log("=================================");
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+
+  let data = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  console.log("UPDATE PROGRESS STATUS:", response.status);
+  console.log("UPDATE PROGRESS RESPONSE:", data);
+
+  if (response.status === 401) {
+    clearAuthTokens();
+
+    throw createHttpError(
+      "Your session has expired. Please login again.",
+      401
+    );
+  }
+
+  if (!response.ok) {
+    const detail = Array.isArray(data?.detail)
+      ? data.detail
+          .map(
+            (item) =>
+              item?.msg ||
+              item?.message ||
+              JSON.stringify(item)
+          )
+          .join(", ")
+      : data?.detail || data?.message;
+
+    throw createHttpError(
+      detail ||
+        `Progress update failed with status ${response.status}`,
+      response.status
+    );
+  }
+
+  return normalizeProgress(data);
+};
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 export default function Workspace() {
   const { levelId } = useParams();
   const nav = useNavigate();
   const { refresh } = useAcademyAuth();
 
-  // ==================================================
-  // STATE
-  // ==================================================
+  /* =======================================================
+     STATE
+  ======================================================= */
 
   const [level, setLevel] = useState(null);
+
   const [nextLevelId, setNextLevelId] = useState(null);
 
   const [passed, setPassed] = useState(new Set());
@@ -86,36 +749,86 @@ export default function Workspace() {
 
   const [videoError, setVideoError] = useState(false);
 
+  const [busy, setBusy] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [checkpointLoading, setCheckpointLoading] = useState(false);
+  const [progressId, setProgressId] = useState(null);
+
   const videoRef = useRef(null);
 
-  // ==================================================
-  // CHECKPOINTS
-  // ==================================================
+  /* =======================================================
+     COURSE ID
+  ======================================================= */
+
+  const courseId =
+    localStorage.getItem("courseId") ||
+    localStorage.getItem("course_id") ||
+    null;
+
+  /* =======================================================
+     CHECKPOINTS
+  ======================================================= */
+
+  const handleVideoTimeUpdate = () => {
+  const video = videoRef.current;
+
+  if (!video || activeCp) return;
+
+  const currentTime = video.currentTime;
+
+  const checkpoint = checkpoints
+    .filter((cp) => !passed.has(cp.id))
+    .sort(
+      (a, b) =>
+        Number(a.at_seconds ?? a.atSeconds ?? 0) -
+        Number(b.at_seconds ?? b.atSeconds ?? 0)
+    )
+    .find((cp) => {
+      const checkpointTime = Number(
+        cp.at_seconds ??
+        cp.atSeconds ??
+        0
+      );
+
+      return currentTime >= checkpointTime;
+    });
+
+  if (checkpoint) {
+    video.pause();
+    setActiveCp(checkpoint);
+  }
+};
 
   const checkpoints = useMemo(() => {
     return (level?.checkpoints || [])
       .slice()
-      .sort((a, b) => a.order - b.order);
+      .sort(
+        (a, b) =>
+          Number(a.order || 0) - Number(b.order || 0)
+      );
   }, [level]);
 
   const firstUnpassed = useMemo(() => {
-    return checkpoints.find((c) => !passed.has(c.id));
+    return checkpoints.find(
+      (checkpoint) => !passed.has(checkpoint.id)
+    );
   }, [checkpoints, passed]);
 
   const allPassed =
     checkpoints.length > 0 &&
-    checkpoints.every((c) => passed.has(c.id));
+    checkpoints.every((checkpoint) =>
+      passed.has(checkpoint.id)
+    );
 
-  // ==================================================
-  // LOAD LEVEL
-  // ==================================================
+  /* =======================================================
+     LOAD LEVEL
+  ======================================================= */
 
   useEffect(() => {
     let mounted = true;
 
     const loadLevel = async () => {
       try {
-        // Reset previous level state
         setLevel(null);
         setActiveCp(null);
         setResults(null);
@@ -132,249 +845,768 @@ export default function Workspace() {
 
         if (!mounted) return;
 
-        // ------------------------------------------------
-        // IMPORTANT:
-        // API response itself is the level object
-        // ------------------------------------------------
-
         setLevel(d);
 
-        // ------------------------------------------------
-        // Next level
-        // ------------------------------------------------
+        /* ---------------------------------------------------
+           Next Level
+        --------------------------------------------------- */
 
-        setNextLevelId(d?.nextLevelId || d?.next_level_id || null);
-
-        // ------------------------------------------------
-        // Progress
-        // ------------------------------------------------
-
-        const progress = d?.progress || {};
-
-        console.log("LEVEL PROGRESS:", progress);
-
-        // Backend may return:
-        //
-        // checkpointsPassed: ["id1", "id2"]
-        //
-        // OR
-        //
-        // checkpointsPassed: 2
-        //
-        // Handle both safely.
-
-        let passedIds = [];
-
-        if (Array.isArray(progress.checkpointsPassed)) {
-          passedIds = progress.checkpointsPassed;
-        } else if (Array.isArray(progress.checkpoints_passed)) {
-          passedIds = progress.checkpoints_passed;
-        }
-
-        setPassed(new Set(passedIds));
-
-        // ------------------------------------------------
-        // Video progress
-        // ------------------------------------------------
-
-        setVideoDone(
-          Boolean(
-            progress.videoCompleted ??
-              progress.video_completed ??
-              d?.videoCompleted ??
-              d?.video_completed ??
-              false
-          )
+        setNextLevelId(
+          d?.nextLevelId ||
+          d?.next_level_id ||
+          null
         );
 
-        console.log("Level loaded successfully:", d);
-      } catch (e) {
-        console.error("LEVEL API ERROR:", e);
+        /* ---------------------------------------------------
+           CHECKPOINTS FIRST
+           GET /api/checkpoints
+        --------------------------------------------------- */
+
+        setCheckpointLoading(true);
+
+        let checkpointList = [];
+
+        try {
+          checkpointList = await fetchCheckpoints({
+            levelId,
+            language,
+          });
+
+          if (!mounted) return;
+
+          console.log(
+            "CHECKPOINTS LOADED:",
+            checkpointList
+          );
+        } catch (checkpointError) {
+          console.error(
+            "CHECKPOINTS API ERROR:",
+            checkpointError
+          );
+
+          if (!mounted) return;
+
+          // Do not continue to Progress API after an expired session.
+          if (checkpointError?.status === 401) {
+            toast.error(
+              "Your session has expired. Please login again."
+            );
+            nav("/login", { replace: true });
+            return;
+          }
+
+          // Keep level API checkpoints only as a non-auth fallback.
+          checkpointList = Array.isArray(d?.checkpoints)
+            ? d.checkpoints.map(normalizeCheckpoint)
+            : [];
+
+          toast.error(
+            checkpointError?.message ||
+            "Unable to load checkpoints"
+          );
+        } finally {
+          if (mounted) {
+            setCheckpointLoading(false);
+          }
+        }
+
+        if (!mounted) return;
+
+        const levelWithCheckpoints = {
+          ...d,
+          checkpoints: checkpointList,
+        };
+
+        setLevel(levelWithCheckpoints);
+
+        /* ---------------------------------------------------
+           PROGRESS SECOND
+           GET /api/progress/user/{user_id}/level/{level_id}
+        --------------------------------------------------- */
+
+        const userId = getStoredUserId();
+
+        if (!userId) {
+          console.warn(
+            "Progress API skipped: user ID not found"
+          );
+
+          setProgressId(null);
+          setPassed(new Set());
+          setVideoDone(false);
+        } else {
+          try {
+            const progress =
+              await fetchUserLevelProgress({
+                userId,
+                levelId,
+              });
+
+            if (!mounted) return;
+
+            const loadedProgressId =
+              getProgressId(progress);
+
+            setProgressId(loadedProgressId);
+
+            const passedIds =
+              getPassedCheckpointIds(progress);
+
+            setPassed(new Set(passedIds));
+            setVideoDone(
+              getVideoCompleted(progress)
+            );
+
+            console.log(
+              "USER LEVEL PROGRESS LOADED:",
+              progress
+            );
+
+            console.log(
+              "PROGRESS ID:",
+              loadedProgressId
+            );
+          } catch (progressError) {
+            console.error(
+              "USER LEVEL PROGRESS API ERROR:",
+              progressError
+            );
+
+            if (!mounted) return;
+
+            if (progressError?.status === 401) {
+              toast.error(
+                "Your session has expired. Please login again."
+              );
+              nav("/login", { replace: true });
+              return;
+            }
+
+            // 404 means this user has no progress record yet.
+            // Save Progress will create it with POST /api/progress.
+            if (progressError?.status === 404) {
+              setProgressId(null);
+              setPassed(new Set());
+              setVideoDone(false);
+            } else {
+              toast.error(
+                progressError?.message ||
+                "Unable to load your progress"
+              );
+            }
+          }
+        }
+
+        console.log(
+          "Level loaded successfully:",
+          d
+        );
+      } catch (error) {
+        console.error(
+          "LEVEL API ERROR:",
+          error
+        );
 
         console.error(
           "LEVEL API RESPONSE:",
-          e?.response?.data
+          error?.response?.data
         );
 
         if (!mounted) return;
 
-        toast.error(
-          e?.response?.data?.detail ||
-            e?.response?.data?.message ||
-            "Cannot open level"
-        );
+        const detail = error?.response?.data?.detail;
 
-        // There is no `/skillhub/journey` route
-        // in your current SkillHubApp.
-        nav("/skillhub", { replace: true });
+        const errorMessage = Array.isArray(detail)
+          ? detail
+            .map(
+              (item) =>
+                item?.msg ||
+                item?.message ||
+                JSON.stringify(item)
+            )
+            .join(", ")
+          : typeof detail === "string"
+            ? detail
+            : error?.response?.data?.message ||
+            error?.message ||
+            "Cannot open level";
+
+        toast.error(errorMessage);
+
+        nav("/skillhub", {
+          replace: true,
+        });
       }
     };
 
-    loadLevel();
+    if (levelId) {
+      loadLevel();
+    }
 
     return () => {
       mounted = false;
     };
   }, [levelId, nav]);
 
-  // ==================================================
-  // ACTIVE CODE
-  // ==================================================
+  /* =======================================================
+     REFRESH CHECKPOINTS WHEN LANGUAGE CHANGES
+  ======================================================= */
+
+  useEffect(() => {
+    if (!levelId || !level) return;
+
+    let mounted = true;
+
+    const reloadCheckpoints = async () => {
+      setCheckpointLoading(true);
+
+      try {
+        const checkpointList = await fetchCheckpoints({
+          levelId,
+          language,
+        });
+
+        if (!mounted) return;
+
+        setLevel((previous) =>
+          previous
+            ? {
+              ...previous,
+              checkpoints: checkpointList,
+            }
+            : previous
+        );
+
+        setActiveCp(null);
+        setResults(null);
+        setRunOut(null);
+
+        console.log(
+          "CHECKPOINTS RELOADED FOR LANGUAGE:",
+          language,
+          checkpointList
+        );
+      } catch (error) {
+        console.error(
+          "CHECKPOINT LANGUAGE API ERROR:",
+          error
+        );
+
+        if (mounted) {
+          if (error?.status === 401) {
+            toast.error(
+              "Your session has expired. Please login again."
+            );
+            nav("/login", { replace: true });
+          } else {
+            toast.error(
+              error?.message ||
+              "Unable to load checkpoints for this language"
+            );
+          }
+        }
+      } finally {
+        if (mounted) {
+          setCheckpointLoading(false);
+        }
+      }
+    };
+
+    // The initial level load already fetches Python checkpoints.
+    // Fetch again only when the selected language changes.
+    if (language !== "python") {
+      reloadCheckpoints();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [language, levelId, nav]);
+
+  /* =======================================================
+     ACTIVE CODE
+  ======================================================= */
 
   const activeCode = activeCp
     ? codeByCp[activeCp.id] ??
-      activeCp.starterCode?.[language] ??
-      ""
+    activeCp.starterCode?.[language] ??
+    ""
     : codeByCp.__scratch ?? "";
 
   const setActiveCode = (code) => {
-    setCodeByCp((m) => ({
-      ...m,
-      [activeCp ? activeCp.id : "__scratch"]: code,
+    setCodeByCp((previous) => ({
+      ...previous,
+      [activeCp
+        ? activeCp.id
+        : "__scratch"]: code,
     }));
   };
 
-  // ==================================================
-  // LANGUAGE CHANGE
-  // ==================================================
+  /* =======================================================
+     PROGRESS API
+  ======================================================= */
+
+  const saveProgressRecord = async ({
+    userId,
+    courseId,
+    levelId,
+    checkpointsPassed,
+    videoCompleted,
+    completed,
+  }) => {
+    if (progressId) {
+  const updated = await updateProgressRecord({
+    progressId,
+    userId,
+    courseId,
+    levelId,
+    checkpointsPassed,
+    videoCompleted,
+    completed,
+  });
+
+      const updatedId = getProgressId(updated);
+
+      if (updatedId) {
+        setProgressId(updatedId);
+      }
+
+      return updated;
+    }
+
+    const created = await createProgressRecord({
+      userId,
+      courseId,
+      levelId,
+      checkpointsPassed,
+      videoCompleted,
+      completed,
+    });
+
+    let createdId = getProgressId(created);
+
+    // Some backends return 201 without the full progress object.
+    // Fetch it once so the next Save uses PUT instead of POST.
+    if (!createdId) {
+      const loaded = await fetchUserLevelProgress({
+        userId,
+        levelId,
+      });
+
+      createdId = getProgressId(loaded);
+    }
+
+    if (createdId) {
+      setProgressId(createdId);
+    }
+
+    return created || null;
+  };
+
+  /* =======================================================
+     PAUSE + SAVE PROGRESS
+
+     Pause does two things:
+     1. Pauses the lesson video.
+     2. Creates or updates the user's progress record.
+
+     API flow:
+     GET  /api/progress/user/{user_id}/level/{level_id}
+     POST /api/progress              -> first pause / no record
+     PUT  /api/progress/{progress_id} -> later pauses
+  ======================================================= */
+
+  const pauseProgress = async () => {
+    const userId =
+      getStoredUserId();
+
+    const currentCourseId =
+      courseId ||
+      level?.courseId ||
+      level?.course_id ||
+      level?.course?.id ||
+      localStorage.getItem("courseId") ||
+      localStorage.getItem("course_id") ||
+      null;
+
+    console.log(
+      "=============================="
+    );
+
+    console.log(
+      "Progress Debug:"
+    );
+
+    console.log({
+      userId,
+      courseId: currentCourseId,
+      levelId,
+      checkpointsPassed:
+        checkpoints.map((checkpoint) =>
+          String(checkpoint.id)
+        ),
+      videoCompleted: videoDone,
+    });
+
+    console.log(
+      "Available localStorage keys:",
+      Object.keys(localStorage)
+    );
+
+    console.log(
+      "=============================="
+    );
+
+    /* ---------------------------------------------------
+       Validate User ID
+    --------------------------------------------------- */
+
+    if (!userId) {
+      toast.error(
+        "User ID not found. Please login again."
+      );
+
+      console.error(
+        "User ID missing. Available localStorage:",
+        Object.keys(localStorage)
+      );
+
+      return;
+    }
+
+    /* ---------------------------------------------------
+       Validate Course ID
+    --------------------------------------------------- */
+
+    if (!currentCourseId) {
+      toast.error(
+        "Course ID not found."
+      );
+
+      return;
+    }
+
+    /* ---------------------------------------------------
+       Validate Level ID
+    --------------------------------------------------- */
+
+    if (!levelId) {
+      toast.error(
+        "Level ID not found."
+      );
+
+      return;
+    }
+
+    try {
+      setBusy(true);
+
+     const passedCheckpointIds = checkpoints
+  .filter((checkpoint) =>
+    passed.has(String(checkpoint.id))
+  )
+  .map((checkpoint) =>
+    String(checkpoint.id)
+  );
+
+      const data =
+        await saveProgressRecord({
+          userId,
+          courseId: currentCourseId,
+          levelId,
+          checkpointsPassed: passedCheckpointIds,
+          videoCompleted: videoDone,
+          completed: videoDone && allPassed,
+        });
+
+      console.log(
+        "Progress saved successfully:",
+        data
+      );
+
+      // Keep the video paused after the progress request succeeds.
+      videoRef.current?.pause();
+
+      toast.success(
+        progressId
+          ? "Progress paused and updated successfully"
+          : "Progress paused and created successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Progress save failed:",
+        error
+      );
+
+      toast.error(
+        error?.message ||
+        "Failed to pause and save progress"
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  // video
+
+
+  /* =======================================================
+     INITIALIZE CODE
+  ======================================================= */
 
   useEffect(() => {
     if (
       activeCp &&
-      codeByCp[activeCp.id] === undefined
+      codeByCp[activeCp.id] ===
+      undefined
     ) {
-      setCodeByCp((m) => ({
-        ...m,
+      setCodeByCp((previous) => ({
+        ...previous,
         [activeCp.id]:
-          activeCp.starterCode?.[language] ?? "",
+          activeCp.starterCode?.[
+          language
+          ] ?? "",
       }));
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCp, language]);
 
-  // ==================================================
-  // VIDEO TIME
-  // ==================================================
+  /* =======================================================
+     VIDEO TIME
+  ======================================================= */
 
   const allowedTime = firstUnpassed
-    ? firstUnpassed.atSeconds
+    ? Number(
+      firstUnpassed.atSeconds || 0
+    )
     : duration || Infinity;
 
   const onTimeUpdate = () => {
-    const v = videoRef.current;
+    const video =
+      videoRef.current;
 
-    if (!v) return;
+    if (!video) return;
 
-    const time = v.currentTime;
+    const time =
+      video.currentTime;
 
     setCurrentTime(time);
 
-    // Unlock checkpoint
+    /* ---------------------------------------------------
+       Unlock checkpoint
+    --------------------------------------------------- */
+
     if (
       firstUnpassed &&
-      time >= firstUnpassed.atSeconds - 0.15 &&
+      time >=
+      Number(
+        firstUnpassed.atSeconds || 0
+      ) - 0.15 &&
       !activeCp
     ) {
-      v.pause();
+      video.pause();
 
-      v.currentTime = Math.min(
-        firstUnpassed.atSeconds,
-        v.duration || firstUnpassed.atSeconds
+      video.currentTime =
+        Math.min(
+          Number(
+            firstUnpassed.atSeconds ||
+            0
+          ),
+          video.duration ||
+          Number(
+            firstUnpassed.atSeconds ||
+            0
+          )
+        );
+
+      openCheckpoint(
+        firstUnpassed
       );
-
-      openCheckpoint(firstUnpassed);
 
       return;
     }
 
-    // Prevent skipping ahead
-    if (time > allowedTime + 0.4) {
-      v.currentTime = allowedTime;
+    /* ---------------------------------------------------
+       Prevent skipping ahead
+    --------------------------------------------------- */
+
+    if (
+      time >
+      allowedTime + 0.4
+    ) {
+      video.currentTime =
+        allowedTime;
     }
   };
 
-  // ==================================================
-  // OPEN CHECKPOINT
-  // ==================================================
+  /* =======================================================
+     OPEN CHECKPOINT
+  ======================================================= */
 
-  const openCheckpoint = (cp) => {
-    setActiveCp(cp);
+  const openCheckpoint = (
+    checkpoint
+  ) => {
+    setActiveCp(
+      checkpoint
+    );
 
     setResults(null);
     setRunOut(null);
     setTab("tests");
 
-    setCodeByCp((m) => {
-      if (m[cp.id] !== undefined) {
-        return m;
-      }
+    setCodeByCp(
+      (previous) => {
+        if (
+          previous[
+          checkpoint.id
+          ] !== undefined
+        ) {
+          return previous;
+        }
 
-      return {
-        ...m,
-        [cp.id]:
-          cp.starterCode?.[language] ?? "",
-      };
-    });
+        return {
+          ...previous,
+          [checkpoint.id]:
+            checkpoint
+              .starterCode?.[
+            language
+            ] ?? "",
+        };
+      }
+    );
 
     toast.info(
-      `Checkpoint ${cp.order}: ${cp.title} — solve to continue`
+      `Checkpoint ${checkpoint.order}: ${checkpoint.title} — solve to continue`
     );
   };
 
-  // ==================================================
-  // VIDEO COMPLETION
-  // ==================================================
+  /* =======================================================
+     VIDEO COMPLETION
+  ======================================================= */
 
   const onEnded = async () => {
-    if (allPassed && !videoDone) {
-      try {
-        const r = await api.videoComplete(levelId);
+  if (!allPassed || videoDone) {
+    return;
+  }
 
-        setVideoDone(true);
+  try {
+    const response = await api.videoComplete(levelId);
 
-        if (r?.levelCompleted) {
-          setCompletedModal(true);
-          refresh();
-        }
-      } catch (e) {
-        console.error(
-          "Video completion failed:",
-          e
-        );
-      }
+    console.log("VIDEO COMPLETE RESPONSE:", response);
+
+    setVideoDone(true);
+
+    /*
+     * Save final progress
+     */
+    const userId = getStoredUserId();
+
+    const currentCourseId =
+      courseId ||
+      level?.courseId ||
+      level?.course_id ||
+      level?.course?.id ||
+      localStorage.getItem("courseId") ||
+      localStorage.getItem("course_id");
+
+    await saveProgressRecord({
+      userId,
+      courseId: currentCourseId,
+      levelId,
+      checkpointsPassed: checkpoints.map((checkpoint) =>
+        String(checkpoint.id)
+      ),
+      videoCompleted: true,
+      completed: true,
+    });
+
+    if (response?.levelCompleted === true) {
+      setCompletedModal(true);
+      refresh();
     }
-  };
 
-  // ==================================================
-  // MANUAL VIDEO COMPLETE
-  // ==================================================
+  } catch (error) {
+    console.error(
+      "Video completion failed:",
+      error
+    );
 
-  const finishVideoManually = async () => {
-    try {
-      const r = await api.videoComplete(levelId);
+    toast.error(
+      "Unable to complete the level"
+    );
+  }
+};
 
+const finishVideoManually = async () => {
+  try {
+    const response =
+      await api.videoComplete(levelId);
+
+    console.log(
+      "VIDEO COMPLETE RESPONSE:",
+      response
+    );
+
+    const data =
+      response?.data ?? response;
+
+    const levelCompleted =
+      data?.level_completed === true ||
+      data?.levelCompleted === true;
+
+    if (levelCompleted) {
       setVideoDone(true);
+      setCompletedModal(true);
 
-      if (r?.levelCompleted) {
-        setCompletedModal(true);
-        refresh();
-      }
-    } catch (e) {
-      console.error(
-        "Manual video completion failed:",
-        e
+      refresh();
+    } else {
+      toast.error(
+        "Level could not be completed"
       );
-
-      toast.error("Could not complete level");
     }
-  };
 
-  // ==================================================
-  // RUN CODE
-  // ==================================================
+  } catch (error) {
+    console.error(
+      "Manual video completion failed:",
+      error
+    );
 
- const runCode = async () => {
+    toast.error(
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Could not complete level"
+    );
+  }
+};
+  /* =======================================================
+     MANUAL VIDEO COMPLETE
+  ======================================================= */
+ const toggleVideoPlayback = () => {
+  const video = videoRef.current;
+
+  if (!video) return;
+
+  // Don't allow video to play when checkpoint is active
+  if (activeCp) {
+    toast.info(
+      `Complete Checkpoint ${activeCp.order} to continue`
+    );
+    return;
+  }
+
+  if (video.paused) {
+    video.play();
+  } else {
+    video.pause();
+  }
+};
+
+  /* =======================================================
+     RUN CODE
+  ======================================================= */
+
+  const runCode = async () => {
   if (!activeCp) {
     toast.error("Watch the video to unlock a challenge");
     return;
@@ -382,117 +1614,266 @@ export default function Workspace() {
 
   setRunning(true);
   setTab("output");
+  setRunOut(null);
 
   try {
-    const r = await api.execute(
+    const response = await api.execute(
       activeCp.id,
       language,
       activeCode,
       stdin
     );
 
-    console.log("RUN RESPONSE:", r);
+    console.log("RUN RESPONSE:", response);
 
-    setRunOut(r);
-  } catch (e) {
-    console.error("Run failed:", e);
+    const data = response?.data ?? response;
 
-    toast.error(
-      e?.response?.data?.detail ||
-      e?.response?.data?.message ||
-      "Run failed"
-    );
+    // Get actual output from test results
+    const results = data?.results || [];
+
+    const actualOutput = results
+      .map((result) => result.actual_output)
+      .filter((output) => output !== null && output !== undefined)
+      .join("\n");
+
+    const errors = results
+      .map((result) => result.error)
+      .filter(Boolean)
+      .join("\n");
+
+    setRunOut({
+      stdout: actualOutput,
+      stderr: errors,
+      exit_code: errors ? 1 : 0,
+      time_ms: data?.time_ms || 0,
+    });
+
+  } catch (error) {
+    console.error("Run failed:", error);
+
+    setRunOut({
+      stdout: "",
+      stderr:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Unable to execute the code.",
+      exit_code: 1,
+      time_ms: 0,
+    });
+
   } finally {
     setRunning(false);
   }
 };
 
-  // ==================================================
-  // SUBMIT
-  // ==================================================
+  /* =======================================================
+     SUBMIT
+  ======================================================= */
 
-  const submit = async () => {
-    if (!activeCp) {
+const submit = async () => {
+  if (!activeCp) {
+    toast.error("Open a checkpoint before submitting");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const response = await api.submit(
+      activeCp.id,
+      language,
+      activeCode
+    );
+
+    console.log("FULL SUBMIT RESPONSE:", response);
+
+    // Support both direct response and wrapped response
+    const data = response?.data ?? response;
+
+    console.log("ACTUAL SUBMIT DATA:", data);
+
+    const passedTests = Number(
+      data?.passed_tests ??
+      data?.passedTests ??
+      0
+    );
+
+    const totalTests = Number(
+      data?.total_tests ??
+      data?.totalTests ??
+      0
+    );
+
+    const checkpointCompleted =
+      data?.checkpoint_completed === true ||
+      data?.checkpointCompleted === true;
+
+    const levelCompleted =
+      data?.level_completed === true ||
+      data?.levelCompleted === true;
+
+    const xpEarned = Number(
+      data?.xp_earned ??
+      data?.xpEarned ??
+      0
+    );
+
+    // Show test result
+    setResults(data);
+    setTab("tests");
+
+    // ==========================================
+    // FAILED
+    // ==========================================
+
+    if (!checkpointCompleted) {
       toast.error(
-        "Open a checkpoint before submitting"
+        `${passedTests}/${totalTests} test cases passed. Keep trying!`
       );
+
       return;
     }
 
-    setSubmitting(true);
+    // ==========================================
+    // CHECKPOINT PASSED
+    // ==========================================
 
-    try {
-     const r = await api.submit(
-  activeCp.id,
-  language,
-  activeCode
-);
+    const completedCheckpointId =
+      String(activeCp.id);
 
-      console.log("SUBMIT RESPONSE:", r);
+    const newPassed = new Set(
+      Array.from(passed).map(String)
+    );
 
-      setResults(r);
-      setTab("tests");
+    newPassed.add(completedCheckpointId);
 
-      if (r?.allPassed) {
-        const np = new Set(passed);
+    const doneAll = checkpoints.every(
+      (checkpoint) =>
+        newPassed.has(String(checkpoint.id))
+    );
 
-        np.add(activeCp.id);
+    // ==========================================
+    // SAVE PROGRESS
+    // ==========================================
 
-        setPassed(np);
+    const userId = getStoredUserId();
 
-        toast.success(
-          `Checkpoint solved! +${r.xpAwarded || 0} XP`
-        );
+    const currentCourseId =
+      courseId ||
+      level?.courseId ||
+      level?.course_id ||
+      level?.course?.id ||
+      localStorage.getItem("courseId") ||
+      localStorage.getItem("course_id");
 
-        refresh();
+    await saveProgressRecord({
+      userId,
+      courseId: currentCourseId,
+      levelId,
+      checkpointsPassed:
+        Array.from(newPassed),
+      videoCompleted: videoDone,
+      completed:
+        videoDone && doneAll,
+    });
 
-        const doneAll = checkpoints.every((c) =>
-          np.has(c.id)
-        );
+    // ==========================================
+    // UPDATE UI
+    // ==========================================
 
-        setActiveCp(null);
+    setPassed(newPassed);
 
-        if (r?.levelCompleted) {
-          setVideoDone(true);
-          setCompletedModal(true);
-        } else if (doneAll) {
-          toast.info(
-            "All challenges solved! Finish the video to complete the level."
-          );
-        } else {
-          setTimeout(() => {
-            videoRef.current?.play();
-          }, 400);
-        }
-      } else {
-        toast.error(
-          `${r?.passedCount || 0}/${r?.total || 0} test cases passed. Keep trying!`
-        );
-      }
-    } catch (e) {
-      console.error(
-        "Submission failed:",
-        e
-      );
+    toast.success(
+      `Checkpoint solved! +${xpEarned} XP`
+    );
 
-      console.error(
-        "Submission response:",
-        e?.response?.data
-      );
+    // Remove checkpoint lock
+    setActiveCp(null);
 
-      toast.error(
-        e?.response?.data?.detail ||
-          e?.response?.data?.message ||
-          "Submission failed"
-      );
-    } finally {
-      setSubmitting(false);
+    // Remove old output/result
+    setRunOut(null);
+
+    // ==========================================
+    // LEVEL COMPLETED
+    // ==========================================
+
+    if (levelCompleted) {
+      setVideoDone(true);
+      setCompletedModal(true);
+
+      refresh();
+
+      return;
     }
-  };
 
-  // ==================================================
-  // LOADING
-  // ==================================================
+    // ==========================================
+    // ALL CHECKPOINTS COMPLETED
+    // ==========================================
+
+    if (doneAll) {
+      toast.info(
+        "All challenges solved! Finish the video to complete the level."
+      );
+
+      // Try to continue video
+      setTimeout(() => {
+        const video = videoRef.current;
+
+        if (video) {
+          video.play().catch((error) => {
+            console.warn(
+              "Video autoplay blocked:",
+              error
+            );
+          });
+        }
+      }, 300);
+
+      return;
+    }
+
+    // ==========================================
+    // CONTINUE TO NEXT CHECKPOINT
+    // ==========================================
+
+    setTimeout(() => {
+      const video = videoRef.current;
+
+      if (video) {
+        video.play().catch((error) => {
+          console.warn(
+            "Video autoplay blocked:",
+            error
+          );
+        });
+      }
+    }, 300);
+
+  } catch (error) {
+    console.error(
+      "Submission failed:",
+      error
+    );
+
+    console.error(
+      "Submission response:",
+      error?.response?.data
+    );
+
+    toast.error(
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Submission failed"
+    );
+
+  } finally {
+    setSubmitting(false);
+  }
+};
+  /* =======================================================
+     LOADING
+  ======================================================= */
 
   if (!level) {
     return (
@@ -508,15 +1889,34 @@ export default function Workspace() {
     );
   }
 
-  // ==================================================
-  // THEORY
-  // ==================================================
+  /* =======================================================
+     THEORY
+  ======================================================= */
 
-  const theory = level.theory || {};
+  const theory =
+    level.theory || {};
 
-  // ==================================================
-  // RENDER
-  // ==================================================
+  /* =======================================================
+     VIDEO URL
+  ======================================================= */
+
+  const videoUrl =
+    level.video?.url?.startsWith(
+      "http"
+    )
+      ? level.video.url
+      : `${import.meta.env
+        .VITE_BACKEND_URL ||
+      import.meta.env
+        .VITE_API_BASE_URL ||
+      ""
+      }${level.video?.url ||
+      ""
+      }`;
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
@@ -528,7 +1928,9 @@ export default function Workspace() {
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/5 bg-slate-950/90 px-5 py-3 backdrop-blur-xl">
 
         <button
-          onClick={() => nav(-1)}
+          onClick={() =>
+            nav(-1)
+          }
           className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white"
           data-testid="workspace-back"
         >
@@ -553,22 +1955,30 @@ export default function Workspace() {
 
         <div className="flex items-center gap-1.5">
 
-          {checkpoints.map((c) => (
-            <span
-              key={c.id}
-              title={c.title}
-              className={`
-                h-2.5 w-8 rounded-full
-                ${
-                  passed.has(c.id)
-                    ? "bg-emerald-400"
-                    : activeCp?.id === c.id
-                    ? "bg-cyan-400"
-                    : "bg-white/10"
+          {checkpoints.map(
+            (checkpoint) => (
+              <span
+                key={
+                  checkpoint.id
                 }
-              `}
-            />
-          ))}
+                title={
+                  checkpoint.title
+                }
+                className={`
+                  h-2.5 w-8 rounded-full
+                  ${passed.has(
+                  checkpoint.id
+                )
+                    ? "bg-emerald-400"
+                    : activeCp?.id ===
+                      checkpoint.id
+                      ? "bg-cyan-400"
+                      : "bg-white/10"
+                  }
+                `}
+              />
+            )
+          )}
 
         </div>
 
@@ -592,119 +2002,161 @@ export default function Workspace() {
 
             <div className="relative">
 
-              <video
-                ref={videoRef}
-                src={
-                  level.video?.url?.startsWith("http")
-                    ? level.video.url
-                    : `${process.env.REACT_APP_BACKEND_URL || ""}${
-                        level.video?.url || ""
-                      }`
-                }
-                poster={level.video?.thumbnail}
-                controls
-                onTimeUpdate={onTimeUpdate}
-                onLoadedMetadata={(e) =>
-                  setDuration(
-                    e.target.duration || 0
-                  )
-                }
-                onSeeking={onTimeUpdate}
-                onPlay={(e) => {
-                  if (activeCp) {
-                    e.target.pause();
-                  }
-                }}
-                onEnded={onEnded}
-                onError={() =>
-                  setVideoError(true)
-                }
-                className="aspect-video w-full bg-black"
-                data-testid="lesson-video"
-              />
+            <video
+  ref={videoRef}
+  src={videoUrl}
+  poster={level.video?.thumbnail}
+  controls
+  onTimeUpdate={onTimeUpdate}
+  onLoadedMetadata={(event) =>
+    setDuration(event.target.duration || 0)
+  }
+  onSeeking={onTimeUpdate}
+  onPlay={(event) => {
+    setIsPlaying(true);
+
+    if (activeCp) {
+      event.target.pause();
+    }
+  }}
+  onPause={() => {
+    setIsPlaying(false);
+  }}
+  onEnded={(event) => {
+    setIsPlaying(false);
+    onEnded(event);
+  }}
+  onError={() => setVideoError(true)}
+  className="aspect-video w-full bg-black"
+  data-testid="lesson-video"
+/>
 
               {/* VIDEO ERROR */}
 
               <AnimatePresence>
-                {videoError && !activeCp && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 grid place-items-center bg-slate-900/95 p-6 text-center"
-                  >
-                    <div>
+                {videoError &&
+                  !activeCp && (
+                    <motion.div
+                      initial={{
+                        opacity: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                      }}
+                      exit={{
+                        opacity: 0,
+                      }}
+                      className="absolute inset-0 grid place-items-center bg-slate-900/95 p-6 text-center"
+                    >
+                      <div>
 
-                      <p className="text-sm text-slate-300">
-                        Video couldn't load right now.
-                      </p>
-
-                      {firstUnpassed ? (
-                        <button
-                          onClick={() =>
-                            openCheckpoint(
-                              firstUnpassed
-                            )
-                          }
-                          data-testid="video-fallback-open-cp"
-                          className="mt-4 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-bold text-white"
-                        >
-                          Start Checkpoint{" "}
-                          {firstUnpassed.order}
-                        </button>
-                      ) : !videoDone ? (
-                        <button
-                          onClick={
-                            finishVideoManually
-                          }
-                          data-testid="video-fallback-complete"
-                          className="mt-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-sm font-bold text-white"
-                        >
-                          Complete Level
-                        </button>
-                      ) : (
-                        <p className="mt-3 text-emerald-400">
-                          Level complete!
+                        <p className="text-sm text-slate-300">
+                          Video couldn't
+                          load right now.
                         </p>
-                      )}
 
-                    </div>
-                  </motion.div>
-                )}
+                        {firstUnpassed ? (
+                          <button
+                            onClick={() =>
+                              openCheckpoint(
+                                firstUnpassed
+                              )
+                            }
+                            data-testid="video-fallback-open-cp"
+                            className="mt-4 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-bold text-white"
+                          >
+                            Start
+                            Checkpoint{" "}
+                            {
+                              firstUnpassed.order
+                            }
+                          </button>
+                        ) : !videoDone ? (
+                          <button
+                            onClick={
+                              finishVideoManually
+                            }
+                            data-testid="video-fallback-complete"
+                            className="mt-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-sm font-bold text-white"
+                          >
+                            Complete
+                            Level
+                          </button>
+                        ) : (
+                          <p className="mt-3 text-emerald-400">
+                            Level
+                            complete!
+                          </p>
+                        )}
+
+                      </div>
+                    </motion.div>
+                  )}
               </AnimatePresence>
 
-              {/* CHECKPOINT LOCK */}
+             {/* CHECKPOINT LOCK */}
+<AnimatePresence>
+  {activeCp && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="absolute inset-0 z-20 grid place-items-center bg-slate-950/85 backdrop-blur-sm"
+    >
+      <div className="text-center">
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-white shadow-lg">
+          <Lock className="h-8 w-8" />
+        </span>
 
-              <AnimatePresence>
-                {activeCp && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 grid place-items-center bg-slate-950/85 backdrop-blur-sm"
-                  >
-                    <div className="text-center">
+        <p className="mt-5 text-2xl font-bold text-white">
+          Checkpoint{" "}
+          {activeCp.checkpoint_order ??
+            activeCp.order ??
+            1}
+        </p>
 
-                      <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-white">
-                        <Lock className="h-7 w-7" />
-                      </span>
-
-                      <p className="mt-4 text-lg font-bold text-white">
-                        Checkpoint{" "}
-                        {activeCp.order}
-                      </p>
-
-                      <p className="text-sm text-slate-300">
-                        Solve the challenge on the
-                        right to continue →
-                      </p>
-
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        <p className="mt-2 text-base text-slate-300">
+          Solve the challenge on the right to continue →
+        </p>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
             </div>
+
+            {/* START / PAUSE + SAVE PROGRESS */}
+
+            {/* <button
+  onClick={toggleVideoPlayback}
+  disabled={
+    busy ||
+    !(
+      courseId ||
+      level?.courseId ||
+      level?.course_id ||
+      level?.course?.id
+    ) ||
+    !levelId
+  }
+  data-testid="pause-progress-btn"
+  className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-105 disabled:opacity-60"
+>
+  {busy ? (
+    <Loader2 className="h-4 w-4 animate-spin" />
+  ) : isPlaying ? (
+    <>
+      <Pause className="h-4 w-4" />
+      Pause
+    </>
+  ) : (
+    <>
+      <Play className="h-4 w-4" />
+      Start
+    </>
+  )}
+</button> */}
 
             {/* VIDEO TIMELINE */}
 
@@ -715,49 +2167,56 @@ export default function Workspace() {
                 <div
                   className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500"
                   style={{
-                    width: `${
-                      duration
+                    width: `${duration
                         ? Math.min(
-                            100,
-                            (currentTime /
-                              duration) *
-                              100
-                          )
+                          100,
+                          (currentTime /
+                            duration) *
+                          100
+                        )
                         : 0
-                    }%`,
+                      }%`,
                   }}
                 />
 
-                {checkpoints.map((c) => (
-                  <span
-                    key={c.id}
-                    title={`${fmt(
-                      c.atSeconds
-                    )} · ${c.title}`}
-                    className={`
-                      absolute -top-1 grid h-3.5 w-3.5
-                      -translate-x-1/2 place-items-center
-                      rounded-full border-2 border-slate-900
-                      ${
-                        passed.has(c.id)
+                {checkpoints.map(
+                  (checkpoint) => (
+                    <span
+                      key={
+                        checkpoint.id
+                      }
+                      title={`${fmt(
+                        checkpoint.atSeconds
+                      )} · ${checkpoint.title
+                        }`}
+                      className={`
+                        absolute -top-1 grid h-3.5 w-3.5
+                        -translate-x-1/2 place-items-center
+                        rounded-full border-2 border-slate-900
+                        ${passed.has(
+                        checkpoint.id
+                      )
                           ? "bg-emerald-400"
                           : "bg-amber-400"
-                      }
-                    `}
-                    style={{
-                      left: `${
-                        duration
-                          ? Math.min(
+                        }
+                      `}
+                      style={{
+                        left: `${duration
+                            ? Math.min(
                               100,
-                              (c.atSeconds /
+                              (Number(
+                                checkpoint.atSeconds ||
+                                0
+                              ) /
                                 duration) *
-                                100
+                              100
                             )
-                          : 0
-                      }%`,
-                    }}
-                  />
-                ))}
+                            : 0
+                          }%`,
+                      }}
+                    />
+                  )
+                )}
 
               </div>
 
@@ -777,6 +2236,8 @@ export default function Workspace() {
 
             <div className="mt-4 space-y-5 text-sm leading-relaxed">
 
+              {/* OBJECTIVES */}
+
               <div>
 
                 <p className="mb-2 font-semibold text-slate-300">
@@ -785,15 +2246,22 @@ export default function Workspace() {
 
                 <ul className="space-y-1.5">
 
-                  {(theory.objectives || []).map(
-                    (o) => (
+                  {(
+                    theory.objectives ||
+                    []
+                  ).map(
+                    (objective) => (
                       <li
-                        key={o}
+                        key={
+                          objective
+                        }
                         className="flex items-start gap-2 text-slate-400"
                       >
                         <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
 
-                        {o}
+                        {
+                          objective
+                        }
                       </li>
                     )
                   )}
@@ -802,27 +2270,48 @@ export default function Workspace() {
 
               </div>
 
+              {/* EXPLANATION */}
+
               {theory.explanation && (
                 <p className="text-slate-400">
-                  {theory.explanation}
+                  {
+                    theory.explanation
+                  }
                 </p>
               )}
 
-              {(theory.codeExamples || []).map(
-                (ex) => (
-                  <div key={ex.title}>
+              {/* CODE EXAMPLES */}
+
+              {(
+                theory.codeExamples ||
+                []
+              ).map(
+                (example) => (
+                  <div
+                    key={
+                      example.title
+                    }
+                  >
 
                     <p className="mb-1.5 font-semibold text-slate-300">
-                      {ex.title}
+                      {
+                        example.title
+                      }
                     </p>
 
                     <pre className="overflow-x-auto rounded-xl border border-white/5 bg-slate-950 p-3 text-xs text-cyan-200">
-                      <code>{ex.code}</code>
+                      <code>
+                        {
+                          example.code
+                        }
+                      </code>
                     </pre>
 
                   </div>
                 )
               )}
+
+              {/* BEST PRACTICES + MISTAKES */}
 
               <div className="grid gap-4 sm:grid-cols-2">
 
@@ -836,10 +2325,20 @@ export default function Workspace() {
 
                   <ul className="space-y-1 text-slate-400">
 
-                    {(theory.bestPractices || []).map(
-                      (b) => (
-                        <li key={b}>
-                          • {b}
+                    {(
+                      theory.bestPractices ||
+                      []
+                    ).map(
+                      (practice) => (
+                        <li
+                          key={
+                            practice
+                          }
+                        >
+                          •{" "}
+                          {
+                            practice
+                          }
                         </li>
                       )
                     )}
@@ -858,10 +2357,20 @@ export default function Workspace() {
 
                   <ul className="space-y-1 text-slate-400">
 
-                    {(theory.commonMistakes || []).map(
-                      (b) => (
-                        <li key={b}>
-                          • {b}
+                    {(
+                      theory.commonMistakes ||
+                      []
+                    ).map(
+                      (mistake) => (
+                        <li
+                          key={
+                            mistake
+                          }
+                        >
+                          •{" "}
+                          {
+                            mistake
+                          }
                         </li>
                       )
                     )}
@@ -889,73 +2398,105 @@ export default function Workspace() {
           <div
             className={`
               rounded-2xl border p-6 transition-colors
-              ${
-                activeCp
-                  ? "border-cyan-400/40 bg-cyan-400/[0.06]"
-                  : "border-white/5 bg-white/[0.03]"
+              ${activeCp
+                ? "border-cyan-400/40 bg-cyan-400/[0.06]"
+                : "border-white/5 bg-white/[0.03]"
               }
             `}
             data-testid="challenge-panel"
           >
 
-            {activeCp ? (
+            {checkpointLoading ? (
+              <div className="flex min-h-36 flex-col items-center justify-center gap-3 py-8 text-center">
+                <Loader2 className="h-7 w-7 animate-spin text-cyan-400" />
+                <p className="text-sm font-semibold text-white">
+                  Loading checkpoints...
+                </p>
+                <p className="text-xs text-slate-500">
+                  Fetching challenges for this level.
+                </p>
+              </div>
+            ) : activeCp ? (
               <>
 
                 <div className="flex items-center justify-between">
 
                   <span className="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-3 py-1 text-xs font-bold text-white">
                     Checkpoint{" "}
-                    {activeCp.order} ·{" "}
-                    {activeCp.difficulty}
+                    {
+                      activeCp.order
+                    }{" "}
+                    ·{" "}
+                    {
+                      activeCp.difficulty
+                    }
                   </span>
 
                   <span className="flex items-center gap-1 text-xs font-bold text-cyan-400">
 
                     <Zap className="h-3.5 w-3.5 fill-current" />
 
-                    {activeCp.xp} XP
+                    {
+                      activeCp.xp
+                    }{" "}
+                    XP
 
                   </span>
 
                 </div>
 
                 <h3 className="mt-3 text-lg font-bold text-white">
-                  {activeCp.title}
+                  {
+                    activeCp.title
+                  }
                 </h3>
 
                 <p className="mt-1 text-sm italic text-slate-400">
-                  {activeCp.scenario}
+                  {
+                    activeCp.scenario
+                  }
                 </p>
 
                 <p className="mt-3 whitespace-pre-line text-sm text-slate-300">
-                  {activeCp.problemStatement}
+                  {
+                    activeCp.problemStatement
+                  }
                 </p>
 
-                {activeCp.hints?.length > 0 && (
-                  <details className="mt-3">
+                {activeCp.hints
+                  ?.length >
+                  0 && (
+                    <details className="mt-3">
 
-                    <summary className="cursor-pointer text-xs font-semibold text-amber-400">
+                      <summary className="cursor-pointer text-xs font-semibold text-amber-400">
 
-                      <Lightbulb className="mr-1 inline h-3.5 w-3.5" />
+                        <Lightbulb className="mr-1 inline h-3.5 w-3.5" />
 
-                      Hints
+                        Hints
 
-                    </summary>
+                      </summary>
 
-                    <ul className="mt-2 space-y-1 text-xs text-slate-400">
+                      <ul className="mt-2 space-y-1 text-xs text-slate-400">
 
-                      {activeCp.hints.map(
-                        (h) => (
-                          <li key={h}>
-                            • {h}
-                          </li>
-                        )
-                      )}
+                        {activeCp.hints.map(
+                          (hint) => (
+                            <li
+                              key={
+                                hint
+                              }
+                            >
+                              •{" "}
+                              {
+                                hint
+                              }
+                            </li>
+                          )
+                        )}
 
-                    </ul>
+                      </ul>
 
-                  </details>
-                )}
+                    </details>
+                  )}
 
               </>
             ) : (
@@ -983,12 +2524,17 @@ export default function Workspace() {
                       ? "Level complete!"
                       : "Finish the video to complete this level."
                     : `A coding challenge appears at each checkpoint (${checkpoints
-                        .map((c) =>
-                          fmt(c.atSeconds)
-                        )
-                        .join(
-                          ", "
-                        )}). Use the editor below to experiment.`}
+                      .map(
+                        (
+                          checkpoint
+                        ) =>
+                          fmt(
+                            checkpoint.atSeconds
+                          )
+                      )
+                      .join(
+                        ", "
+                      )}). Use the editor below to experiment.`}
 
                 </p>
 
@@ -1009,23 +2555,41 @@ export default function Workspace() {
                 <Terminal className="h-4 w-4 text-cyan-400" />
 
                 <select
-                  value={language}
-                  onChange={(e) =>
-                    setLanguage(e.target.value)
+                  value={
+                    language
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setLanguage(
+                      event.target
+                        .value
+                    )
                   }
                   data-testid="language-select"
                   className="rounded-lg border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs font-semibold text-white outline-none"
                 >
 
-                  {LANGS.map((l) => (
-                    <option
-                      key={l.id}
-                      value={l.id}
-                      disabled={l.id === "java"}
-                    >
-                      {l.label}
-                    </option>
-                  ))}
+                  {LANGS.map(
+                    (lang) => (
+                      <option
+                        key={
+                          lang.id
+                        }
+                        value={
+                          lang.id
+                        }
+                        disabled={
+                          lang.id ===
+                          "java"
+                        }
+                      >
+                        {
+                          lang.label
+                        }
+                      </option>
+                    )
+                  )}
 
                 </select>
 
@@ -1034,8 +2598,12 @@ export default function Workspace() {
               <div className="flex items-center gap-2">
 
                 <button
-                  onClick={runCode}
-                  disabled={running}
+                  onClick={
+                    runCode
+                  }
+                  disabled={
+                    running
+                  }
                   data-testid="run-btn"
                   className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10 disabled:opacity-60"
                 >
@@ -1051,9 +2619,12 @@ export default function Workspace() {
                 </button>
 
                 <button
-                  onClick={submit}
+                  onClick={
+                    submit
+                  }
                   disabled={
-                    submitting || !activeCp
+                    submitting ||
+                    !activeCp
                   }
                   data-testid="submit-btn"
                   className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-1.5 text-xs font-bold text-white transition-transform hover:scale-105 disabled:opacity-50"
@@ -1076,9 +2647,15 @@ export default function Workspace() {
             <div className="h-[300px]">
 
               <CodeEditor
-                language={language}
-                value={activeCode}
-                onChange={setActiveCode}
+                language={
+                  language
+                }
+                value={
+                  activeCode
+                }
+                onChange={
+                  setActiveCode
+                }
               />
 
             </div>
@@ -1089,24 +2666,32 @@ export default function Workspace() {
 
               <div className="flex items-center gap-1 px-3 pt-2">
 
-                {["tests", "output"].map(
-                  (t) => (
+                {[
+                  "tests",
+                  "output",
+                ].map(
+                  (type) => (
                     <button
-                      key={t}
+                      key={
+                        type
+                      }
                       onClick={() =>
-                        setTab(t)
+                        setTab(
+                          type
+                        )
                       }
                       className={`
                         rounded-t-lg px-3 py-1.5
                         text-xs font-semibold capitalize
-                        ${
-                          tab === t
-                            ? "bg-slate-950 text-white"
-                            : "text-slate-400"
+                        ${tab ===
+                          type
+                          ? "bg-slate-950 text-white"
+                          : "text-slate-400"
                         }
                       `}
                     >
-                      {t === "tests"
+                      {type ===
+                        "tests"
                         ? "Test Cases"
                         : "Output"}
                     </button>
@@ -1117,21 +2702,28 @@ export default function Workspace() {
 
               <div className="max-h-52 overflow-auto bg-slate-950 p-4 text-xs">
 
-                {tab === "output" ? (
+                {tab ===
+                  "output" ? (
 
                   <div>
 
                     <div className="mb-2">
 
                       <label className="text-slate-500">
-                        Custom Input (stdin)
+                        Custom Input
+                        (stdin)
                       </label>
 
                       <textarea
-                        value={stdin}
-                        onChange={(e) =>
+                        value={
+                          stdin
+                        }
+                        onChange={(
+                          event
+                        ) =>
                           setStdin(
-                            e.target.value
+                            event.target
+                              .value
                           )
                         }
                         rows={2}
@@ -1146,26 +2738,37 @@ export default function Workspace() {
 
                         {runOut.stdout && (
                           <pre className="whitespace-pre-wrap text-emerald-300">
-                            {runOut.stdout}
+                            {
+                              runOut.stdout
+                            }
                           </pre>
                         )}
 
                         {runOut.stderr && (
                           <pre className="whitespace-pre-wrap text-rose-400">
-                            {runOut.stderr}
+                            {
+                              runOut.stderr
+                            }
                           </pre>
                         )}
 
                         <p className="mt-1 text-slate-500">
                           Exit{" "}
-                          {runOut.exit_code} ·{" "}
-                          {runOut.time_ms}ms
+                          {
+                            runOut.exit_code
+                          }{" "}
+                          ·{" "}
+                          {
+                            runOut.time_ms
+                          }
+                          ms
                         </p>
 
                       </>
                     ) : (
                       <p className="text-slate-500">
-                        Press Run to execute your
+                        Press Run to
+                        execute your
                         code.
                       </p>
                     )}
@@ -1177,25 +2780,32 @@ export default function Workspace() {
                   <div className="space-y-2">
 
                     {activeCp?.visibleTestCases?.map(
-                      (tc, i) => {
+                      (
+                        testCase,
+                        index
+                      ) => {
 
-                        const res =
+                        const result =
                           results?.results?.find(
-                            (r) =>
-                              r.index === i
+                            (
+                              item
+                            ) =>
+                              item.index ===
+                              index
                           );
 
                         return (
                           <div
-                            key={i}
+                            key={
+                              index
+                            }
                             className={`
                               rounded-lg border p-2.5
-                              ${
-                                res
-                                  ? res.passed
-                                    ? "border-emerald-500/40 bg-emerald-500/5"
-                                    : "border-rose-500/40 bg-rose-500/5"
-                                  : "border-white/5"
+                              ${result
+                                ? result.passed
+                                  ? "border-emerald-500/40 bg-emerald-500/5"
+                                  : "border-rose-500/40 bg-rose-500/5"
+                                : "border-white/5"
                               }
                             `}
                           >
@@ -1203,11 +2813,15 @@ export default function Workspace() {
                             <div className="flex items-center justify-between">
 
                               <span className="font-semibold text-slate-300">
-                                Test {i + 1}
+                                Test{" "}
+                                {
+                                  index +
+                                  1
+                                }
                               </span>
 
-                              {res &&
-                                (res.passed ? (
+                              {result &&
+                                (result.passed ? (
                                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                                 ) : (
                                   <XCircle className="h-4 w-4 text-rose-400" />
@@ -1221,7 +2835,7 @@ export default function Workspace() {
 
                               <span className="text-slate-300">
                                 {JSON.stringify(
-                                  tc.input
+                                  testCase.input
                                 )}
                               </span>
 
@@ -1233,20 +2847,20 @@ export default function Workspace() {
 
                               <span className="text-slate-300">
                                 {JSON.stringify(
-                                  tc.expectedOutput
+                                  testCase.expectedOutput
                                 )}
                               </span>
 
                             </p>
 
-                            {res &&
-                              !res.passed &&
-                              res.actual !==
-                                undefined && (
+                            {result &&
+                              !result.passed &&
+                              result.actual !==
+                              undefined && (
                                 <p className="text-rose-400">
                                   Got:{" "}
                                   {JSON.stringify(
-                                    res.actual
+                                    result.actual
                                   )}
                                 </p>
                               )}
@@ -1259,54 +2873,72 @@ export default function Workspace() {
                     {activeCp && (
                       <p className="text-slate-500">
                         +{" "}
-                        {activeCp.hiddenCount ||
-                          0}{" "}
-                        hidden test case(s) run on
-                        submit.
+                        {
+                          activeCp.hiddenCount ||
+                          0
+                        }{" "}
+                        hidden test
+                        case(s) run
+                        on submit.
                       </p>
                     )}
 
                     {results && (
                       <div className="mt-1 flex flex-wrap gap-2">
 
-                        {(results.results || [])
+                        {(
+                          results.results ||
+                          []
+                        )
                           .filter(
-                            (r) => r.hidden
+                            (
+                              result
+                            ) =>
+                              result.hidden
                           )
-                          .map((r) => (
-                            <span
-                              key={r.index}
-                              className={`
-                                rounded-md px-2 py-0.5
-                                text-[11px] font-semibold
-                                ${
-                                  r.passed
+                          .map(
+                            (
+                              result
+                            ) => (
+                              <span
+                                key={
+                                  result.index
+                                }
+                                className={`
+                                  rounded-md px-2 py-0.5
+                                  text-[11px] font-semibold
+                                  ${result.passed
                                     ? "bg-emerald-500/15 text-emerald-300"
                                     : "bg-rose-500/15 text-rose-300"
-                                }
-                              `}
-                            >
-                              Hidden #
-                              {r.index + 1}{" "}
-                              {r.passed
-                                ? "✓"
-                                : "✗"}
-                            </span>
-                          ))}
+                                  }
+                                `}
+                              >
+                                Hidden #
+                                {
+                                  result.index +
+                                  1
+                                }{" "}
+                                {result.passed
+                                  ? "✓"
+                                  : "✗"}
+                              </span>
+                            )
+                          )}
 
                       </div>
                     )}
 
                     {!activeCp && (
                       <p className="text-slate-500">
-                        Test cases appear when a
-                        checkpoint challenge is
+                        Test cases
+                        appear when
+                        a checkpoint
+                        challenge is
                         active.
                       </p>
                     )}
 
                   </div>
-
                 )}
 
               </div>
@@ -1328,9 +2960,15 @@ export default function Workspace() {
         {completedModal && (
           <motion.div
             className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            exit={{
+              opacity: 0,
+            }}
           >
 
             <motion.div
@@ -1357,9 +2995,14 @@ export default function Workspace() {
               </h3>
 
               <p className="mt-2 text-slate-300">
-                You solved all checkpoints and
-                finished {level.title}. The next
-                level is unlocked.
+                You solved all
+                checkpoints and
+                finished{" "}
+                {
+                  level.title
+                }.
+                The next level is
+                unlocked.
               </p>
 
               <div className="mt-6 flex flex-col gap-3">
@@ -1389,8 +3032,8 @@ export default function Workspace() {
 
                     <Flag className="h-4 w-4" />
 
-                    You reached the end of the
-                    path!
+                    You reached the
+                    end of the path!
 
                   </p>
                 )}
