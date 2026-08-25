@@ -150,13 +150,28 @@ useEffect(() => {
       pass_percentage: 100,
       duration: "30 minutes",
 
-      video: level.video.url
-        ? {
-            url: level.video.url,
-          }
-        : {},
+     video: level.video.url
+  ? {
+      url: level.video.url,
+    }
+  : {},
 
-      theory: {},
+theory: {
+  learningObjectives: level.theory.learningObjectives
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean),
+
+  bestPractices: level.theory.bestPractices
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean),
+
+  commonMistakes: level.theory.commonMistakes
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean),
+},
     });
 
     toast.success("Level created");
@@ -170,14 +185,23 @@ useEffect(() => {
     setLevelId(l.id);
 
     // Reset level form
-    setLevel({
-      stage: "Beginner",
-      levelNumber: Number(level.levelNumber) + 1,
-      title: "",
-      description: "",
-      xp: 100,
-      video: { url: "" },
-    });
+   setLevel({
+  stage: "Beginner",
+  levelNumber: Number(level.levelNumber) + 1,
+  title: "",
+  description: "",
+  xp: 100,
+
+  video: {
+    url: "",
+  },
+
+  theory: {
+    learningObjectives: "",
+    bestPractices: "",
+    commonMistakes: "",
+  },
+});
 
   } catch (error) {
     console.error(
@@ -515,6 +539,65 @@ const levelCheckpoints = selectedLevel?.checkpoints || [];
               </label>
             </div>
             <div className="sm:col-span-3"><Label>Or Video URL</Label><Input value={level.video.url} onChange={(e) => setLevel({ ...level, video: { url: e.target.value } })} placeholder="https://..." /></div>
+
+                    {/* Theory & Concepts */}
+<div className="sm:col-span-3 mt-2">
+  <Label>Learning Objectives</Label>
+
+  <Area
+    rows={3}
+    value={level.theory.learningObjectives}
+    onChange={(e) =>
+      setLevel({
+        ...level,
+        theory: {
+          ...level.theory,
+          learningObjectives: e.target.value,
+        },
+      })
+    }
+    placeholder="What will the student learn in this level?"
+  />
+</div>
+
+<div className="sm:col-span-3">
+  <Label>Best Practices</Label>
+
+  <Area
+    rows={3}
+    value={level.theory.bestPractices}
+    onChange={(e) =>
+      setLevel({
+        ...level,
+        theory: {
+          ...level.theory,
+          bestPractices: e.target.value,
+        },
+      })
+    }
+    placeholder="Enter best practices..."
+  />
+</div>
+
+<div className="sm:col-span-3">
+  <Label>Common Mistakes</Label>
+
+  <Area
+    rows={3}
+    value={level.theory.commonMistakes}
+    onChange={(e) =>
+      setLevel({
+        ...level,
+        theory: {
+          ...level.theory,
+          commonMistakes: e.target.value,
+        },
+      })
+    }
+    placeholder="Enter common mistakes students should avoid..."
+  />
+</div>
+
           </div>
           <button onClick={createLevel} disabled={busy} data-testid="create-level-btn" className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-bold text-white hover:scale-105 transition-transform disabled:opacity-60"><Plus className="h-4 w-4" /> Add Level</button>
         </Section>
