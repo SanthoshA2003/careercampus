@@ -11,7 +11,7 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 
- const handleGoogleLogin = () => {
+const handleGoogleLogin = () => {
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
   if (!backendUrl) {
@@ -20,7 +20,23 @@ export const useAuth = () => useContext(AuthContext);
     return;
   }
 
-  window.location.href = `${backendUrl}/api/auth/google`;
+  // Automatically detect where the frontend is running
+  const frontendUrl = window.location.origin;
+
+  // Allow only localhost and deployed frontend
+  const allowedFrontends = [
+    "http://localhost:3000",
+    "https://careercampus-bd89.onrender.com",
+  ];
+
+  if (!allowedFrontends.includes(frontendUrl)) {
+    toast.error("Invalid frontend URL");
+    console.error("Invalid frontend URL:", frontendUrl);
+    return;
+  }
+
+  window.location.href =
+    `${backendUrl}/api/auth/google?frontend_url=${encodeURIComponent(frontendUrl)}`;
 };
 
 
