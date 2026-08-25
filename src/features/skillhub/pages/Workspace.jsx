@@ -1893,9 +1893,26 @@ const submit = async () => {
      THEORY
   ======================================================= */
 
-  const theory =
-    level.theory || {};
+  
+const theory = level.theory || {};
 
+const learningObjectives = Array.isArray(theory.learningObjectives)
+  ? theory.learningObjectives
+  : theory.learningObjectives
+    ? [theory.learningObjectives]
+    : [];
+
+const bestPractices = Array.isArray(theory.bestPractices)
+  ? theory.bestPractices
+  : theory.bestPractices
+    ? [theory.bestPractices]
+    : [];
+
+const commonMistakes = Array.isArray(theory.commonMistakes)
+  ? theory.commonMistakes
+  : theory.commonMistakes
+    ? [theory.commonMistakes]
+    : [];
   /* =======================================================
      VIDEO URL
   ======================================================= */
@@ -2246,25 +2263,15 @@ const submit = async () => {
 
                 <ul className="space-y-1.5">
 
-                  {(
-                    theory.objectives ||
-                    []
-                  ).map(
-                    (objective) => (
-                      <li
-                        key={
-                          objective
-                        }
-                        className="flex items-start gap-2 text-slate-400"
-                      >
-                        <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
-
-                        {
-                          objective
-                        }
-                      </li>
-                    )
-                  )}
+                  {learningObjectives.map((objective, index) => (
+                     <li
+  key={index}
+  className="flex items-start gap-2 text-slate-400"
+>
+  <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
+  {objective}
+</li>
+))}
 
                 </ul>
 
@@ -2311,75 +2318,49 @@ const submit = async () => {
                 )
               )}
 
-              {/* BEST PRACTICES + MISTAKES */}
+             {/* BEST PRACTICES + MISTAKES */}
 
-              <div className="grid gap-4 sm:grid-cols-2">
+<div className="grid gap-4 sm:grid-cols-2">
 
-                <div>
+  <div>
 
-                  <p className="mb-2 flex items-center gap-1.5 font-semibold text-emerald-400">
-                    <ListChecks className="h-4 w-4" />
+    <p className="mb-2 flex items-center gap-1.5 font-semibold text-emerald-400">
+      <ListChecks className="h-4 w-4" />
+      Best Practices
+    </p>
 
-                    Best Practices
-                  </p>
+    <ul className="space-y-1 text-slate-400">
 
-                  <ul className="space-y-1 text-slate-400">
+      {bestPractices.map((practice, index) => (
+        <li key={index}>
+          • {practice}
+        </li>
+      ))}
 
-                    {(
-                      theory.bestPractices ||
-                      []
-                    ).map(
-                      (practice) => (
-                        <li
-                          key={
-                            practice
-                          }
-                        >
-                          •{" "}
-                          {
-                            practice
-                          }
-                        </li>
-                      )
-                    )}
+    </ul>
 
-                  </ul>
+  </div>
 
-                </div>
+  <div>
 
-                <div>
+    <p className="mb-2 flex items-center gap-1.5 font-semibold text-amber-400">
+      <AlertTriangle className="h-4 w-4" />
+      Common Mistakes
+    </p>
 
-                  <p className="mb-2 flex items-center gap-1.5 font-semibold text-amber-400">
-                    <AlertTriangle className="h-4 w-4" />
+    <ul className="space-y-1 text-slate-400">
 
-                    Common Mistakes
-                  </p>
+      {commonMistakes.map((mistake, index) => (
+        <li key={index}>
+          • {mistake}
+        </li>
+      ))}
 
-                  <ul className="space-y-1 text-slate-400">
+    </ul>
 
-                    {(
-                      theory.commonMistakes ||
-                      []
-                    ).map(
-                      (mistake) => (
-                        <li
-                          key={
-                            mistake
-                          }
-                        >
-                          •{" "}
-                          {
-                            mistake
-                          }
-                        </li>
-                      )
-                    )}
+  </div>
 
-                  </ul>
-
-                </div>
-
-              </div>
+</div>
 
             </div>
 
