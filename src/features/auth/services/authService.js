@@ -14,7 +14,7 @@ export const googleLogin = () => {
     return;
   }
 
-  window.location.href = `${API_BASE_URL}/api/auth/google`;
+  window.location.href = `${API_BASE_URL}/api/auth/google?frontend_url=${encodeURIComponent(frontendUrl)}`;
 };
 
 // Get logged-in user

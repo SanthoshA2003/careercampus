@@ -26,22 +26,48 @@ const Card = ({ children, className = "" }) => (
 );
 
 export default function Dashboard() {
-  const [data, setData] = useState(null);
-  const nav = useNavigate();
+const [data, setData] = useState(null);
+const [enrolledCourses, setEnrolledCourses] = useState([]);
+const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api
-      .studentSkillHubDashboard()
-      .then((response) => {
-        console.log("Student Dashboard:", response);
-        setData(response);
-      })
-      .catch((error) => {
-        console.error("Student dashboard API error:", error);
-      });
-  }, []);
+const nav = useNavigate();
 
-  if (!data) {
+ useEffect(() => {
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+
+      const [dashboardResponse, enrolledResponse] =
+        await Promise.all([
+          api.studentSkillHubDashboard(),
+          api.enrolledCourses(),
+        ]);
+
+      console.log("Dashboard:", dashboardResponse);
+      console.log("Enrolled Courses:", enrolledResponse);
+
+      setData(dashboardResponse);
+
+      setEnrolledCourses(
+        Array.isArray(enrolledResponse)
+          ? enrolledResponse
+          : []
+      );
+
+    } catch (error) {
+      console.error(
+        "Dashboard error:",
+        error?.response?.data || error
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchDashboard();
+}, []);
+
+  if (loading) {
     return (
       <Shell>
         <div className="grid h-[60vh] place-items-center">
@@ -52,7 +78,9 @@ export default function Dashboard() {
   }
 
   // API mapping
-  const course = data.continue_course;
+const course = enrolledCourses.length > 0
+  ? enrolledCourses[0]
+  : null;
   const achievements = data.achievements || [];
   const recentlyCompleted = data.recently_completed || [];
   const certificates = data.certificates || [];
@@ -113,7 +141,7 @@ export default function Dashboard() {
             {course && (
               <button
                 onClick={() =>
-                  nav(`/skillhub/journey/${course.course_id}`)
+                  nav(`/skillhub/journey/${course.course_id || course.id}`)
                 }
                 className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-slate-900 shadow-large transition-transform hover:scale-105"
               >
@@ -262,7 +290,7 @@ export default function Dashboard() {
               ))}
               {course && (
                 <Link
-                  to={`/skillhub/journey/${course.course_id}`}
+                  to={`/skillhub/journey/${course.course_id || course.id}`}
                   className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-cyan-400 transition-colors hover:bg-white/5"
                 >
                   View Full Journey
