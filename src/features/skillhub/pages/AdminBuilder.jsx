@@ -23,16 +23,17 @@ export default function AdminBuilder() {
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [showThumbnailUrl, setShowThumbnailUrl] = useState(false);
 
-  const [course, setCourse] = useState({
-    title: "",
-    description: "",
-    language: "Python",
-    difficulty: "Beginner",
-    duration: "",
-    thumbnail: "",
-    status: "published",
-    certificate_template: "",
-  });
+const [course, setCourse] = useState({
+  title: "",
+  description: "",
+  category: "Programming",
+  language: "Python",
+  difficulty: "Beginner",
+  duration: "",
+  thumbnail: "",
+  status: "published",
+  certificate_template: "",
+});
 
 const [level, setLevel] = useState({
   stage: "Beginner",
@@ -445,63 +446,88 @@ const levelCheckpoints = selectedLevel?.checkpoints || [];
               />
             </div>
 
-            {/* Difficulty */}
-            <div>
-              <Label>Difficulty</Label>
+           {/* Difficulty */}
+<div>
+  <Label>Difficulty</Label>
 
-              <Input
-                value={course.difficulty}
-                onChange={(e) =>
-                  setCourse({
-                    ...course,
-                    difficulty: e.target.value,
-                  })
-                }
-              />
-            </div>
+  <Input
+    value={course.difficulty}
+    onChange={(e) =>
+      setCourse({
+        ...course,
+        difficulty: e.target.value,
+      })
+    }
+  />
+</div>
 
-            {/* Thumbnail Upload */}
-            <div>
-              <Label>Thumbnail</Label>
+{/* Category */}
+<div>
+  <Label>Category</Label>
 
-              <div className="flex gap-2">
-                {/* Upload Button */}
-                <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5">
-                  {thumbnailUploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
+  <select
+    value={course.category}
+    onChange={(e) =>
+      setCourse({
+        ...course,
+        category: e.target.value,
+      })
+    }
+    className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+  >
+    <option value="Programming">Programming</option>
+    <option value="Artificial Intelligence">
+      Artificial Intelligence
+    </option>
+    <option value="Communication">Communication</option>
+    <option value="Leadership">Leadership</option>
+    <option value="Interview Preparation">
+      Interview Preparation
+    </option>
+    <option value="Cloud">Cloud</option>
+    <option value="Cyber Security">Cyber Security</option>
+    <option value="Data Science">Data Science</option>
+  </select>
+</div>
 
-                  {thumbnailUploading
-                    ? "Uploading..."
-                    : course.thumbnail
-                      ? "Thumbnail Uploaded ✓"
-                      : "Upload Image"}
+{/* Thumbnail Upload */}
+<div>
+  <Label>Thumbnail</Label>
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={uploadThumbnail}
-                    disabled={thumbnailUploading}
-                  />
-                </label>
+  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5">
+    {thumbnailUploading ? (
+      <Loader2 className="h-4 w-4 animate-spin" />
+    ) : (
+      <Upload className="h-4 w-4" />
+    )}
 
-              </div>
+    {thumbnailUploading
+      ? "Uploading..."
+      : course.thumbnail
+      ? "Thumbnail Uploaded ✓"
+      : "Upload Image"}
 
-              <div className="sm:col-span-3">
-                <Label>Thumbnail URL</Label>
-                <Input
-                  value={course.thumbnail}
-                  readOnly
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400"
-                />
-              </div>
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={uploadThumbnail}
+      disabled={thumbnailUploading}
+    />
+  </label>
+</div>
 
+{/* Thumbnail URL */}
+<div>
+  <Label>Thumbnail URL</Label>
 
-            </div>
-          </div>
+  <Input
+    value={course.thumbnail}
+    readOnly
+    placeholder=""
+  />
+</div>          
+</div>
 
           {/* Create Course Button */}
           <button
