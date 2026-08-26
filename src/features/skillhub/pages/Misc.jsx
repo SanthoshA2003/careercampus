@@ -76,26 +76,40 @@ export function AdminStudents() {
                   </div>
                 </div>
 
-                {/* Statistics */}
-                <div className="mt-6 grid grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <p className="font-bold text-cyan-400">
-                      {student.xp ?? 0} XP
-                    </p>
-                  </div>
+              {/* Statistics */}
+<div className="mt-6 grid grid-cols-4 gap-2 text-sm">
 
-                  <div className="text-center">
-                    <p className="font-bold text-amber-400">
-                      {student.streak ?? 0} 🔥
-                    </p>
-                  </div>
+  {/* XP */}
+  <div>
+    <p className="font-bold text-cyan-400">
+      {student.xp ?? 0} XP
+    </p>
+  </div>
 
-                  <div className="text-right">
-                    <p className="font-bold text-emerald-400">
-                      {student.levels ?? 0} levels
-                    </p>
-                  </div>
-                </div>
+  {/* Streak */}
+  <div className="text-center">
+    <p className="font-bold text-amber-400">
+      {student.streak ?? 0} 🔥
+    </p>
+  </div>
+
+  {/* Courses */}
+  <div className="text-center">
+    <p className="font-bold text-violet-400">
+      {student.courses ?? 0}{" "}
+      {student.courses === 1 ? "course" : "courses"}
+    </p>
+  </div>
+
+  {/* Levels */}
+  <div className="text-right">
+    <p className="font-bold text-emerald-400">
+      {student.levels ?? 0}{" "}
+      {student.levels === 1 ? "level" : "levels"}
+    </p>
+  </div>
+
+</div>
               </div>
             ))}
           </div>

@@ -29,15 +29,24 @@ export default function CareerElevator() {
   const progressPct = ((completed + 0.5) / levels.length) * 100;
 
   return (
-    <section id="career-elevator" className="relative overflow-hidden bg-[#F1F5F9] py-24 lg:py-32" data-testid="career-elevator-section">
-      <div className="aurora-blob left-[10%] top-[0%] h-80 w-80 bg-blue-300/30" />
+<section
+  id="career-elevator"
+  className="relative overflow-hidden bg-[#F1F5F9] pt-12 pb-24 lg:pt-16 lg:pb-32"
+  data-testid="career-elevator-section"
+>
+        <div className="aurora-blob left-[10%] top-[0%] h-80 w-80 bg-blue-300/30" />
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">
           <SectionTag icon={Gamepad2}>Career Elevator</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            Your Career Doesn't Grow Overnight.{" "}
-            <span className="gradient-text">It Grows One Step At A Time.</span>
-          </h2>
+<h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+    <span className="block leading-[1.15]">
+
+  Your Career Doesn't Grow Overnight.{" "}
+  </span>
+    <span className="gradient-text-career">
+    It Grows One Step At A Time.
+  </span>
+</h2>
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
             Every achievement unlocks the next opportunity. MyMentor transforms your career journey into a
             structured progression where every milestone prepares you for the next.
