@@ -12,6 +12,8 @@ import Journey from "@/features/skillhub/pages/Journey";
 import Workspace from "@/features/skillhub/pages/Workspace";
 import AdminDashboard from "@/features/skillhub/pages/AdminDashboard";
 import AdminBuilder from "@/features/skillhub/pages/AdminBuilder";
+import AdminCourses from "@/features/skillhub/pages/AdminCourses";
+import AdminCourseLevels from "@/features/skillhub/pages/AdminCourseLevels";
 
 import {
   AdminStudents,
@@ -156,6 +158,29 @@ export default function SkillHubApp() {
             </Guard>
           }
         />
+
+
+        {/* ==============================
+    ADMIN COURSES
+============================== */}
+
+<Route
+  path="admin/courses"
+  element={
+    <Guard admin>
+      <AdminCourses />
+    </Guard>
+  }
+/>
+
+<Route
+  path="admin/courses/:courseId"
+  element={
+    <Guard admin>
+      <AdminCourseLevels />
+    </Guard>
+  }
+/>
 
         {/* ==============================
             ADMIN STUDENTS

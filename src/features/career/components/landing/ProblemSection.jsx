@@ -39,14 +39,26 @@ function FlowColumn({ items, variant }) {
 
 export default function ProblemSection() {
   return (
-    <section id="problem" className="relative py-24 lg:py-32" data-testid="problem-section">
+    <section id="problem" className="relative pt-12 pb-24 lg:pt-16 lg:pb-32" data-testid="problem-section">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">
           <SectionTag icon={X}>The Problem</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            The Education System Was Designed To Help You <span className="text-slate-400">Pass Exams.</span>{" "}
-            <span className="gradient-text-career">Not Build Careers.</span>
-          </h2>
+<h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+  <span className="block leading-[1.15]">
+    The Education System Was
+  </span>
+
+  <span className="mt-2 block leading-[1.15]">
+    Designed To Help You <span className="text-slate-400">Pass</span>
+  </span>
+
+  <span className="mt-2 block leading-[1.15]">
+    <span className="text-slate-400">Exams.</span>{" "}
+    <span className="gradient-text-career">
+      Not Build Careers.
+    </span>
+  </span>
+</h2>
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
             Most students spend years studying without understanding which career suits them,
             which skills they need, how to build projects, and how to become industry ready.

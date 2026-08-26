@@ -313,6 +313,7 @@ export const api = {
       .get("/courses")
       .then((r) => r.data),
 
+
 enrolledCourses: () =>
   client
     .get("/courses/my-enrollments")
@@ -348,6 +349,11 @@ enrolledCourses: () =>
   // This automatically uses:
   // API_BASE_URL + /api
   // and also sends JWT token.
+
+  levels: (params = {}) =>
+  client
+    .get("/levels", { params })
+    .then((r) => r.data),
 
   level: (levelId) =>
     client

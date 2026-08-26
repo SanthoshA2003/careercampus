@@ -5,12 +5,14 @@ import {
   LayoutDashboard,
   Map,
   Award,
+  BookOpen,
   Users,
   Hammer,
   LogOut,
   Flame,
   Zap,
   Home,
+  ArrowLeft,
 } from "lucide-react";
 
 import { api } from "@/services/api";
@@ -29,6 +31,14 @@ const adminNav = [
     label: "Course Builder",
     icon: Hammer,
   },
+
+   {
+    to: "/skillhub/admin/courses",
+    label: "Courses",
+    icon: BookOpen,
+  },
+  
+
   {
     to: "/skillhub/admin/students",
     label: "Students",
@@ -36,7 +46,11 @@ const adminNav = [
   },
 ];
 
-export default function Shell({ children }) {
+export default function Shell({
+  children,
+  showBackButton = false,
+  onBack,
+}) {
   const { user, logout } = useAcademyAuth();
   const { logout: mainLogout } = useAuth();
 
@@ -240,6 +254,7 @@ useEffect(() => {
             </span>
 
           </div>
+          
 
           <div className="hidden text-sm font-medium text-slate-400 lg:block">
             Welcome back,{" "}
@@ -249,19 +264,48 @@ useEffect(() => {
             👋
           </div>
 
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
 
-            <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-400">
-              <Flame className="h-4 w-4" />
-              {user?.streak ?? 0}
-            </span>
+  {/* Back Button */}
+  {showBackButton && (
+    <button
+      onClick={onBack}
+      className="
+        flex
+        items-center
+        gap-2
+        rounded-xl
+        border
+        border-white/10
+        bg-white/[0.04]
+        px-3
+        py-1.5
+        text-sm
+        font-semibold
+        text-slate-300
+        transition-colors
+        hover:bg-white/10
+        hover:text-white
+      "
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Back
+    </button>
+  )}
 
-            <span className="flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-3 py-1.5 text-sm font-bold text-cyan-400">
-              <Zap className="h-4 w-4 fill-current" />
-              {user?.xp ?? 0} XP
-            </span>
+  {/* Streak */}
+  <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-400">
+    <Flame className="h-4 w-4" />
+    {user?.streak ?? 0}
+  </span>
 
-          </div>
+  {/* XP */}
+  <span className="flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-3 py-1.5 text-sm font-bold text-cyan-400">
+    <Zap className="h-4 w-4 fill-current" />
+    {user?.xp ?? 0} XP
+  </span>
+
+</div>
 
         </header>
 

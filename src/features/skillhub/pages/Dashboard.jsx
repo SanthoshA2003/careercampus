@@ -27,7 +27,6 @@ const Card = ({ children, className = "" }) => (
 
 export default function Dashboard() {
 const [data, setData] = useState(null);
-const [enrolledCourses, setEnrolledCourses] = useState([]);
 const [loading, setLoading] = useState(true);
 
 const nav = useNavigate();
@@ -37,28 +36,20 @@ const nav = useNavigate();
     try {
       setLoading(true);
 
-      const [dashboardResponse, enrolledResponse] =
-        await Promise.all([
-          api.studentSkillHubDashboard(),
-          api.enrolledCourses(),
-        ]);
+      // ONLY DASHBOARD API
+      const dashboardResponse =
+        await api.studentSkillHubDashboard();
 
       console.log("Dashboard:", dashboardResponse);
-      console.log("Enrolled Courses:", enrolledResponse);
 
       setData(dashboardResponse);
-
-      setEnrolledCourses(
-        Array.isArray(enrolledResponse)
-          ? enrolledResponse
-          : []
-      );
-
     } catch (error) {
       console.error(
         "Dashboard error:",
         error?.response?.data || error
       );
+
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -79,106 +70,157 @@ const nav = useNavigate();
   }
 
   // API mapping
-const course = enrolledCourses.length > 0
-  ? enrolledCourses[0]
-  : null;
-  const achievements = data.achievements || [];
-  const recentlyCompleted = data.recently_completed || [];
-  const certificates = data.certificates || [];
+const courses = data?.continue_courses || [];
+
+const achievements = data?.achievements || [];
+const recentlyCompleted = data?.recently_completed || [];
+const certificates = data?.certificates || [];
 
   return (
     <Shell>
       <div className="mx-auto max-w-6xl space-y-6">
 
         {/* Continue Learning */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-cyan-500/15 via-violet-500/10 to-slate-900 p-8"
-        >
-          <div className="aurora-blob right-[0%] top-[-20%] h-64 w-64 bg-cyan-500/30" />
 
-          <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
+<div className="space-y-6">
+  {/* SECTION HEADER */}
+
+  <div>
+    <p className="text-sm font-semibold uppercase tracking-widest text-cyan-300">
+      Continue Learning
+    </p>
+
+    <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
+      Your Courses
+    </h1>
+  </div>
+
+  {/* NO COURSES */}
+
+  {courses.length === 0 && (
+    <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-10 text-center">
+      <BookOpen className="mx-auto h-10 w-10 text-cyan-400" />
+
+      <h2 className="mt-4 text-xl font-bold text-white">
+        No enrolled courses
+      </h2>
+
+      <p className="mt-2 text-sm text-slate-400">
+        Start a course to begin your learning journey.
+      </p>
+    </div>
+  )}
+
+  {/* ALL ENROLLED COURSES */}
+
+  <div className="grid gap-6 lg:grid-cols-2">
+    {courses.map((course, index) => (
+      <motion.div
+        key={course.course_id || course.id || index}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1 }}
+        className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-cyan-500/15 via-violet-500/10 to-slate-900 p-7"
+      >
+        <div className="relative">
+
+          {/* TOP */}
+
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
+
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest text-cyan-300">
-                Continue Learning
+              <p className="text-xs font-semibold uppercase tracking-widest text-cyan-300">
+                {course.stage || "Learning Course"}
               </p>
 
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
-                {course?.title || "No Course Available"}
-              </h1>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
+                {course.title}
+              </h2>
 
-              {course ? (
-                <p className="mt-2 text-slate-300">
-                  {course.difficulty} · {course.stage}
-                </p>
-              ) : (
-                <p className="mt-2 text-slate-400">
-                  Start your learning journey.
-                </p>
-              )}
+              <p className="mt-2 text-sm text-slate-300">
+                {course.difficulty} · {course.stage}
+              </p>
 
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-300">
+              {/* COURSE STATS */}
 
-                <span className="flex items-center gap-1.5">
-                  <Zap className="h-4 w-4 fill-current text-cyan-400" />
-                  {data.xp ?? 0} XP
-                </span>
-
-                <span className="flex items-center gap-1.5">
-                  <Flame className="h-4 w-4 text-amber-400" />
-                  {data.streak ?? 0} day streak
-                </span>
+              <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-slate-300">
 
                 <span className="flex items-center gap-1.5">
                   <Target className="h-4 w-4 text-emerald-400" />
-                  {course?.completed_levels ?? 0}/
-                  {course?.total_levels ?? 0} levels
+
+                  {course.completed_levels ?? 0}/
+                  {course.total_levels ?? 0} levels
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+
+                  {course.progress_percentage ?? 0}% completed
                 </span>
 
               </div>
             </div>
 
-            {course && (
-              <button
-                onClick={() =>
-                  nav(`/skillhub/journey/${course.course_id || course.id}`)
-                }
-                className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-slate-900 shadow-large transition-transform hover:scale-105"
-              >
-                <Play className="h-5 w-5 fill-current" />
+            {/* COURSE BUTTON */}
 
-                {course.progress_percentage === 100
-                  ? "View Course"
-                  : "Continue"}
+            <button
+              onClick={() =>
+                nav(
+                  `/skillhub/journey/${
+                    course.course_id || course.id
+                  }`
+                )
+              }
+              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-large transition-transform hover:scale-105"
+            >
+              <Play className="h-4 w-4 fill-current" />
 
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </button>
-            )}
+              {course.progress_percentage === 100
+                ? "View Course"
+                : "Continue"}
+
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </button>
+
           </div>
 
-          {/* Progress Bar */}
-          <div className="relative mt-6">
-            <div className="mb-1 flex justify-between text-xs font-semibold text-slate-400">
+          {/* PROGRESS */}
+
+          <div className="mt-7">
+
+            <div className="mb-2 flex justify-between text-xs font-semibold text-slate-400">
               <span>Course Progress</span>
 
               <span>
-                {course?.progress_percentage ?? 0}%
+                {course.progress_percentage ?? 0}%
               </span>
             </div>
 
             <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500"
                 initial={{ width: 0 }}
                 animate={{
-                  width: `${course?.progress_percentage ?? 0}%`,
+                  width: `${
+                    course.progress_percentage ?? 0
+                  }%`,
                 }}
-                transition={{ duration: 1 }}
+                transition={{
+                  duration: 1,
+                  delay: index * 0.1,
+                }}
               />
+
             </div>
+
           </div>
-        </motion.div>
+
+        </div>
+      </motion.div>
+    ))}
+  </div>
+</div>
 
         <div className="grid gap-6 lg:grid-cols-3">
 
@@ -289,15 +331,17 @@ const course = enrolledCourses.length > 0
                   </p>
                 </div>
               ))}
-              {course && (
-                <Link
-                  to={`/skillhub/journey/${course.course_id || course.id}`}
-                  className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-cyan-400 transition-colors hover:bg-white/5"
-                >
-                  View Full Journey
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              )}
+            {courses.length > 0 && (
+  <Link
+    to={`/skillhub/journey/${
+      courses[0].course_id || courses[0].id
+    }`}
+    className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-cyan-400 transition-colors hover:bg-white/5"
+  >
+    View Full Journey
+    <ArrowRight className="h-4 w-4" />
+  </Link>
+)}
 
             </div>
           </Card>

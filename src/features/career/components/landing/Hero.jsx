@@ -44,7 +44,7 @@ export default function Hero() {
       id="top"
       ref={ref}
       onMouseMove={onMouse}
-      className="relative overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-28"
+      className="relative overflow-hidden pt-24 pb-20 lg:pt-28 lg:pb-28"
       data-testid="hero-section"
     >
       {/* Background */}
@@ -61,9 +61,9 @@ export default function Hero() {
             <SectionTag>Career Operating System</SectionTag>
           </motion.div>
 
-          <h1 className="mt-6 text-[42px] font-black leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-[64px]">
-            <MaskedLine delay={0.1}>Students don't fail for</MaskedLine>
-            <MaskedLine delay={0.2}>lack of talent.</MaskedLine>
+          <h1 className="mt-3 text-[42px] font-black leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-[64px]">
+            <MaskedLine delay={0.1}>Students don't fail for lack of talent.</MaskedLine>
+            {/* <MaskedLine delay={0.2}>lack of talent.</MaskedLine> */}
             <span className="mt-3 block">
               <MaskedLine delay={0.35} className="gradient-text-premium">They fail for</MaskedLine>
               <MaskedLine delay={0.45} className="gradient-text-premium">lack of direction.</MaskedLine>
@@ -87,19 +87,27 @@ export default function Hero() {
             transition={{ delay: 0.85, duration: 0.7 }}
             className="mt-9 flex flex-col gap-4 sm:flex-row"
           >
-            <Magnetic>
-              <PrimaryButton onClick={openAuth} data-testid="hero-start-journey-button">
-                Start My Journey <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </PrimaryButton>
-            </Magnetic>
-            <Magnetic strength={0.2}>
-              <SecondaryButton onClick={openAuth} data-testid="hero-watch-demo-button">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white">
-                  <Play className="h-3 w-3 fill-current" />
-                </span>
-                Watch Demo
-              </SecondaryButton>
-            </Magnetic>
+            <Magnetic strength={0.05}>
+  <PrimaryButton
+    onClick={openAuth}
+    data-testid="hero-start-journey-button"
+  >
+    Start My Journey
+    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+  </PrimaryButton>
+</Magnetic>
+
+<Magnetic strength={0.05}>
+  <SecondaryButton
+    onClick={openAuth}
+    data-testid="hero-watch-demo-button"
+  >
+    <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white">
+      <Play className="h-3 w-3 fill-current" />
+    </span>
+    Watch Demo
+  </SecondaryButton>
+</Magnetic>
           </motion.div>
 
           {/* Floating stats */}
@@ -122,10 +130,15 @@ export default function Hero() {
         </motion.div>
 
         {/* Right — floating dashboard composition */}
-        <div className="relative mx-auto h-[460px] w-full max-w-[520px] lg:h-[560px]">
+        <div className="relative mx-auto h-[520px] w-full max-w-[600px] lg:h-[600px]">
           {/* Main dashboard card */}
-          <FloatCard depth={0.4} mx={mx} my={my} delay={0.3} className="absolute left-1/2 top-1/2 w-[300px] -translate-x-1/2 -translate-y-1/2 sm:w-[360px]">
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-large">
+<FloatCard
+  depth={0.4}
+  mx={mx}
+  my={my}
+  delay={0.3}
+className="absolute left-1/2 top-[15%] z-10 w-[300px] -translate-x-1/2 -translate-y-1/2 sm:w-[360px]">
+              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-large">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Career Dashboard</p>
@@ -197,55 +210,124 @@ export default function Hero() {
             </div>
           </FloatCard>
 
-          {/* Floating mentor card */}
-          <FloatCard depth={1.4} mx={mx} my={my} delay={0.6} className="absolute -left-2 top-6 z-20 sm:left-0">
-            <div className="animate-float rounded-2xl border border-slate-100 bg-white/90 p-3.5 shadow-medium backdrop-blur">
-              <div className="flex items-center gap-3">
-                <img src="https://images.unsplash.com/photo-1737574994780-e31827afaed7?crop=entropy&cs=srgb&fm=jpg&q=85&w=120" alt="Mentor" className="h-10 w-10 rounded-full object-cover" />
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Arjun Menon</p>
-                  <p className="text-[11px] text-slate-500">Mentor · Google</p>
-                </div>
-                <div className="ml-2 flex items-center gap-0.5 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-600">
-                  <Star className="h-3 w-3 fill-current" /> 4.9
-                </div>
-              </div>
-            </div>
-          </FloatCard>
+         {/* Floating mentor card - top left */}
+<FloatCard
+  depth={1.4}
+  mx={mx}
+  my={my}
+  delay={0.6}
+  className="absolute left-0 top-8 z-30"
+>
+  <div className="animate-float rounded-2xl border border-slate-100 bg-white/90 p-3.5 shadow-medium backdrop-blur">
+    <div className="flex items-center gap-3">
+      <img
+        src="https://images.unsplash.com/photo-1737574994780-e31827afaed7?crop=entropy&cs=srgb&fm=jpg&q=85&w=120"
+        alt="Mentor"
+        className="h-10 w-10 rounded-full object-cover"
+      />
+
+      <div>
+        <p className="text-sm font-bold text-slate-900">
+          Arjun Menon
+        </p>
+
+        <p className="text-[11px] text-slate-500">
+          Mentor · Google
+        </p>
+      </div>
+
+      <div className="ml-2 flex items-center gap-0.5 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-600">
+        <Star className="h-3 w-3 fill-current" />
+        4.9
+      </div>
+    </div>
+  </div>
+</FloatCard>
 
           {/* Floating readiness chip */}
-          <FloatCard depth={1.8} mx={mx} my={my} delay={0.75} className="absolute -right-1 top-20 z-20 sm:right-0">
-            <div className="animate-float rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 p-4 text-white shadow-glow" style={{ animationDelay: "1s" }}>
-              <Target className="h-5 w-5" />
-              <p className="mt-2 text-2xl font-black leading-none">+250</p>
-              <p className="text-[11px] opacity-90">Career Score</p>
-            </div>
-          </FloatCard>
+        <FloatCard
+  depth={1.4}
+  mx={mx}
+  my={my}
+  delay={0.6}
+  className="absolute left-8 top-[40%] z-30 -translate-y-1/2"
+>
+  <div
+    className="animate-float rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 p-4 text-white shadow-glow"
+    style={{ animationDelay: "1s" }}
+  >
+    <Target className="h-5 w-5" />
+
+    <p className="mt-2 text-2xl font-black leading-none">
+      +250
+    </p>
+
+    <p className="text-[11px] opacity-90">
+      Career Score
+    </p>
+  </div>
+</FloatCard>
 
           {/* Floating roadmap chip */}
-          <FloatCard depth={1.6} mx={mx} my={my} delay={0.85} className="absolute bottom-6 left-4 z-20">
-            <div className="animate-float rounded-2xl border border-slate-100 bg-white/90 p-3.5 shadow-medium backdrop-blur" style={{ animationDelay: "0.5s" }}>
-              <div className="flex items-center gap-2.5">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 text-white"><Map className="h-4 w-4" /></span>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Roadmap</p>
-                  <p className="text-[11px] text-slate-500">11 milestones</p>
-                </div>
-              </div>
-            </div>
-          </FloatCard>
+          <FloatCard
+  depth={2}
+  mx={mx}
+  my={my}
+  delay={0.85}
+  className="absolute top-[70%] left-0 z-30"
+>
+  <div
+    className="animate-float rounded-2xl border border-slate-100 bg-white/90 p-3.5 shadow-medium backdrop-blur"
+    style={{ animationDelay: "0.5s" }}
+  >
+    <div className="flex items-center gap-2.5">
+      <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 text-white">
+        <Map className="h-4 w-4" />
+      </span>
+
+      <div>
+        <p className="text-sm font-bold text-slate-900">
+          Roadmap
+        </p>
+
+        <p className="text-[11px] text-slate-500">
+          11 milestones
+        </p>
+      </div>
+    </div>
+  </div>
+</FloatCard>
 
           {/* Floating analytics chip */}
-          <FloatCard depth={2} mx={mx} my={my} delay={0.95} className="absolute -bottom-2 -right-2 z-30">
-            <div className="animate-float rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-medium" style={{ animationDelay: "1.4s" }}>
-              <div className="flex items-end gap-1">
-                {[10, 16, 12, 22, 18, 26].map((h, i) => (
-                  <motion.span key={i} className="w-1.5 rounded-full bg-gradient-to-t from-blue-600 to-cyan-400" initial={{ height: 0 }} whileInView={{ height: h }} viewport={{ once: true }} transition={{ delay: 1 + i * 0.06 }} />
-                ))}
-              </div>
-              <p className="mt-1.5 text-[11px] font-semibold text-slate-500">Weekly XP</p>
-            </div>
-          </FloatCard>
+          <FloatCard
+  depth={2}
+  mx={mx}
+  my={my}
+  delay={0.95}
+  className="absolute bottom-8 right-0 z-30"
+>
+  <div
+    className="animate-float rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-medium"
+    style={{ animationDelay: "1.4s" }}
+  >
+    <div className="flex items-end gap-1">
+      {[10, 16, 12, 22, 18, 26].map((h, i) => (
+        <motion.span
+          key={i}
+          className="w-1.5 rounded-full bg-gradient-to-t from-blue-600 to-cyan-400"
+          initial={{ height: 0 }}
+          whileInView={{ height: h }}
+          viewport={{ once: true }}
+          transition={{ delay: 1 + i * 0.06 }}
+        />
+      ))}
+    </div>
+
+    <p className="mt-1.5 text-[11px] font-semibold text-slate-500">
+      Weekly XP
+    </p>
+  </div>
+</FloatCard>
         </div>
       </div>
     </section>
