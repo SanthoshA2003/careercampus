@@ -5,8 +5,12 @@ import { faqs } from "@/features/career/services/landingData";
 
 export default function FAQ() {
   return (
-    <section id="faq" className="relative overflow-hidden bg-[#F1F5F9] py-24 lg:py-32" data-testid="faq-section">
-      <div className="mx-auto max-w-3xl px-5 lg:px-8">
+<section
+  id="faq"
+  className="relative overflow-hidden bg-[#F1F5F9] pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="faq-section"
+>
+        <div className="mx-auto max-w-3xl px-5 lg:px-8">
         <Reveal className="text-center">
           <SectionTag icon={HelpCircle}>FAQ</SectionTag>
           <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">

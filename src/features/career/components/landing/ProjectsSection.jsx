@@ -11,8 +11,11 @@ const diffColor = {
 
 export default function ProjectsSection() {
   return (
-    <section className="relative overflow-hidden bg-[#0D1B2A] py-24 lg:py-32" data-testid="projects-section">
-      <div className="aurora-blob left-[0%] top-[10%] h-80 w-80 bg-blue-600/25" />
+<section
+  className="relative overflow-hidden bg-[#0D1B2A] pt-2 pb-24 lg:pt-5 lg:pb-32"
+  data-testid="projects-section"
+>
+        <div className="aurora-blob left-[0%] top-[10%] h-80 w-80 bg-blue-600/25" />
       <div className="aurora-blob right-[0%] bottom-[5%] h-80 w-80 bg-green-500/20" />
       <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">

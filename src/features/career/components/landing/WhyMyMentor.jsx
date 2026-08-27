@@ -6,17 +6,29 @@ import { comparisonColumns, comparisonRows } from "@/features/career/services/la
 export default function WhyMyMentor() {
   const last = comparisonColumns.length - 1;
   return (
-    <section className="relative py-24 lg:py-32" data-testid="why-mymentor-section">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <SectionTag icon={Layers}>Why MyMentor</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            Why Students Choose <span className="gradient-text">MyMentor</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
-            Many platforms solve one part of your career journey. MyMentor connects every part together.
-          </p>
-        </Reveal>
+   <section
+  className="relative pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="why-mymentor-section"
+>
+  <div className="mx-auto max-w-7xl px-5 lg:px-8">
+    <Reveal className="mx-auto max-w-3xl text-center">
+      <SectionTag icon={Layers}>Why MyMentor</SectionTag>
+
+      <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+        <span className="block leading-[1]">
+          Why Students Choose
+        </span>
+
+        <span className="mt-2 block leading-[1] gradient-text">
+          MyMentor
+        </span>
+      </h2>
+
+      <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
+        Many platforms solve one part of your career journey. MyMentor connects
+        every part together.
+      </p>
+    </Reveal>
 
         <Reveal delay={0.1} className="mt-14 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-medium">
           <div className="overflow-x-auto">

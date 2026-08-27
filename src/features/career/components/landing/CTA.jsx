@@ -13,8 +13,11 @@ const badges = [
 export default function CTA() {
   const { openAuth } = useAuth();
   return (
-    <section className="relative overflow-hidden py-24 lg:py-32" data-testid="cta-section">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+<section
+  className="relative overflow-hidden pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="cta-section"
+>
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-blue-600 via-cyan-500 to-green-500 px-6 py-20 text-center shadow-large sm:px-12 lg:py-28">
           {/* soft particles / blobs */}
           <div className="pointer-events-none absolute inset-0">
@@ -38,9 +41,15 @@ export default function CTA() {
           ))}
 
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative mx-auto max-w-3xl">
-            <h2 className="text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[56px]">
-              Your Future Doesn't Start After Graduation. It Starts Today.
-            </h2>
+           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-[56px]">
+  <span className="block leading-[1]">
+    Your Future Doesn't Start
+  </span>
+
+  <span className="mt-2 block leading-[1]">
+    After Graduation. It Starts Today.
+  </span>
+</h2>
             <p className="mx-auto mt-6 max-w-xl text-[18px] leading-relaxed text-white/90">
               Join thousands of learners building meaningful careers with MyMentor.
             </p>

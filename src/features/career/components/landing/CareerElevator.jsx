@@ -39,11 +39,11 @@ export default function CareerElevator() {
         <Reveal className="mx-auto max-w-3xl text-center">
           <SectionTag icon={Gamepad2}>Career Elevator</SectionTag>
 <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-    <span className="block leading-[1.15]">
+    <span className="block leading-[1]">
 
   Your Career Doesn't Grow Overnight.{" "}
   </span>
-    <span className="gradient-text-career">
+    <span className="gradient-text-career leading-[1]">
     It Grows One Step At A Time.
   </span>
 </h2>

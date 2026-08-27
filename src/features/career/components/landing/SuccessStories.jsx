@@ -5,17 +5,28 @@ import { successStories } from "@/features/career/services/landingData";
 
 export default function SuccessStories() {
   return (
-    <section className="relative overflow-hidden bg-[#F1F5F9] py-24 lg:py-32" data-testid="success-stories-section">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <SectionTag icon={Sparkles}>Success Stories</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            Real Journeys. <span className="gradient-text-career">Real Transformations.</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
-            See how MyMentor helps learners transform dreams into careers.
-          </p>
-        </Reveal>
+   <section
+  className="relative overflow-hidden bg-[#F1F5F9] pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="success-stories-section"
+>
+  <div className="mx-auto max-w-7xl px-5 lg:px-8">
+    <Reveal className="mx-auto max-w-3xl text-center">
+      <SectionTag icon={Sparkles}>Success Stories</SectionTag>
+
+      <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+        <span className="block leading-[1]">
+          Real Journeys.
+        </span>
+
+        <span className="mt-2 block leading-[1] gradient-text-career">
+          Real Transformations.
+        </span>
+      </h2>
+
+      <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
+        See how MyMentor helps learners transform dreams into careers.
+      </p>
+    </Reveal>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {successStories.map((s, i) => (

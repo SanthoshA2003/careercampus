@@ -7,17 +7,24 @@ import { useAuth } from "@/features/auth/components/AuthModal";
 export default function CareerGraph() {
   const { openAuth } = useAuth();
   return (
-    <section className="relative overflow-hidden bg-[#F1F5F9] py-24 lg:py-32" data-testid="career-graph-section">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <SectionTag icon={LineChart}>Career Graph</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            Your Career Is More Than <span className="gradient-text">A Resume.</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
-            Traditional resumes only show where you've been. Your Career Graph shows where you're going.
-          </p>
-        </Reveal>
+<section
+  className="relative overflow-hidden bg-[#F1F5F9] pt-2 pb-24 lg:pt-4 lg:pb-32"
+  data-testid="career-graph-section"
+>
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+    <Reveal className="mx-auto max-w-3xl text-center">
+      <SectionTag icon={LineChart}>Career Graph</SectionTag>
+
+<h2 className="mt-3 text-3xl font-extrabold leading-[1.3] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+          Your Career Is More Than A{" "}
+        <span className="mt-2 block leading-[1.2] gradient-text">Resume.</span>
+      </h2>
+
+      <p className="mx-auto mt-8 max-w-2xl text-[18px] leading-relaxed text-slate-600">
+        Traditional resumes only show where you've been. Your Career Graph
+        shows where you're going.
+      </p>
+    </Reveal>
 
         <div className="mt-16 grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
           {/* Left dashboard */}

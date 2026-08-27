@@ -15,11 +15,11 @@ export default function CareerPersonas() {
         <Reveal className="mx-auto max-w-3xl text-center">
           <SectionTag icon={Users}>Career Personas</SectionTag>
          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-  <span className="block leading-[1.15]">
+  <span className="block leading-[1]">
     Every Career Begins With A
   </span>
 
-  <span className="mt-2 block leading-[1.2] gradient-text">
+  <span className="mt-2 block leading-[1] gradient-text">
     Different Mindset.
   </span>
 </h2>

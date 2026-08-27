@@ -9,8 +9,12 @@ export default function CareerReadiness() {
   const R = 170;
   const C = 2 * Math.PI * R;
   return (
-    <section id="career-readiness" className="relative py-24 lg:py-32" data-testid="career-readiness-section">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+<section
+  id="career-readiness"
+  className="relative pt-4 pb-24 lg:pt-6 lg:pb-32"
+  data-testid="career-readiness-section"
+>
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">
           <SectionTag icon={Target}>Career Readiness Index</SectionTag>
           <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">

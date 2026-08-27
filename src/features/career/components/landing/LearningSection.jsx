@@ -131,17 +131,30 @@
   });
 
     return (
-      <section id="skillhub" className="relative py-24 lg:py-32" data-testid="learning-section">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <Reveal className="mx-auto max-w-3xl text-center">
-            <SectionTag icon={BookOpen}>SkillHub · LMS</SectionTag>
-            <h2 className="mt-6 text-3xl font-extrabold leading-[1.15] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-              Learning Becomes Just <span className="gradient-text">One Part</span> Of MyMentor.
-            </h2>
-            <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
-              Learning alone doesn't build careers. Projects, Roadmaps, Mentorship, Career Readiness and Career Graph together create career success.
-            </p>
-          </Reveal>
+     <section
+  id="skillhub"
+  className="relative pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="learning-section"
+>
+  <div className="mx-auto max-w-7xl px-5 lg:px-8">
+    <Reveal className="mx-auto max-w-3xl text-center">
+      <SectionTag icon={BookOpen}>SkillHub · LMS</SectionTag>
+
+     <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+  <span className="block leading-[1.15]">
+    Learning Becomes Just
+  </span>
+
+  <span className="mt-2 block leading-[1.15]">
+    <span className="gradient-text">One Part</span> Of MyMentor.
+  </span>
+</h2>
+
+      <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
+        Learning alone doesn't build careers. Projects, Roadmaps, Mentorship,
+        Career Readiness and Career Graph together create career success.
+      </p>
+    </Reveal>
 
           <div className="mt-16 grid gap-8 lg:grid-cols-[280px_1fr]">
             {/* Sidebar */}

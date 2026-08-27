@@ -12,23 +12,42 @@ export default function TransformationTimeline() {
   const lineScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <section className="relative overflow-hidden bg-[#0D1B2A] py-24 lg:py-32" data-testid="transformation-section">
-      <div className="aurora-blob left-[-5%] top-[10%] h-96 w-96 bg-blue-600/30" />
-      <div className="aurora-blob right-[-5%] bottom-[10%] h-96 w-96 bg-cyan-500/20" />
-      <div className="grid-pattern absolute inset-0 opacity-[0.07]" />
+<section
+  className="relative overflow-hidden bg-[#0D1B2A] pt-4 pb-24 lg:pt-6 lg:pb-32"
+  data-testid="transformation-section"
+>
+  <div className="aurora-blob left-[-5%] top-[10%] h-96 w-96 bg-blue-600/30" />
+  <div className="aurora-blob right-[-5%] bottom-[10%] h-96 w-96 bg-cyan-500/20" />
+  <div className="grid-pattern absolute inset-0 opacity-[0.07]" />
 
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mx-auto max-w-3xl text-center">
-          <SectionTag dark>One Journey</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[52px]">
-            One Decision.{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 bg-clip-text text-transparent">One Journey. One Transformation.</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-300">
-            A single career decision made at the right time can completely transform someone's future.
-            MyMentor guides learners through every important milestone.
-          </p>
-        </motion.div>
+  <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="mx-auto max-w-3xl text-center"
+    >
+      <SectionTag dark>One Journey</SectionTag>
+
+      <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[52px]">
+  <span className="block leading-[1.1]">
+    One Decision.{"  "}
+    <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 bg-clip-text text-transparent">
+      One Journey.
+    </span>
+  </span>
+
+  <span className="block leading-[1.1] bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 bg-clip-text text-transparent">
+    One Transformation.
+  </span>
+</h2>
+
+      <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-300">
+        A single career decision made at the right time can completely transform
+        someone's future. MyMentor guides learners through every important
+        milestone.
+      </p>
+    </motion.div>
 
         {/* Timeline */}
         <div ref={ref} className="relative mx-auto mt-16 max-w-3xl">

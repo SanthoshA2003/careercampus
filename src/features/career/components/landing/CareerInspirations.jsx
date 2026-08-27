@@ -9,17 +9,29 @@ function initials(name) {
 
 export default function CareerInspirations() {
   return (
-    <section className="relative py-24 lg:py-32" data-testid="inspirations-section">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <SectionTag icon={Star}>Career Inspirations</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            Learn From People Who <span className="gradient-text-premium">Changed The World.</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
-            Every great career begins with inspiration. Meet pioneers who transformed industries.
-          </p>
-        </Reveal>
+  <section
+  className="relative pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="inspirations-section"
+>
+  <div className="mx-auto max-w-7xl px-5 lg:px-8">
+    <Reveal className="mx-auto max-w-3xl text-center">
+      <SectionTag icon={Star}>Career Inspirations</SectionTag>
+
+      <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+        <span className="block leading-[1.15]">
+          Learn From People Who
+        </span>
+
+        <span className="mt-1 block leading-[1.15] gradient-text-premium">
+          Changed The World.
+        </span>
+      </h2>
+
+      <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
+        Every great career begins with inspiration. Meet pioneers who transformed
+        industries.
+      </p>
+    </Reveal>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {inspirations.map((p, i) => (

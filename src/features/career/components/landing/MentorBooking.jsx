@@ -7,19 +7,32 @@ import { useAuth } from "@/features/auth/components/AuthModal";
 export default function MentorBooking() {
   const { openAuth } = useAuth();
   return (
-    <section id="mentors" className="relative overflow-hidden bg-[#F1F5F9] py-24 lg:py-32" data-testid="mentor-booking-section">
-      <div className="aurora-blob right-[0%] top-[10%] h-80 w-80 bg-purple-300/25" />
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <SectionTag icon={BadgeCheck}>Book A Mentor</SectionTag>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
-            Learn From Industry Experts.{" "}
-            <span className="gradient-text-premium">Get Personal Guidance.</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
-            Book one-on-one sessions with experienced professionals who can guide your career journey.
-          </p>
-        </Reveal>
+  <section
+  id="mentors"
+  className="relative overflow-hidden bg-[#F1F5F9] pt-2 pb-24 lg:pt-3 lg:pb-32"
+  data-testid="mentor-booking-section"
+>
+  <div className="aurora-blob right-[0%] top-[10%] h-80 w-80 bg-purple-300/25" />
+
+  <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+    <Reveal className="mx-auto max-w-3xl text-center">
+      <SectionTag icon={BadgeCheck}>Book A Mentor</SectionTag>
+
+      <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]">
+        <span className="block leading-[1]">
+          Learn From Industry Experts.
+        </span>
+
+        <span className="mt-2 block leading-[1] gradient-text-premium">
+          Get Personal Guidance.
+        </span>
+      </h2>
+
+      <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-slate-600">
+        Book one-on-one sessions with experienced professionals who can guide
+        your career journey.
+      </p>
+    </Reveal>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {mentors.map((m, i) => (
