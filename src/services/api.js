@@ -8,6 +8,9 @@ if (!API_BASE_URL) {
 
 const API = `${API_BASE_URL}/api`;
 
+// Used by the Google OAuth redirect. Keep this on the same frontend origin.
+const frontendUrl = window.location.origin;
+
 // ==================================================
 // AXIOS CLIENT
 // ==================================================
@@ -386,22 +389,46 @@ enrolledCourses: () =>
 // PROFILE PHOTO
 // ==================================================
 
-uploadProfilePhoto: (file) => {
+uploadProfilePhoto: async (file) => {
+  if (!file) {
+    throw new Error("No profile photo selected.");
+  }
+
   const fd = new FormData();
   fd.append("file", file);
 
-  return client
-    .post("/files/profile-photo", fd)
-    .then((r) => r.data);
+  const response = await client.post(
+    "/files/profile-photo",
+    fd
+  );
+
+  console.log(
+    "PROFILE PHOTO POST RESPONSE:",
+    response.data
+  );
+
+  return response.data;
 },
 
-updateProfilePhoto: (file) => {
+updateProfilePhoto: async (file) => {
+  if (!file) {
+    throw new Error("No profile photo selected.");
+  }
+
   const fd = new FormData();
   fd.append("file", file);
 
-  return client
-    .put("/files/profile-photo", fd)
-    .then((r) => r.data);
+  const response = await client.put(
+    "/files/profile-photo",
+    fd
+  );
+
+  console.log(
+    "PROFILE PHOTO PUT RESPONSE:",
+    response.data
+  );
+
+  return response.data;
 },
 
 // ==================================================
