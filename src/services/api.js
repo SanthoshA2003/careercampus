@@ -17,6 +17,8 @@ const client = axios.create({
   withCredentials: true,
 });
 
+
+
 // ==================================================
 // JWT TOKEN INTERCEPTOR
 // ==================================================
@@ -374,6 +376,46 @@ enrolledCourses: () =>
       .put(`/levels/${levelId}`, body)
       .then((r) => r.data),
 
+  // ==================================================
+// PROFILE PHOTO
+// ==================================================
+
+uploadProfilePhoto: (file) => {
+  const fd = new FormData();
+  fd.append("file", file);
+
+  return client
+    .post("/files/profile-photo", fd)
+    .then((r) => r.data);
+},
+
+updateProfilePhoto: (file) => {
+  const fd = new FormData();
+  fd.append("file", file);
+
+  return client
+    .put("/files/profile-photo", fd)
+    .then((r) => r.data);
+},
+
+// ==================================================
+// WORK EXPERIENCES
+// ==================================================
+
+getWorkExperiences: () =>
+  client
+    .get("/work-experiences/me")
+    .then((r) => r.data),
+
+createWorkExperience: (body) =>
+  client
+    .post("/work-experiences/me", body)
+    .then((r) => r.data),
+
+updateWorkExperience: (id, body) =>
+  client
+    .put(`/work-experiences/${id}`, body)
+    .then((r) => r.data),
   // ==================================================
   // CHECKPOINTS
   // ==================================================
