@@ -1522,7 +1522,7 @@ const fetchWorkExperience = async () => {
                   {data.stats.applications === 0 && (
                     <NextCTA
                       to="/jobs"
-                      label="Explore jobs"
+                      label="Exp
                     />
                   )}
 
