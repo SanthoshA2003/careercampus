@@ -1977,10 +1977,10 @@ export default function ProfilePage() {
           {/* ==================================================
               PROFILE EDITOR
           ================================================== */}
-
-          <ProfileEditor
-            user={user}
-          />
+<ProfileEditor
+  user={user}
+  photoFileId={photoFileId}
+/>
 
           {/* ==================================================
               WORK EXPERIENCE
@@ -2671,6 +2671,7 @@ export default function ProfilePage() {
 
 function ProfileEditor({
   user,
+  photoFileId,
 }) {
   const [p, setP] = useState(null);
 
