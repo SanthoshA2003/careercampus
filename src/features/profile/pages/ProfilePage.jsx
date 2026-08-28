@@ -21,8 +21,6 @@ import {
   Pencil,
   Camera,
   X,
-  Trash2,
-  Upload,
   Plus,
   MapPin,
 } from "lucide-react";
@@ -32,11 +30,9 @@ import { Logo } from "@/features/career/components/landing/primitives";
 import { useAuth } from "@/features/auth/components/AuthModal";
 import { toast } from "sonner";
 
-
-// ============================================================
-// ICONS
-// ============================================================
-
+/* ============================================================
+   ICONS
+============================================================ */
 
 const ICONS = {
   compass: Compass,
@@ -48,10 +44,9 @@ const ICONS = {
   trophy: Trophy,
 };
 
-
-// ============================================================
-// TIER COLORS
-// ============================================================
+/* ============================================================
+   TIER COLORS
+============================================================ */
 
 const TIER_COLORS = {
   Explorer: "from-slate-500 to-slate-600",
@@ -61,10 +56,9 @@ const TIER_COLORS = {
   "Career Champion": "from-emerald-500 to-teal-600",
 };
 
-
-// ============================================================
-// PROFILE CATEGORIES
-// ============================================================
+/* ============================================================
+   PROFILE CATEGORIES
+============================================================ */
 
 const CATEGORIES = [
   {
@@ -81,17 +75,16 @@ const CATEGORIES = [
   },
 ];
 
-
-// ============================================================
-// COMMON FIELD STYLE
-// ============================================================
+/* ============================================================
+   COMMON FIELD STYLE
+============================================================ */
 
 const pfield =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[15px] text-slate-900 outline-none transition-colors focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50";
 
-// ============================================================
-// PROFILE LABEL
-// ============================================================
+/* ============================================================
+   PROFILE LABEL
+============================================================ */
 
 function PLabel({ children }) {
   return (
@@ -101,10 +94,10 @@ function PLabel({ children }) {
   );
 }
 
+/* ============================================================
+   SCORE RING
+============================================================ */
 
-// ============================================================
-// SCORE RING
-// ============================================================
 function ScoreRing({
   score = 0,
   tier = "Explorer",
@@ -117,7 +110,6 @@ function ScoreRing({
   const c = 2 * Math.PI * r;
 
   const [dash, setDash] = useState(c);
-
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -141,26 +133,26 @@ function ScoreRing({
 
     if (!file) return;
 
+    console.log(
+      "SELECTED PROFILE PHOTO:",
+      file.name,
+      file.type,
+      file.size
+    );
+
     try {
       await onPhotoChange(file);
     } finally {
+      // Allow selecting the same image again
       event.target.value = "";
     }
   };
-
   return (
     <div
       className="flex shrink-0 flex-col items-center"
       data-testid="score-ring"
     >
-
-      {/* =====================================================
-          SCORE RING + PHOTO
-      ===================================================== */}
-
       <div className="relative h-[208px] w-[208px]">
-
-        {/* Score ring */}
         <svg
           width="208"
           height="208"
@@ -187,7 +179,6 @@ function ScoreRing({
                 offset="0%"
                 stopColor="#2563eb"
               />
-
               <stop
                 offset="100%"
                 stopColor="#06b6d4"
@@ -212,9 +203,7 @@ function ScoreRing({
           />
         </svg>
 
-        {/* =================================================
-            PHOTO
-        ================================================= */}
+        {/* PHOTO */}
 
         <div
           className="
@@ -230,7 +219,6 @@ function ScoreRing({
             shadow-lg
           "
         >
-
           {photoUrl ? (
             <img
               src={photoUrl}
@@ -242,7 +230,8 @@ function ScoreRing({
                   photoUrl
                 );
 
-                event.currentTarget.style.display = "none";
+                event.currentTarget.style.display =
+                  "none";
               }}
             />
           ) : (
@@ -261,7 +250,6 @@ function ScoreRing({
             </div>
           )}
 
-          {/* Upload loading */}
           {uploading && (
             <div
               className="
@@ -272,21 +260,12 @@ function ScoreRing({
                 bg-slate-900/50
               "
             >
-              <Loader2
-                className="
-                  h-8
-                  w-8
-                  animate-spin
-                  text-white
-                "
-              />
+              <Loader2 className="h-8 w-8 animate-spin text-white" />
             </div>
           )}
         </div>
 
-        {/* =================================================
-            CAMERA BUTTON
-        ================================================= */}
+        {/* CAMERA */}
 
         <button
           type="button"
@@ -333,7 +312,6 @@ function ScoreRing({
           )}
         </button>
 
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -341,15 +319,11 @@ function ScoreRing({
           className="hidden"
           onChange={handleFileChange}
         />
-
       </div>
 
-      {/* =====================================================
-          SCORE
-      ===================================================== */}
+      {/* SCORE */}
 
       <div className="mt-4 text-center">
-
         <motion.div
           initial={{
             opacity: 0,
@@ -377,17 +351,14 @@ function ScoreRing({
         <div className="mt-1 text-sm font-medium text-slate-400">
           / 100
         </div>
-
       </div>
-
     </div>
   );
 }
 
-
-// ============================================================
-// HERO STAT
-// ============================================================
+/* ============================================================
+   HERO STAT
+============================================================ */
 
 const HeroStat = ({
   icon: Icon,
@@ -411,10 +382,9 @@ const HeroStat = ({
   </div>
 );
 
-
-// ============================================================
-// NEXT CTA
-// ============================================================
+/* ============================================================
+   NEXT CTA
+============================================================ */
 
 const NextCTA = ({
   to,
@@ -429,10 +399,9 @@ const NextCTA = ({
   </Link>
 );
 
-
-// ============================================================
-// PROFILE VALUE
-// ============================================================
+/* ============================================================
+   PROFILE VALUE
+============================================================ */
 
 function ProfileValue({
   label,
@@ -451,18 +420,720 @@ function ProfileValue({
   );
 }
 
+/* ============================================================
+   WORK EXPERIENCE POPUP
+============================================================ */
 
-// ============================================================
-// PROFILE PAGE
-// ============================================================ 
+function WorkExperienceModal({
+  open,
+  onClose,
+  workExperience,
+  onSaved,
+}) {
+  const [form, setForm] = useState({
+    role: "",
+    organization: "",
+    yearsExperience: "",
+    location: "",
+    locationType: "",
+    employmentType: "",
+    currentlyWorking: false,
+    startMonth: "",
+    startYear: "",
+    highlights: "",
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  /* ----------------------------------------------------------
+     LOAD EXISTING EXPERIENCE INTO FORM
+  ---------------------------------------------------------- */
+
+  useEffect(() => {
+    if (!open) return;
+
+    const startDate =
+      workExperience?.start_date || "";
+
+    setForm({
+      role:
+        workExperience?.job_title || "",
+
+      organization:
+        workExperience?.company_name || "",
+
+      yearsExperience:
+        workExperience?.years_experience ??
+        workExperience?.experience_years ??
+        "",
+
+      location:
+        workExperience?.location || "",
+
+      locationType:
+        workExperience?.location_type || "",
+
+      employmentType:
+        workExperience?.employment_type || "",
+
+      currentlyWorking:
+        Boolean(
+          workExperience?.currently_working
+        ),
+
+      startMonth:
+        startDate
+          ? startDate.substring(5, 7)
+          : "",
+
+      startYear:
+        startDate
+          ? startDate.substring(0, 4)
+          : "",
+
+      highlights:
+        workExperience?.description || "",
+    });
+  }, [open, workExperience]);
+
+  /* ----------------------------------------------------------
+     FIELD SETTER
+  ---------------------------------------------------------- */
+
+  const setField = (key) => (event) => {
+    setForm((prev) => ({
+      ...prev,
+      [key]: event.target.value,
+    }));
+  };
+
+  /* ----------------------------------------------------------
+     SAVE
+  ---------------------------------------------------------- */
+
+  const handleSave = async () => {
+    if (!form.role.trim()) {
+      toast.error(
+        "Please enter your job title / role."
+      );
+      return;
+    }
+
+    if (!form.organization.trim()) {
+      toast.error(
+        "Please enter your organization / company."
+      );
+      return;
+    }
+
+    if (
+      form.yearsExperience === "" ||
+      form.yearsExperience === null ||
+      form.yearsExperience === undefined
+    ) {
+      toast.error(
+        "Please enter your years of experience."
+      );
+      return;
+    }
+
+    if (!form.location.trim()) {
+      toast.error(
+        "Please enter your location."
+      );
+      return;
+    }
+
+    if (!form.locationType) {
+      toast.error(
+        "Please select your location type."
+      );
+      return;
+    }
+
+    if (!form.employmentType) {
+      toast.error(
+        "Please select your employment type."
+      );
+      return;
+    }
+
+    if (!form.startMonth) {
+      toast.error(
+        "Please select your start month."
+      );
+      return;
+    }
+
+    if (!form.startYear) {
+      toast.error(
+        "Please select your start year."
+      );
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const payload = {
+        company_name:
+          form.organization.trim(),
+
+        job_title:
+          form.role.trim(),
+
+        employment_type:
+          form.employmentType,
+
+        location:
+          form.location.trim(),
+
+        start_date:
+          `${form.startYear}-${String(
+            form.startMonth
+          ).padStart(2, "0")}-01`,
+
+        end_date: null,
+
+        currently_working:
+          Boolean(form.currentlyWorking),
+
+        description:
+          form.highlights?.trim() || "",
+
+        skills: "",
+      };
+
+      let result;
+
+      if (workExperience?.id) {
+        result =
+          await api.updateWorkExperience(
+            workExperience.id,
+            payload
+          );
+      } else {
+        result =
+          await api.createWorkExperience(
+            payload
+          );
+      }
+
+      console.log(
+        "WORK EXPERIENCE SAVE RESPONSE:",
+        result
+      );
+
+      toast.success(
+        workExperience?.id
+          ? "Work experience updated successfully."
+          : "Work experience added successfully."
+      );
+
+      if (onSaved) {
+        await onSaved();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error(
+        "WORK EXPERIENCE SAVE ERROR:",
+        error
+      );
+
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Unable to save work experience.";
+
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="
+        fixed
+        inset-0
+        z-[100]
+        flex
+        items-center
+        justify-center
+        bg-slate-900/50
+        p-4
+        backdrop-blur-sm
+      "
+      onMouseDown={(event) => {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+          if (!saving) {
+            onClose();
+          }
+        }
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="work-experience-title"
+        className="
+          max-h-[92vh]
+          w-full
+          max-w-3xl
+          overflow-y-auto
+          rounded-3xl
+          bg-white
+          p-6
+          shadow-2xl
+          sm:p-8
+        "
+      >
+        {/* HEADER */}
+
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div
+              className="
+                mb-2
+                inline-flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-xl
+                bg-blue-50
+                text-blue-600
+              "
+            >
+              <Briefcase className="h-5 w-5" />
+            </div>
+
+            <h3
+              id="work-experience-title"
+              className="text-2xl font-black text-slate-900"
+            >
+              {workExperience
+                ? "Edit Work Experience"
+                : "Add Work Experience"}
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Add your work experience,
+              role, company and location
+              details.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!saving) {
+                onClose();
+              }
+            }}
+            disabled={saving}
+            className="
+              grid
+              h-10
+              w-10
+              shrink-0
+              place-items-center
+              rounded-full
+              border
+              border-slate-200
+              text-slate-500
+              hover:bg-slate-50
+              hover:text-slate-900
+              disabled:opacity-50
+            "
+            aria-label="Close work experience"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* FIELDS */}
+
+        <div className="mt-7 grid gap-5 sm:grid-cols-2">
+          <div>
+            <PLabel>
+              Job Title / Role *
+            </PLabel>
+
+            <input
+              className={pfield}
+              value={form.role}
+              onChange={setField("role")}
+              placeholder="e.g. Software Engineer"
+            />
+          </div>
+
+          <div>
+            <PLabel>
+              Organization / Company *
+            </PLabel>
+
+            <input
+              className={pfield}
+              value={form.organization}
+              onChange={setField(
+                "organization"
+              )}
+              placeholder="e.g. Microsoft"
+            />
+          </div>
+
+          <div>
+            <PLabel>
+              Years of Experience *
+            </PLabel>
+
+            <input
+              type="number"
+              min="0"
+              max="60"
+              step="0.5"
+              className={pfield}
+              value={
+                form.yearsExperience
+              }
+              onChange={setField(
+                "yearsExperience"
+              )}
+              placeholder="e.g. 3"
+            />
+          </div>
+
+          <div>
+            <PLabel>
+              Location *
+            </PLabel>
+
+            <div className="relative">
+              <MapPin
+                className="
+                  pointer-events-none
+                  absolute
+                  left-3
+                  top-1/2
+                  h-4
+                  w-4
+                  -translate-y-1/2
+                  text-slate-400
+                "
+              />
+
+              <input
+                className={`${pfield} pl-9`}
+                value={form.location}
+                onChange={setField(
+                  "location"
+                )}
+                placeholder="e.g. Chennai, Tamil Nadu"
+              />
+            </div>
+          </div>
+
+          <div>
+            <PLabel>
+              Location Type *
+            </PLabel>
+
+            <select
+              className={pfield}
+              value={
+                form.locationType
+              }
+              onChange={setField(
+                "locationType"
+              )}
+            >
+              <option value="">
+                Select
+              </option>
+
+              <option value="On-site">
+                On-site
+              </option>
+
+              <option value="Hybrid">
+                Hybrid
+              </option>
+
+              <option value="Remote">
+                Remote
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <PLabel>
+              Employment Type *
+            </PLabel>
+
+            <select
+              className={pfield}
+              value={
+                form.employmentType
+              }
+              onChange={setField(
+                "employmentType"
+              )}
+            >
+              <option value="">
+                Select
+              </option>
+
+              <option value="Full-time">
+                Full-time
+              </option>
+
+              <option value="Part-time">
+                Part-time
+              </option>
+
+              <option value="Contract">
+                Contract
+              </option>
+
+              <option value="Freelance">
+                Freelance
+              </option>
+
+              <option value="Internship">
+                Internship
+              </option>
+
+              <option value="Self-employed">
+                Self-employed
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <PLabel>
+              Start Month *
+            </PLabel>
+
+            <select
+              className={pfield}
+              value={form.startMonth}
+              onChange={setField(
+                "startMonth"
+              )}
+            >
+              <option value="">
+                Select month
+              </option>
+
+              {Array.from(
+                { length: 12 },
+                (_, index) => {
+                  const month =
+                    String(index + 1).padStart(
+                      2,
+                      "0"
+                    );
+
+                  const label =
+                    new Date(
+                      2000,
+                      index,
+                      1
+                    ).toLocaleString(
+                      "en-US",
+                      {
+                        month: "long",
+                      }
+                    );
+
+                  return (
+                    <option
+                      key={month}
+                      value={month}
+                    >
+                      {label}
+                    </option>
+                  );
+                }
+              )}
+            </select>
+          </div>
+
+          <div>
+            <PLabel>
+              Start Year *
+            </PLabel>
+
+            <select
+              className={pfield}
+              value={form.startYear}
+              onChange={setField(
+                "startYear"
+              )}
+            >
+              <option value="">
+                Select year
+              </option>
+
+              {Array.from(
+                {
+                  length:
+                    new Date().getFullYear() -
+                    1970 +
+                    1,
+                },
+                (_, index) => {
+                  const year =
+                    new Date().getFullYear() -
+                    index;
+
+                  return (
+                    <option
+                      key={year}
+                      value={year}
+                    >
+                      {year}
+                    </option>
+                  );
+                }
+              )}
+            </select>
+          </div>
+        </div>
+
+        {/* CURRENTLY WORKING */}
+
+        <label className="mt-6 flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
+          <input
+            type="checkbox"
+            checked={
+              Boolean(
+                form.currentlyWorking
+              )
+            }
+            onChange={(event) =>
+              setForm((prev) => ({
+                ...prev,
+                currentlyWorking:
+                  event.target.checked,
+              }))
+            }
+            className="
+              h-5
+              w-5
+              rounded
+              border-slate-300
+              text-blue-600
+              focus:ring-blue-500
+            "
+          />
+
+          I currently work here
+        </label>
+
+        {/* HIGHLIGHTS */}
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between">
+            <PLabel>
+              Highlights
+            </PLabel>
+
+            <span className="text-xs text-slate-400">
+              {(
+                form.highlights || ""
+              ).length}
+              /2000
+            </span>
+          </div>
+
+          <textarea
+            rows={5}
+            maxLength={2000}
+            className={`${pfield} resize-none`}
+            value={
+              form.highlights
+            }
+            onChange={setField(
+              "highlights"
+            )}
+            placeholder="Projects, problems you solved, or results you achieved"
+          />
+        </div>
+
+        {/* BUTTONS */}
+
+        <div className="mt-7 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="
+              rounded-full
+              border
+              border-slate-200
+              bg-white
+              px-6
+              py-3
+              font-semibold
+              text-slate-700
+              hover:bg-slate-50
+              disabled:opacity-60
+            "
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="
+              inline-flex
+              items-center
+              gap-2
+              rounded-full
+              bg-gradient-to-r
+              from-blue-600
+              to-cyan-500
+              px-6
+              py-3
+              font-semibold
+              text-white
+              shadow-medium
+              disabled:opacity-60
+            "
+          >
+            {saving && (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            )}
+
+            {saving
+              ? "Saving..."
+              : workExperience
+                ? "Update Experience"
+                : "Save Details"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   PROFILE PAGE
+============================================================ */
 
 export default function ProfilePage() {
-  const [workExperience, setWorkExperience] = useState(null);
-  const [workExperienceLoading, setWorkExperienceLoading] = useState(false);
-  const [workExperienceError, setWorkExperienceError] = useState("");
-
-  // your existing states...
-
   const {
     ready,
     isAuthed,
@@ -471,6 +1142,29 @@ export default function ProfilePage() {
     user,
   } = useAuth();
 
+  /* ==========================================================
+     PAGE STATE
+  ========================================================== */
+
+  const [
+    workExperience,
+    setWorkExperience,
+  ] = useState(null);
+
+  const [
+    workExperienceLoading,
+    setWorkExperienceLoading,
+  ] = useState(false);
+
+  const [
+    workExperienceError,
+    setWorkExperienceError,
+  ] = useState("");
+
+  const [
+    workExperienceModalOpen,
+    setWorkExperienceModalOpen,
+  ] = useState(false);
 
   const [data, setData] = useState({
     score: 0,
@@ -495,35 +1189,48 @@ export default function ProfilePage() {
     nextSteps: [],
   });
 
-  const [scoreBreakdown, setScoreBreakdown] =
-    useState(null);
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [photoUploading, setPhotoUploading] = useState(false);
+  const [
+    scoreBreakdown,
+    setScoreBreakdown,
+  ] = useState(null);
 
+  const [
+    photoUrl,
+    setPhotoUrl,
+  ] = useState("");
 
+  // File id returned by the upload API. Persist this on the profile.
+  const [photoFileId, setPhotoFileId] = useState(null);
 
+  const [
+    photoUploading,
+    setPhotoUploading,
+  ] = useState(false);
 
-  const [breakdownLoading, setBreakdownLoading] =
-    useState(false);
+  const [
+    breakdownLoading,
+    setBreakdownLoading,
+  ] = useState(false);
 
-  const [scoreLoading, setScoreLoading] =
-    useState(false);
+  const [
+    scoreLoading,
+    setScoreLoading,
+  ] = useState(false);
 
-  const [journeyLoading, setJourneyLoading] =
-    useState(false);
+  const [
+    journeyLoading,
+    setJourneyLoading,
+  ] = useState(false);
 
-  // ==========================================================
-  // PROFILE PHOTO
-  // ==========================================================
+  /* ==========================================================
+     PROFILE PHOTO
+  ========================================================== */
 
   const loadProfilePhoto = async () => {
     try {
       const profile = await api.getProfile();
 
-      console.log(
-        "PROFILE PHOTO LOAD RESPONSE:",
-        profile
-      );
+      console.log("PROFILE PHOTO LOAD RESPONSE:", profile);
 
       const returnedPhoto =
         profile?.profile_photo_url ||
@@ -535,207 +1242,302 @@ export default function ProfilePage() {
         profile?.file_url ||
         profile?.fileUrl ||
         profile?.url ||
+        profile?.data?.profile_photo_url ||
+        profile?.data?.profilePhotoUrl ||
+        profile?.data?.photo_url ||
+        profile?.data?.photoUrl ||
+        profile?.data?.file_url ||
+        profile?.data?.fileUrl ||
+        profile?.data?.url ||
         "";
 
+      const returnedFileId =
+        profile?.profile_photo_file_id ||
+        profile?.profilePhotoFileId ||
+        profile?.photo_file_id ||
+        profile?.file_id ||
+        profile?.data?.profile_photo_file_id ||
+        profile?.data?.profilePhotoFileId ||
+        profile?.data?.photo_file_id ||
+        profile?.data?.file_id ||
+        null;
+
+      setPhotoFileId(returnedFileId);
       setPhotoUrl(returnedPhoto || "");
-
     } catch (error) {
-
       if (error?.response?.status !== 404) {
-        console.warn(
-          "PROFILE PHOTO LOAD ERROR:",
-          error
-        );
+        console.warn("PROFILE PHOTO LOAD ERROR:", error);
       }
-
     }
   };
-  
-// ============================================================
-// FETCH WORK EXPERIENCE
-// ============================================================
-const fetchWorkExperience = async () => {
-  try {
-    setWorkExperienceLoading(true);
-    setWorkExperienceError("");
 
-    // IMPORTANT:
-    // api.js already contains getWorkExperiences()
-    // which calls GET /work-experiences/me
-    const response = await api.getWorkExperiences();
+  /* ==========================================================
+     FETCH WORK EXPERIENCE
+  ========================================================== */
 
-    console.log(
-      "WORK EXPERIENCE GET RESPONSE:",
-      response
-    );
+  const fetchWorkExperience =
+    async () => {
+      try {
+        setWorkExperienceLoading(
+          true
+        );
 
-    // API returns an array
-    const experiences = Array.isArray(response)
-      ? response
-      : response
-        ? [response]
-        : [];
+        setWorkExperienceError(
+          ""
+        );
 
-    setWorkExperience(experiences[0] || null);
+        const response =
+          await api.getWorkExperiences();
 
-    return experiences[0] || null;
+        const experiences =
+          Array.isArray(response)
+            ? response
+            : response
+              ? [response]
+              : [];
 
-  } catch (error) {
-    console.error(
-      "WORK EXPERIENCE FETCH ERROR:",
-      error?.response?.status,
-      error?.response?.data || error?.message
-    );
+        setWorkExperience(
+          experiences[0] || null
+        );
 
-    setWorkExperience(null);
+        return (
+          experiences[0] || null
+        );
+      } catch (error) {
+        console.error(
+          "WORK EXPERIENCE FETCH ERROR:",
+          error
+        );
 
-    setWorkExperienceError(
-      error?.response?.data?.detail ||
-      error?.response?.data?.message ||
-      "Unable to load work experience."
-    );
+        setWorkExperience(null);
 
-    return null;
+        setWorkExperienceError(
+          error?.response?.data
+            ?.detail ||
+          error?.response?.data
+            ?.message ||
+          "Unable to load work experience."
+        );
 
-  } finally {
-    setWorkExperienceLoading(false);
-  }
-};
-  // ============================================================
-  // PROFILE PHOTO UPLOAD
-  // ============================================================
+        return null;
+      } finally {
+        setWorkExperienceLoading(
+          false
+        );
+      }
+    };
+
+  /* ==========================================================
+     PROFILE PHOTO UPLOAD
+  ========================================================== */
 
   const uploadProfilePhoto = async (file) => {
     if (!file) return;
 
-    // Validate image
-    if (!file.type?.startsWith("image/")) {
-      toast.error("Please select an image file.");
-      return;
-    }
-
-    // Max 5 MB
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Profile photo must be smaller than 5MB.");
-      return;
-    }
+    let localPreviewUrl = "";
 
     try {
       setPhotoUploading(true);
 
-      console.log("PROFILE PHOTO REQUEST:", {
-        fileName: file.name,
-        type: file.type,
-        size: file.size,
-        existingPhoto: Boolean(photoUrl),
-      });
-
-      let result;
-
-      // --------------------------------------------------------
-      // FIRST PHOTO
-      // POST /api/files/profile-photo
-      // --------------------------------------------------------
-
-      if (!photoUrl) {
-        result = await api.uploadProfilePhoto(file);
+      if (!file.type?.startsWith("image/")) {
+        toast.error("Please select an image file.");
+        return;
       }
 
-      // --------------------------------------------------------
-      // REPLACE EXISTING PHOTO
-      // PUT /api/files/profile-photo
-      // --------------------------------------------------------
-
-      else {
-        result = await api.updateProfilePhoto(file);
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Profile photo must be smaller than 5MB.");
+        return;
       }
 
-      console.log("PROFILE PHOTO RESPONSE:", result);
+      // Immediate UI preview.
+      localPreviewUrl = URL.createObjectURL(file);
+      setPhotoUrl(localPreviewUrl);
 
-      // Backend response:
-      //
-      // {
-      //   id: "...",
-      //   file_name: "...",
-      //   file_url: "https://res.cloudinary.com/...",
-      //   content_type: "image/jpeg",
-      //   size: 256464
-      // }
+      const hasPermanentPhoto = Boolean(
+        photoUrl && !photoUrl.startsWith("blob:")
+      );
 
-      const newPhoto =
+      const result = hasPermanentPhoto
+        ? await api.updateProfilePhoto(file)
+        : await api.uploadProfilePhoto(file);
+
+      console.log("PROFILE PHOTO API RESPONSE:", result);
+
+      // The upload API may return an id but no URL.
+      const uploadedFileId =
+        result?.id ||
+        result?.file_id ||
+        result?.fileId ||
+        result?.data?.id ||
+        result?.data?.file_id ||
+        result?.data?.fileId ||
+        null;
+
+      const serverPhotoUrl =
+        result?.profile_photo_url ||
+        result?.profilePhotoUrl ||
+        result?.photo_url ||
+        result?.photoUrl ||
+        result?.profile_photo ||
+        result?.photo ||
         result?.file_url ||
         result?.fileUrl ||
         result?.url ||
-        result?.photo_url ||
-        result?.profile_photo_url ||
-        result?.profilePhotoUrl ||
+        result?.data?.profile_photo_url ||
+        result?.data?.profilePhotoUrl ||
+        result?.data?.photo_url ||
+        result?.data?.photoUrl ||
+        result?.data?.profile_photo ||
+        result?.data?.photo ||
+        result?.data?.file_url ||
+        result?.data?.fileUrl ||
+        result?.data?.url ||
         "";
 
-      if (!newPhoto) {
-        throw new Error(
-          "Photo uploaded, but image URL was not returned by the server."
+      if (uploadedFileId) {
+        setPhotoFileId(uploadedFileId);
+
+        // If the profile already exists, save the file reference now.
+        // For a first-time profile, save() will include this id.
+        try {
+          await api.updateProfile({
+            profile_photo_file_id: uploadedFileId,
+          });
+          console.log(
+            "PROFILE PHOTO REFERENCE SAVED:",
+            uploadedFileId
+          );
+        } catch (profileLinkError) {
+          if (profileLinkError?.response?.status !== 404) {
+            console.warn(
+              "PROFILE PHOTO REFERENCE SAVE ERROR:",
+              profileLinkError
+            );
+          }
+        }
+      }
+
+      if (serverPhotoUrl) {
+        setPhotoUrl(serverPhotoUrl);
+      }
+
+      // Re-fetch so the UI uses the permanent URL when the backend exposes it.
+      try {
+        const profile = await api.getProfile();
+
+        const savedFileId =
+          profile?.profile_photo_file_id ||
+          profile?.profilePhotoFileId ||
+          profile?.photo_file_id ||
+          profile?.file_id ||
+          profile?.data?.profile_photo_file_id ||
+          profile?.data?.profilePhotoFileId ||
+          profile?.data?.photo_file_id ||
+          profile?.data?.file_id ||
+          uploadedFileId ||
+          null;
+
+        const savedPhotoUrl =
+          profile?.profile_photo_url ||
+          profile?.profilePhotoUrl ||
+          profile?.photo_url ||
+          profile?.photoUrl ||
+          profile?.profile_photo ||
+          profile?.photo ||
+          profile?.file_url ||
+          profile?.fileUrl ||
+          profile?.url ||
+          profile?.data?.profile_photo_url ||
+          profile?.data?.profilePhotoUrl ||
+          profile?.data?.photo_url ||
+          profile?.data?.photoUrl ||
+          profile?.data?.profile_photo ||
+          profile?.data?.photo ||
+          profile?.data?.file_url ||
+          profile?.data?.fileUrl ||
+          profile?.data?.url ||
+          serverPhotoUrl ||
+          "";
+
+        setPhotoFileId(savedFileId);
+
+        if (savedPhotoUrl) {
+          setPhotoUrl(savedPhotoUrl);
+          if (localPreviewUrl) {
+            URL.revokeObjectURL(localPreviewUrl);
+            localPreviewUrl = "";
+          }
+        }
+      } catch (profileReadError) {
+        console.warn(
+          "PROFILE PHOTO RELOAD AFTER UPLOAD ERROR:",
+          profileReadError
         );
       }
 
-      // Show newly uploaded Cloudinary image immediately
-      setPhotoUrl(newPhoto);
-
       toast.success(
-        photoUrl
+        hasPermanentPhoto
           ? "Profile photo updated successfully."
           : "Profile photo uploaded successfully."
       );
-
     } catch (error) {
       console.error("PROFILE PHOTO UPLOAD ERROR:", error);
+
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+      }
+
+      try {
+        await loadProfilePhoto();
+      } catch (_) {
+        // Keep the original upload error.
+      }
 
       const message =
         error?.response?.data?.detail ||
         error?.response?.data?.message ||
+        error?.response?.data?.error ||
         error?.message ||
         "Unable to upload profile photo.";
 
       toast.error(message);
-
     } finally {
       setPhotoUploading(false);
     }
   };
 
- 
+  /* ==========================================================
+     SCORE BREAKDOWN
+  ========================================================== */
 
-  // ==========================================================
-  // FETCH SCORE BREAKDOWN
-  // ==========================================================
+  const fetchScoreBreakdown =
+    async () => {
+      try {
+        setBreakdownLoading(true);
 
-  const fetchScoreBreakdown = async () => {
-    try {
-      setBreakdownLoading(true);
+        const result =
+          await api.scoreBreakdown();
 
-      const result =
-        await api.scoreBreakdown();
+        setScoreBreakdown(result);
+      } catch (error) {
+        console.error(
+          "SCORE BREAKDOWN ERROR:",
+          error
+        );
 
-      setScoreBreakdown(result);
-    } catch (error) {
-      console.error(
-        "SCORE BREAKDOWN ERROR:",
-        error
-      );
+        toast.error(
+          error?.response?.data
+            ?.detail ||
+          "Unable to load score breakdown"
+        );
+      } finally {
+        setBreakdownLoading(false);
+      }
+    };
 
-      toast.error(
-        error?.response?.data?.detail ||
-        "Unable to load score breakdown"
-      );
-    } finally {
-      setBreakdownLoading(false);
-    }
-  };
-
-
-
-  // ==========================================================
-  // FETCH PROFILE SCORE
-  // ==========================================================
+  /* ==========================================================
+     PROFILE SCORE
+  ========================================================== */
 
   const fetchScore = async () => {
     try {
@@ -747,7 +1549,8 @@ const fetchWorkExperience = async () => {
       setData((prev) => ({
         ...prev,
 
-        score: result?.score ?? 0,
+        score:
+          result?.score ?? 0,
 
         tier:
           result?.badge ||
@@ -758,7 +1561,8 @@ const fetchWorkExperience = async () => {
             result?.name || "",
 
           careerGoal:
-            result?.career_goal || "",
+            result?.career_goal ||
+            "",
         },
 
         stats: {
@@ -769,16 +1573,21 @@ const fetchWorkExperience = async () => {
             result?.day_streak ?? 0,
 
           levelsCompleted:
-            result?.completed_levels ?? 0,
+            result?.completed_levels ??
+            0,
 
           totalLevels:
-            result?.total_levels ?? 0,
+            result?.total_levels ??
+            0,
 
           applications:
-            result?.applications ?? 0,
+            result?.applications ??
+            0,
 
           hasCareerPlan:
-            Boolean(result?.career_goal),
+            Boolean(
+              result?.career_goal
+            ),
         },
       }));
     } catch (error) {
@@ -788,7 +1597,8 @@ const fetchWorkExperience = async () => {
       );
 
       toast.error(
-        error?.response?.data?.detail ||
+        error?.response?.data
+          ?.detail ||
         "Unable to load profile summary."
       );
     } finally {
@@ -796,10 +1606,9 @@ const fetchWorkExperience = async () => {
     }
   };
 
-
-  // ==========================================================
-  // FETCH JOURNEY
-  // ==========================================================
+  /* ==========================================================
+     JOURNEY
+  ========================================================== */
 
   const fetchJourney = async () => {
     try {
@@ -810,6 +1619,7 @@ const fetchWorkExperience = async () => {
 
       setData((prev) => ({
         ...prev,
+
         journey:
           result?.journey || [],
       }));
@@ -820,7 +1630,8 @@ const fetchWorkExperience = async () => {
       );
 
       toast.error(
-        error?.response?.data?.detail ||
+        error?.response?.data
+          ?.detail ||
         "Unable to load your journey."
       );
     } finally {
@@ -828,10 +1639,9 @@ const fetchWorkExperience = async () => {
     }
   };
 
-
-  // ==========================================================
-  // LOAD DATA
-  // ==========================================================
+  /* ==========================================================
+     LOAD PAGE DATA
+  ========================================================== */
 
   useEffect(() => {
     if (!ready || !isAuthed) {
@@ -845,81 +1655,115 @@ const fetchWorkExperience = async () => {
     fetchWorkExperience();
   }, [ready, isAuthed]);
 
+  /* ==========================================================
+     BREAKDOWN ITEMS
+  ========================================================== */
 
-  // ==========================================================
-  // SCORE BREAKDOWN ITEMS
-  // ==========================================================
+  const breakdownItems =
+    scoreBreakdown
+      ? [
+          {
+            label:
+              "Career Clarity",
+            icon: Compass,
+            value:
+              scoreBreakdown.career_clarity,
+            max:
+              scoreBreakdown.career_clarity_max,
+          },
 
-  const breakdownItems = scoreBreakdown
-    ? [
-      {
-        label: "Career Clarity",
-        icon: Compass,
-        value:
-          scoreBreakdown.career_clarity,
-        max:
-          scoreBreakdown.career_clarity_max,
-      },
-      {
-        label: "Learning Progress",
-        icon: GraduationCap,
-        value:
-          scoreBreakdown.learning_progress,
-        max:
-          scoreBreakdown.learning_progress_max,
-      },
-      {
-        label: "Profile Completeness",
-        icon: UserCheck,
-        value:
-          scoreBreakdown.profile_completeness,
-        max:
-          scoreBreakdown.profile_completeness_max,
-      },
-      {
-        label: "Consistency",
-        icon: Flame,
-        value:
-          scoreBreakdown.consistency,
-        max:
-          scoreBreakdown.consistency_max,
-      },
-      {
-        label: "Job Readiness",
-        icon: Briefcase,
-        value:
-          scoreBreakdown.job_readiness,
-        max:
-          scoreBreakdown.job_readiness_max,
-      },
-    ]
-    : [];
+          {
+            label:
+              "Learning Progress",
+            icon: GraduationCap,
+            value:
+              scoreBreakdown.learning_progress,
+            max:
+              scoreBreakdown.learning_progress_max,
+          },
 
-  // ==========================================================
-  // PAGE
-  // ==========================================================
+          {
+            label:
+              "Profile Completeness",
+            icon: UserCheck,
+            value:
+              scoreBreakdown.profile_completeness,
+            max:
+              scoreBreakdown.profile_completeness_max,
+          },
+
+          {
+            label:
+              "Consistency",
+            icon: Flame,
+            value:
+              scoreBreakdown.consistency,
+            max:
+              scoreBreakdown.consistency_max,
+          },
+
+          {
+            label:
+              "Job Readiness",
+            icon: Briefcase,
+            value:
+              scoreBreakdown.job_readiness,
+            max:
+              scoreBreakdown.job_readiness_max,
+          },
+        ]
+      : [];
+
+  /* ==========================================================
+     PAGE
+  ========================================================== */
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-
       <div className="noise-overlay" />
-
 
       {/* ======================================================
           HEADER
       ====================================================== */}
 
-      <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/70 backdrop-blur-xl">
-
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 lg:px-8">
-
+      <header
+        className="
+          sticky
+          top-0
+          z-40
+          border-b
+          border-slate-200/60
+          bg-white/70
+          backdrop-blur-xl
+        "
+      >
+        <div
+          className="
+            mx-auto
+            flex
+            h-[72px]
+            max-w-7xl
+            items-center
+            justify-between
+            px-5
+            lg:px-8
+          "
+        >
           <Logo />
 
           <div className="flex items-center gap-3">
-
             <Link
               to="/"
-              className="hidden items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 sm:flex"
+              className="
+                hidden
+                items-center
+                gap-1.5
+                text-sm
+                font-medium
+                text-slate-500
+                hover:text-slate-900
+                sm:flex
+              "
             >
               <ArrowLeft className="h-4 w-4" />
               Home
@@ -929,33 +1773,53 @@ const fetchWorkExperience = async () => {
               <button
                 onClick={logout}
                 data-testid="profile-logout"
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-slate-200
+                  px-4
+                  py-2
+                  text-sm
+                  font-medium
+                  text-slate-600
+                  hover:bg-slate-50
+                "
               >
                 <LogOut className="h-4 w-4" />
                 Logout
               </button>
             )}
-
           </div>
         </div>
       </header>
-
 
       {/* ======================================================
           AUTH / LOADING
       ====================================================== */}
 
       {!ready ? (
-
         <div className="grid h-[70vh] place-items-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
-
       ) : !isAuthed ? (
-
         <div className="mx-auto grid max-w-md place-items-center px-5 py-32 text-center">
-
-          <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-glow">
+          <span
+            className="
+              grid
+              h-16
+              w-16
+              place-items-center
+              rounded-2xl
+              bg-gradient-to-br
+              from-blue-600
+              to-cyan-500
+              text-white
+              shadow-glow
+            "
+          >
             <Lock className="h-7 w-7" />
           </span>
 
@@ -964,33 +1828,53 @@ const fetchWorkExperience = async () => {
           </h1>
 
           <p className="mt-3 text-slate-600">
-            Log in to view and edit your profile.
+            Log in to view and edit
+            your profile.
           </p>
 
           <button
             onClick={() => openAuth()}
             data-testid="profile-login-cta"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold text-white shadow-medium"
+            className="
+              mt-6
+              inline-flex
+              items-center
+              gap-2
+              rounded-full
+              bg-gradient-to-r
+              from-blue-600
+              to-cyan-500
+              px-7
+              py-3.5
+              font-semibold
+              text-white
+              shadow-medium
+            "
           >
             Login to continue
           </button>
-
         </div>
-
       ) : (
-
         <div className="mx-auto max-w-6xl px-5 pb-24 pt-10 lg:px-8">
 
           {/* ==================================================
               SCORE / PROFILE HERO
           ================================================== */}
 
-          <div className="mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-8 shadow-soft lg:p-12">
-
+          <div
+            className="
+              mt-8
+              overflow-hidden
+              rounded-3xl
+              border
+              border-slate-100
+              bg-white
+              p-8
+              shadow-soft
+              lg:p-12
+            "
+          >
             <div className="flex flex-col items-center gap-10 lg:flex-row">
-
-              {/* SCORE */}
-
               <div className="shrink-0">
                 {scoreLoading ? (
                   <div className="grid h-[250px] w-[208px] place-items-center">
@@ -1000,23 +1884,44 @@ const fetchWorkExperience = async () => {
                   <ScoreRing
                     score={data.score}
                     tier={data.tier}
-                    name={user?.name || data.user?.name || ""}
+                    name={
+                      user?.name ||
+                      data.user?.name ||
+                      ""
+                    }
                     photoUrl={photoUrl}
-                    uploading={photoUploading}
-                    onPhotoChange={uploadProfilePhoto}
+                    uploading={
+                      photoUploading
+                    }
+                    onPhotoChange={
+                      uploadProfilePhoto
+                    }
                   />
                 )}
               </div>
 
-
-              {/* PROFILE INFO */}
-
               <div className="flex-1 text-center lg:text-left">
-
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#334155] px-4 py-2 text-sm font-semibold text-white shadow-sm">
+                <div
+                  className="
+                    mb-4
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    bg-[#334155]
+                    px-4
+                    py-2
+                    text-sm
+                    font-semibold
+                    text-white
+                    shadow-sm
+                  "
+                >
                   <Award className="h-4 w-4" />
+
                   <span>
-                    {data.tier || "Explorer"}
+                    {data.tier ||
+                      "Explorer"}
                   </span>
                 </div>
 
@@ -1034,11 +1939,7 @@ const fetchWorkExperience = async () => {
                     : "Set a career goal to boost your clarity. Here's your MyMentor Score and how far you've come with us."}
                 </p>
 
-
-                {/* STATS */}
-
                 <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
-
                   <HeroStat
                     icon={Zap}
                     value={data.stats.xp}
@@ -1047,441 +1948,635 @@ const fetchWorkExperience = async () => {
 
                   <HeroStat
                     icon={Flame}
-                    value={data.stats.streak}
+                    value={
+                      data.stats.streak
+                    }
                     label="DAY STREAK"
                   />
 
                   <HeroStat
-                    icon={GraduationCap}
+                    icon={
+                      GraduationCap
+                    }
                     value={`${data.stats.levelsCompleted}/${data.stats.totalLevels}`}
                     label="LEVELS"
                   />
 
                   <HeroStat
                     icon={Briefcase}
-                    value={data.stats.applications}
+                    value={
+                      data.stats.applications
+                    }
                     label="APPLICATIONS"
                   />
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
 
           {/* ==================================================
               PROFILE EDITOR
           ================================================== */}
 <ProfileEditor
   user={user}
-  workExperience={workExperience}
-  onWorkExperienceSaved={fetchWorkExperience}
+  photoFileId={photoFileId}
 />
 
           {/* ==================================================
-              BREAKDOWN + JOURNEY
+              WORK EXPERIENCE
           ================================================== */}
 
+          <div className="mt-8">
+            {workExperienceLoading ? (
+              <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
+                <p className="text-sm text-slate-500">
+                  Loading work experience...
+                </p>
+              </div>
+            ) : workExperienceError ? (
+              <div className="rounded-3xl border border-red-100 bg-white p-8 shadow-soft">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">
+                      Work Experience
+                    </h2>
 
+                    <p className="mt-1 text-sm text-red-500">
+                      {workExperienceError}
+                    </p>
+                  </div>
 
-    {/* ==================================================
-    WORK EXPERIENCE
-================================================== */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWorkExperienceModalOpen(
+                        true
+                      )
+                    }
+                    className="
+                      inline-flex
+                      items-center
+                      gap-2
+                      rounded-full
+                      border
+                      border-slate-200
+                      bg-white
+                      px-4
+                      py-2
+                      text-sm
+                      font-semibold
+                      text-slate-700
+                      hover:bg-slate-50
+                    "
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </button>
+                </div>
+              </div>
+            ) : workExperience ? (
+              <div
+                className="
+                  rounded-3xl
+                  border
+                  border-slate-100
+                  bg-white
+                  p-8
+                  shadow-soft
+                "
+              >
+                {/* HEADER */}
 
-<div className="mt-8">
-  {workExperienceLoading ? (
-    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
-      <p className="text-sm text-slate-500">
-        Loading work experience...
-      </p>
-    </div>
-  ) : workExperienceError ? (
-    <div className="rounded-3xl border border-red-100 bg-white p-8 shadow-soft">
-      <p className="text-sm text-red-500">
-        {workExperienceError}
-      </p>
-    </div>
-  ) : workExperience ? (
-    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="
+                        flex
+                        h-12
+                        w-12
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-2xl
+                        bg-blue-50
+                        text-blue-600
+                      "
+                    >
+                      <Briefcase className="h-6 w-6" />
+                    </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">
+                        Work Experience
+                      </h2>
 
-        <div className="flex items-start gap-4">
+                      <p className="mt-1 text-sm text-slate-500">
+                        Your professional
+                        experience
+                      </p>
+                    </div>
+                  </div>
 
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-            <Briefcase className="h-6 w-6" />
+                  <div className="flex items-center gap-2">
+                    {workExperience.currently_working && (
+                      <span
+                        className="
+                          rounded-full
+                          bg-emerald-50
+                          px-3
+                          py-1
+                          text-xs
+                          font-semibold
+                          text-emerald-600
+                        "
+                      >
+                        Currently Working
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setWorkExperienceModalOpen(
+                          true
+                        )
+                      }
+                      className="
+                        inline-flex
+                        items-center
+                        gap-2
+                        rounded-full
+                        border
+                        border-slate-200
+                        bg-white
+                        px-4
+                        py-2
+                        text-sm
+                        font-semibold
+                        text-slate-700
+                        hover:bg-slate-50
+                        hover:text-blue-600
+                      "
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </button>
+                  </div>
+                </div>
+
+                {/* DETAILS */}
+
+                <div className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                  <ProfileValue
+                    label="Job Title / Role"
+                    value={
+                      workExperience.job_title ||
+                      "-"
+                    }
+                  />
+
+                  <ProfileValue
+                    label="Organization / Company"
+                    value={
+                      workExperience.company_name ||
+                      "-"
+                    }
+                  />
+
+                  <ProfileValue
+                    label="Employment Type"
+                    value={
+                      workExperience.employment_type ||
+                      "-"
+                    }
+                  />
+
+                  <ProfileValue
+                    label="Location"
+                    value={
+                      workExperience.location ||
+                      "-"
+                    }
+                  />
+
+                  <ProfileValue
+                    label="Start Date"
+                    value={
+                      workExperience.start_date
+                        ? new Date(
+                            workExperience.start_date
+                          ).toLocaleDateString(
+                            "en-IN",
+                            {
+                              month:
+                                "long",
+                              year:
+                                "numeric",
+                            }
+                          )
+                        : "-"
+                    }
+                  />
+
+                  {!workExperience.currently_working &&
+                    workExperience.end_date && (
+                      <ProfileValue
+                        label="End Date"
+                        value={new Date(
+                          workExperience.end_date
+                        ).toLocaleDateString(
+                          "en-IN",
+                          {
+                            month:
+                              "long",
+                            year:
+                              "numeric",
+                          }
+                        )}
+                      />
+                    )}
+                </div>
+
+                {/* DESCRIPTION */}
+
+                {workExperience.description && (
+                  <div className="mt-7 border-t border-slate-100 pt-6">
+                    <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      Highlights
+                    </div>
+
+                    <p className="whitespace-pre-line text-[15px] leading-7 text-slate-700">
+                      {
+                        workExperience.description
+                      }
+                    </p>
+                  </div>
+                )}
+
+                {/* SKILLS */}
+
+                {workExperience.skills && (
+                  <div className="mt-6">
+                    <div className="mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      Skills
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {workExperience.skills
+                        .split(",")
+                        .map(
+                          (skill) =>
+                            skill.trim()
+                        )
+                        .filter(Boolean)
+                        .map(
+                          (skill) => (
+                            <span
+                              key={skill}
+                              className="
+                                rounded-full
+                                bg-slate-50
+                                px-3
+                                py-1.5
+                                text-xs
+                                font-medium
+                                text-slate-600
+                              "
+                            >
+                              {skill}
+                            </span>
+                          )
+                        )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ==================================================
+                 NO EXPERIENCE
+              ================================================== */
+
+              <div
+                className="
+                  rounded-3xl
+                  border
+                  border-slate-100
+                  bg-white
+                  p-8
+                  shadow-soft
+                "
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="
+                        flex
+                        h-12
+                        w-12
+                        items-center
+                        justify-center
+                        rounded-2xl
+                        bg-slate-50
+                        text-slate-400
+                      "
+                    >
+                      <Briefcase className="h-6 w-6" />
+                    </div>
+
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">
+                        Work Experience
+                      </h2>
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        No work experience
+                        added yet.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* + ADD ONLY HERE */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWorkExperienceModalOpen(
+                        true
+                      )
+                    }
+                    className="
+                      inline-flex
+                      items-center
+                      gap-2
+                      rounded-full
+                      border
+                      border-slate-200
+                      bg-white
+                      px-4
+                      py-2
+                      text-sm
+                      font-semibold
+                      text-slate-700
+                      hover:bg-slate-50
+                      hover:text-blue-600
+                    "
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Work Experience
-            </h2>
+          {/* ==================================================
+              SCORE BREAKDOWN + JOURNEY
+          ================================================== */}
 
-            <p className="mt-1 text-sm text-slate-500">
-              Your professional experience
-            </p>
-          </div>
-
-        </div>
-
-        {workExperience.currently_working && (
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-            Currently Working
-          </span>
-        )}
-
-      </div>
-
-      {/* Job Details */}
-      <div className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-
-        <ProfileValue
-          label="Job Title / Role"
-          value={workExperience.job_title || "-"}
-        />
-
-        <ProfileValue
-          label="Organization / Company"
-          value={workExperience.company_name || "-"}
-        />
-
-        <ProfileValue
-          label="Employment Type"
-          value={workExperience.employment_type || "-"}
-        />
-
-        <ProfileValue
-          label="Location"
-          value={workExperience.location || "-"}
-        />
-
-        <ProfileValue
-          label="Start Date"
-          value={
-            workExperience.start_date
-              ? new Date(
-                  workExperience.start_date
-                ).toLocaleDateString("en-IN", {
-                  month: "long",
-                  year: "numeric",
-                })
-              : "-"
-          }
-        />
-
-        {!workExperience.currently_working &&
-          workExperience.end_date && (
-            <ProfileValue
-              label="End Date"
-              value={new Date(
-                workExperience.end_date
-              ).toLocaleDateString("en-IN", {
-                month: "long",
-                year: "numeric",
-              })}
-            />
-          )}
-
-      </div>
-
-      {/* Description */}
-      {workExperience.description && (
-        <div className="mt-7 border-t border-slate-100 pt-6">
-
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-            Highlights
-          </div>
-
-          <p className="whitespace-pre-line text-[15px] leading-7 text-slate-700">
-            {workExperience.description}
-          </p>
-
-        </div>
-      )}
-
-      {/* Skills */}
-      {workExperience.skills && (
-        <div className="mt-6">
-
-          <div className="mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-            Skills
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-
-            {workExperience.skills
-              .split(",")
-              .map((skill) => skill.trim())
-              .filter(Boolean)
-              .map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600"
-                >
-                  {skill}
-                </span>
-              ))}
-
-          </div>
-
-        </div>
-      )}
-
-    </div>
-  ) : (
-    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
-
-      <div className="flex items-center gap-4">
-
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
-          <Briefcase className="h-6 w-6" />
-        </div>
-
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">
-            Work Experience
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            No work experience added yet.
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-  )}
-</div>
-
-
-{/* ==================================================
-    BREAKDOWN + JOURNEY
-================================================== */}
-
-<div className="mt-8 grid gap-8 lg:grid-cols-2">
-
-  {/* SCORE BREAKDOWN */}
+          <div className="mt-8 grid gap-8 lg:grid-cols-2">
 
             {/* SCORE BREAKDOWN */}
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
-
+            <div
+              className="
+                rounded-3xl
+                border
+                border-slate-100
+                bg-white
+                p-8
+                shadow-soft
+              "
+            >
               <h2 className="text-lg font-bold text-slate-900">
                 Score Breakdown
               </h2>
 
               <p className="text-sm text-slate-500">
-                What makes up your {data.score}-point score.
+                What makes up your{" "}
+                {data.score}-point score.
               </p>
 
               <div className="mt-6 space-y-5">
-
                 {breakdownLoading ? (
-
                   <div className="grid h-64 place-items-center">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                   </div>
-
-                ) : breakdownItems.length === 0 ? (
-
+                ) : breakdownItems.length ===
+                  0 ? (
                   <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">
-                    Complete your profile and start your career journey to build your score.
+                    Complete your profile
+                    and start your career
+                    journey to build your
+                    score.
                   </div>
-
                 ) : (
+                  breakdownItems.map(
+                    (b, i) => {
+                      const Icon =
+                        b.icon;
 
-                  breakdownItems.map((b, i) => {
+                      const value =
+                        Number(
+                          b.value
+                        ) || 0;
 
-                    const Icon = b.icon;
+                      const max =
+                        Number(
+                          b.max
+                        ) || 1;
 
-                    const value =
-                      Number(b.value) || 0;
+                      const pct =
+                        Math.min(
+                          100,
+                          Math.round(
+                            (value /
+                              max) *
+                              100
+                          )
+                        );
 
-                    const max =
-                      Number(b.max) || 1;
-
-                    const pct =
-                      Math.min(
-                        100,
-                        Math.round(
-                          (value / max) * 100
-                        )
-                      );
-
-                    return (
-                      <div
-                        key={b.label}
-                        data-testid={`breakdown-${i}`}
-                      >
-
-                        <div className="mb-1.5 flex items-center justify-between text-sm">
-
-                          <span className="flex items-center gap-2 font-medium text-slate-700">
-
-                            <Icon className="h-4 w-4 text-blue-600" />
-
-                            {b.label}
-
-                          </span>
-
-                          <span className="font-bold text-slate-900">
-                            {value}
-
-                            <span className="font-normal text-slate-400">
-                              /{max}
+                      return (
+                        <div
+                          key={
+                            b.label
+                          }
+                          data-testid={`breakdown-${i}`}
+                        >
+                          <div className="mb-1.5 flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-2 font-medium text-slate-700">
+                              <Icon className="h-4 w-4 text-blue-600" />
+                              {
+                                b.label
+                              }
                             </span>
-                          </span>
 
+                            <span className="font-bold text-slate-900">
+                              {
+                                value
+                              }
+
+                              <span className="font-normal text-slate-400">
+                                /{max}
+                              </span>
+                            </span>
+                          </div>
+
+                          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                            <motion.div
+                              initial={{
+                                width: 0,
+                              }}
+                              animate={{
+                                width: `${pct}%`,
+                              }}
+                              transition={{
+                                delay:
+                                  0.2 +
+                                  i *
+                                    0.1,
+                                duration:
+                                  0.9,
+                              }}
+                              className="
+                                h-full
+                                rounded-full
+                                bg-gradient-to-r
+                                from-blue-600
+                                to-cyan-500
+                              "
+                            />
+                          </div>
                         </div>
-
-                        <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-
-                          <motion.div
-                            initial={{
-                              width: 0,
-                            }}
-                            animate={{
-                              width: `${pct}%`,
-                            }}
-                            transition={{
-                              delay:
-                                0.2 +
-                                i * 0.1,
-                              duration: 0.9,
-                            }}
-                            className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500"
-                          />
-
-                        </div>
-
-                      </div>
-                    );
-                  })
-
+                      );
+                    }
+                  )
                 )}
-
               </div>
-
             </div>
-
 
             {/* JOURNEY */}
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
-
+            <div
+              className="
+                rounded-3xl
+                border
+                border-slate-100
+                bg-white
+                p-8
+                shadow-soft
+              "
+            >
               <h2 className="text-lg font-bold text-slate-900">
-                Your Journey with MyMentor
+                Your Journey with
+                MyMentor
               </h2>
 
               <p className="text-sm text-slate-500">
-                Milestones you've reached and what's next.
+                Milestones you've reached
+                and what's next.
               </p>
 
               <div className="mt-6 space-y-1">
-
                 {journeyLoading ? (
-
                   <div className="grid h-64 place-items-center">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                   </div>
-
-                ) : data.journey.length === 0 ? (
-
+                ) : data.journey.length ===
+                  0 ? (
                   <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">
-                    Your journey milestones will appear here as you progress.
+                    Your journey
+                    milestones will
+                    appear here as you
+                    progress.
                   </div>
-
                 ) : (
+                  data.journey.map(
+                    (j, i) => {
+                      const Icon =
+                        ICONS[j.icon] ||
+                        Sparkles;
 
-                  data.journey.map((j, i) => {
-
-                    const Icon =
-                      ICONS[j.icon] ||
-                      Sparkles;
-
-                    return (
-                      <motion.div
-                        key={j.key || i}
-                        initial={{
-                          opacity: 0,
-                          x: -12,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          x: 0,
-                        }}
-                        transition={{
-                          delay:
-                            0.15 +
-                            i * 0.08,
-                        }}
-                        className="relative flex gap-4 pb-6 last:pb-0"
-                        data-testid={`journey-${i}`}
-                      >
-
-                        {i <
-                          data.journey.length -
-                          1 && (
+                      return (
+                        <motion.div
+                          key={
+                            j.key ||
+                            i
+                          }
+                          initial={{
+                            opacity: 0,
+                            x: -12,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            x: 0,
+                          }}
+                          transition={{
+                            delay:
+                              0.15 +
+                              i *
+                                0.08,
+                          }}
+                          className="relative flex gap-4 pb-6 last:pb-0"
+                          data-testid={`journey-${i}`}
+                        >
+                          {i <
+                            data.journey
+                              .length -
+                              1 && (
                             <span
-                              className={`absolute left-[19px] top-10 h-full w-0.5 ${j.done
-                                ? "bg-blue-200"
-                                : "bg-slate-100"
-                                }`}
+                              className={`absolute left-[19px] top-10 h-full w-0.5 ${
+                                j.done
+                                  ? "bg-blue-200"
+                                  : "bg-slate-100"
+                              }`}
                             />
                           )}
 
-                        <span
-                          className={`relative z-10 grid h-10 w-10 shrink-0 place-items-center rounded-full ${j.done
-                            ? "bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-soft"
-                            : "border-2 border-dashed border-slate-200 bg-white text-slate-300"
+                          <span
+                            className={`relative z-10 grid h-10 w-10 shrink-0 place-items-center rounded-full ${
+                              j.done
+                                ? "bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-soft"
+                                : "border-2 border-dashed border-slate-200 bg-white text-slate-300"
                             }`}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </span>
+                          >
+                            <Icon className="h-5 w-5" />
+                          </span>
 
-                        <div className="pt-0.5">
-
-                          <div className="flex items-center gap-2">
-
-                            <h3
-                              className={`font-semibold ${j.done
-                                ? "text-slate-900"
-                                : "text-slate-500"
+                          <div className="pt-0.5">
+                            <div className="flex items-center gap-2">
+                              <h3
+                                className={`font-semibold ${
+                                  j.done
+                                    ? "text-slate-900"
+                                    : "text-slate-500"
                                 }`}
-                            >
-                              {j.title}
-                            </h3>
+                              >
+                                {
+                                  j.title
+                                }
+                              </h3>
 
-                            {j.done ? (
-                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                            ) : (
-                              <Circle className="h-4 w-4 text-slate-300" />
-                            )}
+                              {j.done ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                              ) : (
+                                <Circle className="h-4 w-4 text-slate-300" />
+                              )}
+                            </div>
 
+                            <p className="text-sm text-slate-500">
+                              {
+                                j.description
+                              }
+                            </p>
                           </div>
-
-                          <p className="text-sm text-slate-500">
-                            {j.description}
-                          </p>
-
-                        </div>
-
-                      </motion.div>
-                    );
-                  })
-
+                        </motion.div>
+                      );
+                    }
+                  )
                 )}
-
               </div>
-
             </div>
-
           </div>
-
 
           {/* ==================================================
               NEXT STEPS
@@ -1489,40 +2584,55 @@ const fetchWorkExperience = async () => {
 
           {(
             !data.stats.hasCareerPlan ||
-            data.stats.levelsCompleted === 0 ||
-            data.stats.applications === 0
+            data.stats.levelsCompleted ===
+              0 ||
+            data.stats.applications ===
+              0
           ) && (
+            <div
+              className="
+                mt-8
+                rounded-3xl
+                bg-gradient-to-br
+                from-blue-600
+                via-cyan-500
+                to-green-500
+                p-8
+                sm:p-10
+              "
+            >
+              <h2 className="text-2xl font-black text-white">
+                Boost your score
+              </h2>
 
-              <div className="mt-8 rounded-3xl bg-gradient-to-br from-blue-600 via-cyan-500 to-green-500 p-8 sm:p-10">
+              <p className="mt-2 max-w-xl text-white/90">
+                Complete these next
+                steps to level up your
+                MyMentor Score.
+              </p>
 
-                <h2 className="text-2xl font-black text-white">
-                  Boost your score
-                </h2>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {!data.stats
+                  .hasCareerPlan && (
+                  <NextCTA
+                    to="/career-path"
+                    label="Generate career plan"
+                  />
+                )}
 
-                <p className="mt-2 max-w-xl text-white/90">
-                  Complete these next steps to level up your MyMentor Score.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-
-                  {!data.stats.hasCareerPlan && (
-                    <NextCTA
-                      to="/career-path"
-                      label="Generate career plan"
-                    />
-                  )}
-
-                  {data.stats.levelsCompleted === 0 && (
-                    <NextCTA
-                      to="/skillhub"
-                      label="Start learning"
-                    />
-                  )}
+                {data.stats
+                  .levelsCompleted ===
+                  0 && (
+                  <NextCTA
+                    to="/skillhub"
+                    label="Start learning"
+                  />
+                )}
 
                   {data.stats.applications === 0 && (
                     <NextCTA
                       to="/jobs"
-                      label="Exp
+                      label="Explore jobs"
                     />
                   )}
 
@@ -1535,233 +2645,85 @@ const fetchWorkExperience = async () => {
         </div>
       )}
 
+      {/* ========================================================
+          WORK EXPERIENCE MODAL
+      ======================================================== */}
+
+      <WorkExperienceModal
+        open={
+          workExperienceModalOpen
+        }
+        onClose={() =>
+          setWorkExperienceModalOpen(
+            false
+          )
+        }
+        workExperience={
+          workExperience
+        }
+        onSaved={fetchWorkExperience}
+      />
     </div>
   );
 }
 
+/* ============================================================
+   PROFILE EDITOR
+============================================================ */
 
-
-// ============================================================
-// PROFILE EDITOR
-// ============================================================
 function ProfileEditor({
   user,
-  workExperience,
-  onWorkExperienceSaved,
+  photoFileId,
 }) {
-   const [p, setP] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [p, setP] = useState(null);
 
-  const [profileLoading, setProfileLoading] = useState(true);
-
-
-  const [profileExists, setProfileExists] = useState(false);
-
-  const [isEditing, setIsEditing] = useState(false);
-
-  const [draftBeforeEdit, setDraftBeforeEdit] = useState(null);
-  const [professionalPopupOpen, setProfessionalPopupOpen] =
+  const [saving, setSaving] =
     useState(false);
 
+  const [
+    profileLoading,
+    setProfileLoading,
+  ] = useState(true);
 
+  const [
+    profileExists,
+    setProfileExists,
+  ] = useState(false);
 
+  const [
+    isEditing,
+    setIsEditing,
+  ] = useState(false);
 
-  // ==========================================================
-  // SET FIELD
-  // ==========================================================
+  const [
+    draftBeforeEdit,
+    setDraftBeforeEdit,
+  ] = useState(null);
 
-  const set = (key) => (e) => {
+  /* ==========================================================
+     SET FIELD
+  ========================================================== */
+  const set = (key) => (event) => {
     setP((state) => ({
       ...state,
-      [key]: e.target.value,
+      [key]: event.target.value,
     }));
   };
 
-// ============================================================
-// SAVE WORK EXPERIENCE
-// ============================================================
-const saveWorkExperience = async () => {
-  if (!p) {
-    return false;
-  }
-
-  // ----------------------------------------------------------
-  // VALIDATION
-  // ----------------------------------------------------------
-
-  if (!p.role?.trim()) {
-    toast.error(
-      "Please enter your job title / role."
-    );
-    return false;
-  }
-
-  if (!p.organization?.trim()) {
-    toast.error(
-      "Please enter your organization / company."
-    );
-    return false;
-  }
-
-  if (
-    p.yearsExperience === "" ||
-    p.yearsExperience === null ||
-    p.yearsExperience === undefined
-  ) {
-    toast.error(
-      "Please enter your years of experience."
-    );
-    return false;
-  }
-
-  if (!p.location?.trim()) {
-    toast.error(
-      "Please enter your location."
-    );
-    return false;
-  }
-
-  if (!p.locationType) {
-    toast.error(
-      "Please select your location type."
-    );
-    return false;
-  }
-
-  if (!p.employmentType) {
-    toast.error(
-      "Please select your employment type."
-    );
-    return false;
-  }
-
-  if (!p.startMonth) {
-    toast.error(
-      "Please select your start month."
-    );
-    return false;
-  }
-
-  if (!p.startYear) {
-    toast.error(
-      "Please select your start year."
-    );
-    return false;
-  }
-
-  try {
-    const payload = {
-      company_name:
-        p.organization.trim(),
-
-      job_title:
-        p.role.trim(),
-
-      employment_type:
-        p.employmentType,
-
-      location:
-        p.location.trim(),
-
-      start_date:
-        `${p.startYear}-${String(
-          p.startMonth
-        ).padStart(2, "0")}-01`,
-
-      end_date:
-        p.currentlyWorking
-          ? null
-          : null,
-
-      currently_working:
-        Boolean(p.currentlyWorking),
-
-      description:
-        p.highlights?.trim() || "",
-
-      skills:
-        "",
-    };
-
-    console.log(
-      "WORK EXPERIENCE SAVE REQUEST:",
-      payload
-    );
-
-    let result;
-
-    // --------------------------------------------------------
-    // UPDATE EXISTING EXPERIENCE
-    // --------------------------------------------------------
-
-    if (workExperience?.id) {
-      result =
-        await api.updateWorkExperience(
-          workExperience.id,
-          payload
-        );
-    }
-
-    // --------------------------------------------------------
-    // CREATE NEW EXPERIENCE
-    // --------------------------------------------------------
-
-    else {
-      result =
-        await api.createWorkExperience(
-          payload
-        );
-    }
-
-    console.log(
-      "WORK EXPERIENCE SAVE RESPONSE:",
-      result
-    );
-
-    // --------------------------------------------------------
-    // REFRESH PARENT DATA
-    // --------------------------------------------------------
-
-    if (onWorkExperienceSaved) {
-      await onWorkExperienceSaved();
-    }
-
-    return true;
-
-  } catch (error) {
-    console.error(
-      "WORK EXPERIENCE SAVE ERROR:",
-      error
-    );
-
-    const message =
-      error?.response?.data?.detail ||
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.message ||
-      "Unable to save work experience.";
-
-    toast.error(message);
-
-    return false;
-  }
-};
-  // ==========================================================
-  // NORMALIZE PROFILE
-  // ==========================================================
+  /* ==========================================================
+     NORMALIZE PROFILE
+  ========================================================== */
 
   const normalizeProfile = (
     data,
     currentUser
   ) => {
-
     const category =
       data?.profile_category ||
       data?.profileCategory ||
       "";
 
     return {
-
       ...data,
 
       name:
@@ -1770,12 +2732,10 @@ const saveWorkExperience = async () => {
         "",
 
       dob:
-        data?.dob ||
-        "",
+        data?.dob || "",
 
       age:
-        data?.age ??
-        null,
+        data?.age ?? null,
 
       profileCategory:
         category,
@@ -1786,7 +2746,6 @@ const saveWorkExperience = async () => {
         data?.educationLevel ||
         "",
 
-      // Student
       currentYear:
         data?.class_year ||
         data?.current_year ||
@@ -1799,7 +2758,6 @@ const saveWorkExperience = async () => {
         data?.schoolCollege ||
         "",
 
-      // Working professional
       yearsExperience:
         data?.years_experience ??
         data?.experience_years ??
@@ -1807,8 +2765,7 @@ const saveWorkExperience = async () => {
         "",
 
       role:
-        data?.role ||
-        "",
+        data?.role || "",
 
       careerGoal:
         data?.career_goal ||
@@ -1820,14 +2777,12 @@ const saveWorkExperience = async () => {
         data?.careerInterests ||
         "",
 
-      // Other professional details
       organization:
         data?.organization ||
         "",
 
       location:
-        data?.location ||
-        "",
+        data?.location || "",
 
       locationType:
         data?.location_type ||
@@ -1836,124 +2791,42 @@ const saveWorkExperience = async () => {
       employmentType:
         data?.employment_type ||
         "",
+
       currentlyWorking:
-        data?.currently_working ?? data?.currentlyWorking ?? false,
+        data?.currently_working ??
+        data?.currentlyWorking ??
+        false,
+
       startMonth:
-        data?.start_month ?? data?.startMonth ?? "",
+        data?.start_month ??
+        data?.startMonth ??
+        "",
+
       startYear:
-        data?.start_year ?? data?.startYear ?? "",
+        data?.start_year ??
+        data?.startYear ??
+        "",
+
       highlights:
         data?.highlights || "",
     };
   };
 
-
-
-  
-  const fetchWorkExperience = async () => {
-    try {
-      const response = await api.get("/api/work-experiences/me");
-
-      console.log(
-        "WORK EXPERIENCE API RESPONSE:",
-        response.data
-      );
-
-      const experiences = Array.isArray(response.data)
-        ? response.data
-        : response.data
-          ? [response.data]
-          : [];
-
-      return experiences[0] || null;
-
-    } catch (error) {
-      console.error(
-        "WORK EXPERIENCE FETCH ERROR:",
-        error?.response?.status,
-        error?.response?.data || error.message
-      );
-
-      return null;
-    }
-  };
-
- 
-    // ============================================================
-// OPEN WORK EXPERIENCE POPUP
-// ============================================================
-const handleOpenProfessionalPopup = () => {
-  if (workExperience) {
-    const startDate =
-      workExperience.start_date || "";
-
-    setP((current) => ({
-      ...current,
-
-      role:
-        workExperience.job_title ||
-        current?.role ||
-        "",
-
-      organization:
-        workExperience.company_name ||
-        current?.organization ||
-        "",
-
-      location:
-        workExperience.location ||
-        current?.location ||
-        "",
-
-      locationType:
-        current?.locationType ||
-        "",
-
-      employmentType:
-        workExperience.employment_type ||
-        current?.employmentType ||
-        "",
-
-      currentlyWorking:
-        workExperience.currently_working ??
-        current?.currentlyWorking ??
-        false,
-
-      startMonth:
-        startDate
-          ? startDate.substring(5, 7)
-          : current?.startMonth || "",
-
-      startYear:
-        startDate
-          ? startDate.substring(0, 4)
-          : current?.startYear || "",
-
-      highlights:
-        workExperience.description ||
-        current?.highlights ||
-        "",
-    }));
-  }
-
-  setProfessionalPopupOpen(true);
-};
-  // ==========================================================
-  // LOAD PROFILE
-  // ==========================================================
+  /* ==========================================================
+     LOAD PROFILE
+  ========================================================== */
 
   useEffect(() => {
-
     const loadProfile =
       async () => {
-
         if (!user) {
           return;
         }
 
         try {
-
-          setProfileLoading(true);
+          setProfileLoading(
+            true
+          );
 
           const data =
             await api.getProfile();
@@ -1973,25 +2846,12 @@ const handleOpenProfessionalPopup = () => {
 
           setP(normalized);
 
-await fetchWorkExperience();
-          // ------------------------------------------------
-          // PHOTO
-          // ------------------------------------------------
-
-          const returnedPhoto =
-            data?.profile_photo_url ||
-            data?.profilePhotoUrl ||
-            data?.photo_url ||
-            data?.photo ||
-            data?.profile_photo ||
-            "";
-
-          if (returnedPhoto) {
-            setPhotoUrl(returnedPhoto);
-          }
-
+          /*
+           * Existing profile:
+           * READ ONLY
+           */
+          setIsEditing(false);
         } catch (error) {
-
           console.error(
             "PROFILE LOAD ERROR:",
             error
@@ -2001,8 +2861,18 @@ await fetchWorkExperience();
             error?.response?.status ===
             404
           ) {
-
+            /*
+             * IMPORTANT:
+             *
+             * No profile exists.
+             * Open the form automatically.
+             *
+             * This is the main fix for
+             * first-time profile filling.
+             */
             setProfileExists(false);
+
+            setIsEditing(true);
 
             setP({
               name:
@@ -2035,52 +2905,45 @@ await fetchWorkExperience();
               locationType: "",
 
               employmentType: "",
-              currentlyWorking: false,
+
+              currentlyWorking:
+                false,
+
               startMonth: "",
+
               startYear: "",
+
               highlights: "",
             });
-
           } else {
-
             toast.error(
-              error?.response?.data?.detail ||
-              "Unable to load profile."
+              error?.response?.data
+                ?.detail ||
+                "Unable to load profile."
             );
-
           }
-
         } finally {
-
-          setProfileLoading(false);
-
+          setProfileLoading(
+            false
+          );
         }
-
       };
 
     loadProfile();
-
   }, [user]);
 
-
-  // ==========================================================
-  // SAVE WORK EXPERIENCE
-  // ==========================================================
-
-  
-  // ==========================================================
-  // SAVE PROFILE
-  // ==========================================================
+  /* ==========================================================
+     SAVE PROFILE
+  ========================================================== */
 
   const save = async () => {
-
     if (!p) {
       return;
     }
 
-    // --------------------------------------------------------
-    // Basic validation
-    // --------------------------------------------------------
+    /* --------------------------------------------------------
+       PROFILE CATEGORY
+    -------------------------------------------------------- */
 
     if (!p.profileCategory) {
       toast.error(
@@ -2089,14 +2952,16 @@ await fetchWorkExperience();
       return;
     }
 
+    /* --------------------------------------------------------
+       STUDENT VALIDATION
+    -------------------------------------------------------- */
 
     if (
       p.profileCategory ===
-      "School student" ||
+        "School student" ||
       p.profileCategory ===
-      "College student"
+        "College student"
     ) {
-
       if (!p.currentYear) {
         toast.error(
           "Please enter your current year / class."
@@ -2110,33 +2975,26 @@ await fetchWorkExperience();
         );
         return;
       }
-
     }
 
+    /* --------------------------------------------------------
+       PROFESSIONAL
+    -------------------------------------------------------- */
 
-    if (
-      p.profileCategory ===
-      "Working professional"
-    ) {
-      if (!p.role?.trim()) { toast.error("Please enter your job title / role in the + popup."); return; }
-      if (!p.organization?.trim()) { toast.error("Please enter your organization / company in the + popup."); return; }
-      if (p.yearsExperience === "" || p.yearsExperience === null || p.yearsExperience === undefined) { toast.error("Please enter your years of experience in the + popup."); return; }
-      if (!p.location?.trim()) { toast.error("Please enter your location in the + popup."); return; }
-      if (!p.locationType) { toast.error("Please select your location type in the + popup."); return; }
-      if (!p.employmentType) { toast.error("Please select your employment type in the + popup."); return; }
-      if (!p.startMonth || !p.startYear) { toast.error("Please select your start month and start year in the + popup."); return; }
-    }
+    /*
+     * IMPORTANT:
+     *
+     * Work experience is handled separately
+     * through the Work Experience card.
+     *
+     * Therefore we do NOT force the work fields
+     * here when the user is only saving profile.
+     */
 
     setSaving(true);
 
     try {
-
-      // ------------------------------------------------------
-      // BUILD REQUEST
-      // ------------------------------------------------------
-
       const body = {
-
         dob:
           p.dob || null,
 
@@ -2152,128 +3010,120 @@ await fetchWorkExperience();
         career_interests:
           p.careerInterests || null,
 
-        // Working-professional details
         organization:
           p.organization || null,
+
         location:
           p.location || null,
+
         location_type:
           p.locationType || null,
+
         employment_type:
           p.employmentType || null,
+
         currently_working:
-          Boolean(p.currentlyWorking),
+          Boolean(
+            p.currentlyWorking
+          ),
+
         start_month:
           p.startMonth || null,
+
         start_year:
-          p.startYear ? Number(p.startYear) : null,
+          p.startYear
+            ? Number(
+                p.startYear
+              )
+            : null,
+
         highlights:
           p.highlights || null,
+
+        profile_photo_file_id:
+          photoFileId || null,
       };
 
-
-      // ------------------------------------------------------
-      // STUDENT
-      // ------------------------------------------------------
+      /* ------------------------------------------------------
+         STUDENT
+      ------------------------------------------------------ */
 
       if (
         p.profileCategory ===
-        "School student" ||
+          "School student" ||
         p.profileCategory ===
-        "College student"
+          "College student"
       ) {
-
         body.class_year =
           p.currentYear || null;
 
         body.institution =
           p.schoolCollege || null;
 
-        /*
-         * Explicitly clear professional fields.
-         */
-
         body.years_experience =
           null;
 
-        body.role =
-          null;
+        body.role = null;
+
         body.organization =
           null;
-        body.location =
-          null;
+
+        body.location = null;
+
         body.location_type =
           null;
+
         body.employment_type =
           null;
-        body.currently_working = null;
+
+        body.currently_working =
+          null;
+
         body.start_month = null;
+
         body.start_year = null;
+
         body.highlights = null;
       }
 
-
-      // ------------------------------------------------------
-      // WORKING PROFESSIONAL
-      // ------------------------------------------------------
+      /* ------------------------------------------------------
+         WORKING PROFESSIONAL
+      ------------------------------------------------------ */
 
       if (
         p.profileCategory ===
         "Working professional"
       ) {
-
         body.years_experience =
-          p.yearsExperience !== ""
+          p.yearsExperience !==
+          ""
             ? Number(
-              p.yearsExperience
-            )
+                p.yearsExperience
+              )
             : null;
 
         body.role =
           p.role || null;
 
-        /*
-         * Explicitly clear student fields.
-         */
-
-        body.class_year =
-          null;
+        body.class_year = null;
 
         body.institution =
           null;
-
-        body.organization =
-          p.organization || null;
-        body.location =
-          p.location || null;
-        body.location_type =
-          p.locationType || null;
-        body.employment_type =
-          p.employmentType || null;
       }
-
 
       console.log(
         "PROFILE SAVE REQUEST:",
         body
       );
 
-
-      // ------------------------------------------------------
-      // UPDATE / CREATE
-      // ------------------------------------------------------
-
       let response;
 
       if (profileExists) {
-
         response =
           await api.updateProfile(
             body
           );
-
       } else {
-
         response =
           await api.createProfile(
             body
@@ -2282,16 +3132,24 @@ await fetchWorkExperience();
         setProfileExists(true);
       }
 
-
       console.log(
         "PROFILE SAVE RESPONSE:",
         response
       );
 
-
-      // ------------------------------------------------------
-      // UPDATE LOCAL STATE
-      // ------------------------------------------------------
+      /*
+       * PROFILE SCORE REFRESH
+       * ---------------------
+       * The profile-score endpoint calculates the score from the
+       * latest saved profile. Refresh it immediately after saving
+       * so the score shown in the hero card changes without a page
+       * refresh.
+       */
+      await Promise.all([
+        fetchScore(),
+        fetchScoreBreakdown(),
+        fetchJourney(),
+      ]);
 
       const normalized =
         normalizeProfile(
@@ -2300,8 +3158,8 @@ await fetchWorkExperience();
         );
 
       /*
-       * Preserve current local values when
-       * backend doesn't return every field.
+       * Preserve local values when
+       * backend does not return every field.
        */
 
       setP({
@@ -2334,7 +3192,8 @@ await fetchWorkExperience();
           "",
 
         yearsExperience:
-          normalized.yearsExperience !== ""
+          normalized.yearsExperience !==
+          ""
             ? normalized.yearsExperience
             : p.yearsExperience,
 
@@ -2362,79 +3221,90 @@ await fetchWorkExperience();
           normalized.organization ||
           p.organization ||
           "",
+
         location:
           normalized.location ||
           p.location ||
           "",
+
         locationType:
           normalized.locationType ||
           p.locationType ||
           "",
+
         employmentType:
           normalized.employmentType ||
           p.employmentType ||
           "",
+
         currentlyWorking:
-          normalized.currentlyWorking ?? p.currentlyWorking ?? false,
+          normalized.currentlyWorking ??
+          p.currentlyWorking ??
+          false,
+
         startMonth:
-          normalized.startMonth || p.startMonth || "",
+          normalized.startMonth ||
+          p.startMonth ||
+          "",
+
         startYear:
-          normalized.startYear || p.startYear || "",
+          normalized.startYear ||
+          p.startYear ||
+          "",
+
         highlights:
-          normalized.highlights || p.highlights || "",
+          normalized.highlights ||
+          p.highlights ||
+          "",
       });
 
-
       /*
-       * VERY IMPORTANT:
+       * AFTER SAVE:
        *
-       * After save the profile becomes
-       * read-only.
+       * Profile becomes read-only.
        *
        * User must click Edit again.
        */
 
-      setDraftBeforeEdit(null);
-      setIsEditing(false);
+      setDraftBeforeEdit(
+        null
+      );
 
+      setIsEditing(false);
 
       toast.success(
         profileExists
           ? "Profile updated successfully"
           : "Profile created successfully"
       );
-
     } catch (error) {
-
       console.error(
         "PROFILE SAVE ERROR:",
         error
       );
 
       const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
+        error?.response?.data
+          ?.detail ||
+        error?.response?.data
+          ?.message ||
+        error?.response?.data
+          ?.error ||
         error?.message ||
         "Could not save profile";
 
       toast.error(message);
-
     } finally {
-
       setSaving(false);
-
     }
   };
 
-
-  // ==========================================================
-  // PROFILE COMPLETION
-  // ==========================================================
+  /* ==========================================================
+     PROFILE COMPLETION
+  ========================================================== */
 
   const calculateCompletion =
     () => {
-
       if (!p) {
         return 0;
       }
@@ -2448,17 +3318,16 @@ await fetchWorkExperience();
         p.careerInterests,
       ];
 
-      let requiredFields =
-        [...commonFields];
-
+      let requiredFields = [
+        ...commonFields,
+      ];
 
       if (
         p.profileCategory ===
-        "School student" ||
+          "School student" ||
         p.profileCategory ===
-        "College student"
+          "College student"
       ) {
-
         requiredFields.push(
           p.currentYear
         );
@@ -2468,6 +3337,11 @@ await fetchWorkExperience();
         );
       }
 
+      /*
+       * For Working Professional,
+       * work experience fields are
+       * part of completion.
+       */
 
       if (
         p.profileCategory ===
@@ -2483,200 +3357,201 @@ await fetchWorkExperience();
           p.startMonth,
           p.startYear,
           p.highlights,
-          p.currentlyWorking ? "yes" : ""
+          p.currentlyWorking
+            ? "yes"
+            : ""
         );
       }
-
 
       const completed =
         requiredFields.filter(
           (value) =>
             value !== null &&
-            value !== undefined &&
-            String(value).trim() !== ""
+            value !==
+              undefined &&
+            String(value).trim() !==
+              ""
         );
-
 
       return Math.round(
         (completed.length /
           requiredFields.length) *
-        100
+          100
       );
     };
 
-
-  // ==========================================================
-  // LOADING
-  // ==========================================================
+  /* ==========================================================
+     LOADING
+  ========================================================== */
 
   if (
     profileLoading ||
     !p
   ) {
-
     return (
-      <div className="mt-8 grid min-h-[300px] place-items-center rounded-3xl border border-slate-100 bg-white shadow-soft">
-
+      <div
+        className="
+          mt-8
+          grid
+          min-h-[300px]
+          place-items-center
+          rounded-3xl
+          border
+          border-slate-100
+          bg-white
+          shadow-soft
+        "
+      >
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-
       </div>
     );
   }
 
-
   const completionPercentage =
     calculateCompletion();
 
-
-  // ==========================================================
-  // CATEGORY HELPERS
-  // ==========================================================
+  /* ==========================================================
+     CATEGORY HELPERS
+  ========================================================== */
 
   const isStudent =
     p.profileCategory ===
-    "School student" ||
+      "School student" ||
     p.profileCategory ===
-    "College student";
+      "College student";
 
-  const isProfessional =
-    p.profileCategory ===
-    "Working professional";
-
-
-  // ==========================================================
-  // RENDER
-  // ==========================================================
+  /* ==========================================================
+     RENDER
+  ========================================================== */
 
   return (
     <div
-      className="mt-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-soft"
+      className="
+        mt-8
+        rounded-3xl
+        border
+        border-slate-100
+        bg-white
+        p-8
+        shadow-soft
+      "
       data-testid="profile-editor"
     >
-
       {/* ====================================================
           HEADER
       ==================================================== */}
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-
         <div>
-
           <h2 className="text-lg font-bold text-slate-900">
             My Profile
           </h2>
 
           <p className="text-sm text-slate-500">
-            Complete your profile to unlock better recommendations.
+            Complete your profile to
+            unlock better
+            recommendations.
           </p>
-
         </div>
 
-        {/* COMPLETION + ADD + EDIT */}
+        {/* ==================================================
+            COMPLETION + EDIT
+           
+            IMPORTANT:
+            +Add IS NOT HERE.
+         ================================================== */}
+
         <div className="flex items-center gap-3">
           <div className="w-36">
             <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
-              <span>Completion</span>
-              <span data-testid="profile-completion">{completionPercentage}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 transition-all" style={{ width: `${completionPercentage}%` }} />
-            </div>
-          </div>
-          {isProfessional && (
-            <button
-              type="button"
-              onClick={handleOpenProfessionalPopup}
-              className="..."
-              title="Add job details"
-            >
-              +Add
-            </button>
-          )}
-          {!isEditing && (
-            <button type="button" onClick={() => { setDraftBeforeEdit({ ...p }); setIsEditing(true); }} data-testid="profile-edit" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-blue-600">
-              <Pencil className="h-4 w-4" />
-              Edit
-            </button>
-          )}
-        </div>
+              <span>
+                Completion
+              </span>
 
-      </div>
-      {/* ====================================================
-          WORKING PROFESSIONAL POPUP
-      ==================================================== */}
-      {professionalPopupOpen && isProfessional && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onMouseDown={(e) => { if (e.target === e.currentTarget) setProfessionalPopupOpen(false); }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="professional-details-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Briefcase className="h-5 w-5" /></div>
-                <h3 id="professional-details-title" className="text-2xl font-black text-slate-900">Working Professional Details</h3>
-                <p className="mt-1 text-sm text-slate-500">Add your work experience, role, company and location details.</p>
-              </div>
-              <button type="button" onClick={() => setProfessionalPopupOpen(false)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900" aria-label="Close professional details"><X className="h-5 w-5" /></button>
-            </div>
-
-            <div className="mt-7 grid gap-5 sm:grid-cols-2">
-              <div><PLabel>Job Title / Role *</PLabel><input className={pfield} value={p.role || ""} onChange={set("role")} placeholder="e.g. Software Engineer" /></div>
-              <div><PLabel>Organization / Company *</PLabel><input className={pfield} value={p.organization || ""} onChange={set("organization")} placeholder="e.g. Microsoft" /></div>
-              <div><PLabel>Years of Experience *</PLabel><input type="number" min="0" max="60" step="0.5" className={pfield} value={p.yearsExperience ?? ""} onChange={set("yearsExperience")} placeholder="e.g. 3" /></div>
-              <div><PLabel>Location *</PLabel><div className="relative"><MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className={`${pfield} pl-9`} value={p.location || ""} onChange={set("location")} placeholder="e.g. Chennai, Tamil Nadu" /></div></div>
-              <div><PLabel>Location Type *</PLabel><select className={pfield} value={p.locationType || ""} onChange={set("locationType")}><option value="">Select</option><option value="On-site">On-site</option><option value="Hybrid">Hybrid</option><option value="Remote">Remote</option></select></div>
-              <div><PLabel>Employment Type *</PLabel><select className={pfield} value={p.employmentType || ""} onChange={set("employmentType")}><option value="">Select</option><option value="Full-time">Full-time</option><option value="Part-time">Part-time</option><option value="Contract">Contract</option><option value="Freelance">Freelance</option><option value="Internship">Internship</option><option value="Self-employed">Self-employed</option></select></div>
-              <div><PLabel>Start Month *</PLabel><select className={pfield} value={p.startMonth || ""} onChange={set("startMonth")}><option value="">Select month</option>{Array.from({ length: 12 }, (_, index) => { const month = String(index + 1).padStart(2, "0"); const label = new Date(2000, index, 1).toLocaleString("en-US", { month: "long" }); return <option key={month} value={month}>{label}</option>; })}</select></div>
-              <div><PLabel>Start Year *</PLabel><select className={pfield} value={p.startYear || ""} onChange={set("startYear")}><option value="">Select year</option>{Array.from({ length: new Date().getFullYear() - 1970 + 1 }, (_, index) => { const year = new Date().getFullYear() - index; return <option key={year} value={year}>{year}</option>; })}</select></div>
-            </div>
-
-            <label className="mt-6 flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700"><input type="checkbox" checked={Boolean(p.currentlyWorking)} onChange={(e) => setP((state) => ({ ...state, currentlyWorking: e.target.checked }))} className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />I currently work here</label>
-
-            <div className="mt-6"><div className="flex items-center justify-between"><PLabel>Highlights</PLabel><span className="text-xs text-slate-400">{(p.highlights || "").length}/2000</span></div><textarea rows={5} maxLength={2000} className={`${pfield} resize-none`} value={p.highlights || ""} onChange={set("highlights")} placeholder="Projects, problems you solved, or results you achieved" /></div>
-
-            <div className="mt-7 flex flex-wrap justify-end gap-3">
-              <button type="button" onClick={() => setProfessionalPopupOpen(false)} disabled={saving} className="rounded-full border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">Cancel</button>
-              <button type="button" disabled={saving} onClick={async () => {
-                if (!p.role?.trim()) return toast.error("Please enter your job title / role.");
-                if (!p.organization?.trim()) return toast.error("Please enter your organization / company.");
-                if (p.yearsExperience === "" || p.yearsExperience === null || p.yearsExperience === undefined) return toast.error("Please enter your years of experience.");
-                if (!p.location?.trim()) return toast.error("Please enter your location.");
-                if (!p.locationType) return toast.error("Please select your location type.");
-                if (!p.employmentType) return toast.error("Please select your employment type.");
-                if (!p.startMonth) return toast.error("Please select your start month.");
-                if (!p.startYear) return toast.error("Please select your start year.");
-                try {
-                  setSaving(true);
-                  await saveWorkExperience();
-                  await save();
-                  setProfessionalPopupOpen(false);
-                } catch (error) {
-                  console.error("WORK EXPERIENCE SAVE ERROR:", error);
-
-                  const message =
-                    error?.response?.data?.detail ||
-                    error?.response?.data?.message ||
-                    error?.response?.data?.error ||
-                    error?.message ||
-                    "Unable to save work experience.";
-
-                  toast.error(message);
-                } finally {
-                  setSaving(false);
+              <span data-testid="profile-completion">
+                {
+                  completionPercentage
                 }
-              }} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 font-semibold text-white shadow-medium disabled:opacity-60">{saving && <Loader2 className="h-4 w-4 animate-spin" />}{saving ? "Saving..." : "Save Details"}</button>
+                %
+              </span>
+            </div>
+
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="
+                  h-full
+                  rounded-full
+                  bg-gradient-to-r
+                  from-blue-600
+                  to-cyan-500
+                  transition-all
+                "
+                style={{
+                  width: `${completionPercentage}%`,
+                }}
+              />
             </div>
           </div>
+
+          {/* =================================================
+              EDIT ONLY AFTER PROFILE EXISTS
+          ================================================= */}
+
+          {profileExists &&
+            !isEditing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftBeforeEdit({
+                    ...p,
+                  });
+
+                  setIsEditing(
+                    true
+                  );
+                }}
+                data-testid="profile-edit"
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-slate-200
+                  bg-white
+                  px-5
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-slate-700
+                  transition-colors
+                  hover:bg-slate-50
+                  hover:text-blue-600
+                "
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </button>
+            )}
         </div>
-      )}
+      </div>
 
       {/* ====================================================
-          READ ONLY PROFILE
+          PROFILE CONTENT
       ==================================================== */}
 
       {!isEditing ? (
+        /*
+         * IMPORTANT:
+         *
+         * This branch is only reached after a saved
+         * profile exists.
+         *
+         * First-time profile automatically uses
+         * isEditing=true.
+         */
 
         <div className="mt-7 grid gap-x-8 gap-y-7 sm:grid-cols-2">
-
-          {/* ROW 1 */}
-
           <ProfileValue
             label="Full Name"
             value={p.name}
@@ -2686,16 +3561,15 @@ await fetchWorkExperience();
             label="Date of Birth"
             value={
               p.dob
-                ? String(p.dob).slice(
-                  0,
-                  10
-                )
+                ? String(
+                    p.dob
+                  ).slice(
+                    0,
+                    10
+                  )
                 : ""
             }
           />
-
-
-          {/* ROW 2 */}
 
           <ProfileValue
             label="Profile Category"
@@ -2704,23 +3578,33 @@ await fetchWorkExperience();
             }
           />
 
-
-          {!isProfessional && (
+          {!(
+            p.profileCategory ===
+            "Working professional"
+          ) && (
             <>
-              <ProfileValue label="Class / Year" value={p.currentYear} />
-              <ProfileValue label="School / College" value={p.schoolCollege} />
+              <ProfileValue
+                label="Class / Year"
+                value={
+                  p.currentYear
+                }
+              />
+
+              <ProfileValue
+                label="School / College"
+                value={
+                  p.schoolCollege
+                }
+              />
             </>
           )}
 
           <ProfileValue
             label="Education Level"
-            value={p.education}
+            value={
+              p.education
+            }
           />
-
-
-
-
-          {/* ROW 4 */}
 
           <ProfileValue
             label="Career Goal"
@@ -2735,17 +3619,21 @@ await fetchWorkExperience();
               p.careerInterests
             }
           />
-
         </div>
-
       ) : (
-
         /* ==================================================
-           EDIT FORM
+           EDIT / FIRST-TIME FORM
+
+           First time:
+             isEditing = true
+             profileExists = false
+
+           Existing profile edit:
+             isEditing = true
+             profileExists = true
         ================================================== */
 
         <div className="mt-7">
-
           <div className="grid gap-5 sm:grid-cols-2">
 
             {/* FULL NAME */}
@@ -2765,11 +3653,9 @@ await fetchWorkExperience();
               />
             </div>
 
-
             {/* DOB */}
 
             <div>
-
               <PLabel>
                 Date of Birth
               </PLabel>
@@ -2777,36 +3663,28 @@ await fetchWorkExperience();
               <input
                 type="date"
                 className={pfield}
-                value={
-                  (
-                    p.dob ||
-                    ""
-                  ).slice(
-                    0,
-                    10
-                  )
-                }
+                value={(
+                  p.dob || ""
+                ).slice(
+                  0,
+                  10
+                )}
                 onChange={set(
                   "dob"
                 )}
-                max={
-                  new Date()
-                    .toISOString()
-                    .slice(
-                      0,
-                      10
-                    )
-                }
+                max={new Date()
+                  .toISOString()
+                  .slice(
+                    0,
+                    10
+                  )}
                 data-testid="profile-dob"
               />
-
             </div>
-
 
             {/* CATEGORY */}
 
             <div>
-
               <PLabel>
                 Profile Category
               </PLabel>
@@ -2817,10 +3695,10 @@ await fetchWorkExperience();
                   p.profileCategory ||
                   ""
                 }
-                onChange={(e) => {
-
+                onChange={(event) => {
                   const category =
-                    e.target.value;
+                    event.target
+                      .value;
 
                   setP(
                     (state) => ({
@@ -2831,7 +3709,7 @@ await fetchWorkExperience();
 
                       /*
                        * Clear category-specific
-                       * fields when changing category.
+                       * fields when category changes.
                        */
 
                       currentYear:
@@ -2843,22 +3721,29 @@ await fetchWorkExperience();
                       yearsExperience:
                         "",
 
-                      role:
-                        "",
+                      role: "",
+
                       organization:
                         "",
+
                       location:
                         "",
+
                       locationType:
                         "",
+
                       employmentType:
                         "",
+
                       currentlyWorking:
                         false,
+
                       startMonth:
                         "",
+
                       startYear:
                         "",
+
                       highlights:
                         "",
                     })
@@ -2866,14 +3751,12 @@ await fetchWorkExperience();
                 }}
                 data-testid="profile-category"
               >
-
                 <option value="">
                   Select
                 </option>
 
                 {CATEGORIES.map(
                   (category) => (
-
                     <option
                       key={
                         category.value
@@ -2886,23 +3769,15 @@ await fetchWorkExperience();
                         category.label
                       }
                     </option>
-
                   )
                 )}
-
               </select>
-
             </div>
 
-
-            {/* ==================================================
-                STUDENT: CLASS / YEAR
-            ================================================== */}
+            {/* STUDENT: CLASS / YEAR */}
 
             {isStudent && (
-
               <div>
-
                 <PLabel>
                   Class / Year
                 </PLabel>
@@ -2918,26 +3793,19 @@ await fetchWorkExperience();
                   )}
                   placeholder={
                     p.profileCategory ===
-                      "School student"
+                    "School student"
                       ? "e.g. Class 12"
                       : "e.g. 2nd Year"
                   }
                   data-testid="profile-classyear"
                 />
-
               </div>
-
             )}
 
-
-            {/* ==================================================
-                STUDENT: SCHOOL / COLLEGE
-            ================================================== */}
+            {/* STUDENT: SCHOOL / COLLEGE */}
 
             {isStudent && (
-
               <div>
-
                 <PLabel>
                   School / College
                 </PLabel>
@@ -2953,22 +3821,18 @@ await fetchWorkExperience();
                   )}
                   placeholder={
                     p.profileCategory ===
-                      "School student"
+                    "School student"
                       ? "e.g. ABC Higher Secondary School"
                       : "e.g. Anna University"
                   }
                   data-testid="profile-institution"
                 />
-
               </div>
-
             )}
-
 
             {/* EDUCATION */}
 
             <div>
-
               <PLabel>
                 Education Level
               </PLabel>
@@ -2985,14 +3849,11 @@ await fetchWorkExperience();
                 placeholder="e.g. Bachelor's Degree"
                 data-testid="profile-education"
               />
-
             </div>
-
 
             {/* CAREER GOAL */}
 
             <div>
-
               <PLabel>
                 Career Goal
               </PLabel>
@@ -3009,14 +3870,11 @@ await fetchWorkExperience();
                 placeholder="e.g. I want to become a Doctor"
                 data-testid="profile-goal"
               />
-
             </div>
-
 
             {/* CAREER INTERESTS */}
 
             <div>
-
               <PLabel>
                 Career Interests
               </PLabel>
@@ -3033,29 +3891,42 @@ await fetchWorkExperience();
                 placeholder="e.g. Medicine, Research"
                 data-testid="profile-interests"
               />
-
             </div>
-
           </div>
-
 
           {/* ==================================================
               SAVE / CANCEL
           ================================================== */}
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-
             <button
               type="button"
               onClick={save}
               disabled={saving}
               data-testid="profile-save"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3 font-semibold text-white shadow-medium transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-glow disabled:opacity-60"
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-full
+                bg-gradient-to-r
+                from-blue-600
+                to-cyan-500
+                px-7
+                py-3
+                font-semibold
+                text-white
+                shadow-medium
+                transition
+                hover:-translate-y-0.5
+                hover:shadow-glow
+                disabled:opacity-60
+              "
             >
-
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
+
                   Saving...
                 </>
               ) : (
@@ -3065,31 +3936,53 @@ await fetchWorkExperience();
                     : "Save Profile"}
                 </>
               )}
-
             </button>
 
+            {/* CANCEL ONLY FOR EXISTING PROFILE EDIT */}
 
-            <button
-              type="button"
-              onClick={() => {
-                if (draftBeforeEdit) {
-                  setP(draftBeforeEdit);
-                }
-                setDraftBeforeEdit(null);
-                setIsEditing(false);
-              }}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-7 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-            >
-              Cancel
-            </button>
+            {profileExists && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    draftBeforeEdit
+                  ) {
+                    setP(
+                      draftBeforeEdit
+                    );
+                  }
 
+                  setDraftBeforeEdit(
+                    null
+                  );
+
+                  setIsEditing(
+                    false
+                  );
+                }}
+                disabled={saving}
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-slate-200
+                  bg-white
+                  px-7
+                  py-3
+                  font-semibold
+                  text-slate-700
+                  hover:bg-slate-50
+                  disabled:opacity-60
+                "
+              >
+                Cancel
+              </button>
+            )}
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }
