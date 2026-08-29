@@ -30,6 +30,8 @@ import { Logo } from "@/features/career/components/landing/primitives";
 import { useAuth } from "@/features/auth/components/AuthModal";
 import { toast } from "sonner";
 
+
+
 /* ============================================================
    ICONS
 ============================================================ */
@@ -430,18 +432,23 @@ function WorkExperienceModal({
   workExperience,
   onSaved,
 }) {
-  const [form, setForm] = useState({
-    role: "",
-    organization: "",
-    yearsExperience: "",
-    location: "",
-    locationType: "",
-    employmentType: "",
-    currentlyWorking: false,
-    startMonth: "",
-    startYear: "",
-    highlights: "",
-  });
+const [form, setForm] = useState({
+  role: "",
+  organization: "",
+  yearsExperience: "",
+  location: "",
+  locationType: "",
+  employmentType: "",
+  currentlyWorking: false,
+
+  startMonth: "",
+  startYear: "",
+
+  endMonth: "",
+  endYear: "",
+
+  highlights: "",
+});
 
   const [saving, setSaving] = useState(false);
 
@@ -449,52 +456,56 @@ function WorkExperienceModal({
      LOAD EXISTING EXPERIENCE INTO FORM
   ---------------------------------------------------------- */
 
-  useEffect(() => {
-    if (!open) return;
+ useEffect(() => {
+  if (!open) return;
 
-    const startDate =
-      workExperience?.start_date || "";
+  const startDate = workExperience?.start_date || "";
+  const endDate = workExperience?.end_date || "";
 
-    setForm({
-      role:
-        workExperience?.job_title || "",
+  setForm({
+    role: workExperience?.job_title || "",
 
-      organization:
-        workExperience?.company_name || "",
+    organization: workExperience?.company_name || "",
 
-      yearsExperience:
-        workExperience?.years_experience ??
-        workExperience?.experience_years ??
-        "",
+    yearsExperience:
+      workExperience?.years_experience ??
+      workExperience?.experience_years ??
+      "",
 
-      location:
-        workExperience?.location || "",
+    location: workExperience?.location || "",
 
-      locationType:
-        workExperience?.location_type || "",
+    locationType: workExperience?.location_type || "",
 
-      employmentType:
-        workExperience?.employment_type || "",
+    employmentType: workExperience?.employment_type || "",
 
-      currentlyWorking:
-        Boolean(
-          workExperience?.currently_working
-        ),
+    currentlyWorking: Boolean(
+      workExperience?.currently_working
+    ),
 
-      startMonth:
-        startDate
-          ? startDate.substring(5, 7)
-          : "",
+    // Start date
+    startMonth: startDate
+      ? startDate.substring(5, 7)
+      : "",
 
-      startYear:
-        startDate
-          ? startDate.substring(0, 4)
-          : "",
+    startYear: startDate
+      ? startDate.substring(0, 4)
+      : "",
 
-      highlights:
-        workExperience?.description || "",
-    });
-  }, [open, workExperience]);
+    // End date
+    endMonth:
+      !workExperience?.currently_working && endDate
+        ? endDate.substring(5, 7)
+        : "",
+
+    endYear:
+      !workExperience?.currently_working && endDate
+        ? endDate.substring(0, 4)
+        : "",
+
+    highlights:
+      workExperience?.description || "",
+  });
+}, [open, workExperience]);
 
   /* ----------------------------------------------------------
      FIELD SETTER
@@ -572,6 +583,39 @@ function WorkExperienceModal({
       return;
     }
 
+    if (!form.currentlyWorking) {
+  if (!form.endMonth) {
+    toast.error(
+      "Please select your end month."
+    );
+    return;
+  }
+
+  if (!form.endYear) {
+    toast.error(
+      "Please select your end year."
+    );
+    return;
+  }
+
+  const startDate = new Date(
+    Number(form.startYear),
+    Number(form.startMonth) - 1
+  );
+
+  const endDate = new Date(
+    Number(form.endYear),
+    Number(form.endMonth) - 1
+  );
+
+  if (endDate < startDate) {
+    toast.error(
+      "End date cannot be before start date."
+    );
+    return;
+  }
+}
+
     try {
       setSaving(true);
 
@@ -593,7 +637,11 @@ function WorkExperienceModal({
             form.startMonth
           ).padStart(2, "0")}-01`,
 
-        end_date: null,
+        end_date: form.currentlyWorking
+  ? null
+  : `${form.endYear}-${String(
+      form.endMonth
+    ).padStart(2, "0")}-01`,
 
         currently_working:
           Boolean(form.currentlyWorking),
@@ -1010,35 +1058,128 @@ function WorkExperienceModal({
           </div>
         </div>
 
-        {/* CURRENTLY WORKING */}
+  {/* CURRENTLY WORKING */}
+<label className="mt-6 flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
+  <input
+    type="checkbox"
+    checked={Boolean(form.currentlyWorking)}
+    onChange={(event) =>
+      setForm((prev) => ({
+        ...prev,
+        currentlyWorking: event.target.checked,
 
-        <label className="mt-6 flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
-          <input
-            type="checkbox"
-            checked={
-              Boolean(
-                form.currentlyWorking
-              )
+        // Clear end date when currently working
+        ...(event.target.checked
+          ? {
+              endMonth: "",
+              endYear: "",
             }
-            onChange={(event) =>
-              setForm((prev) => ({
-                ...prev,
-                currentlyWorking:
-                  event.target.checked,
-              }))
-            }
-            className="
-              h-5
-              w-5
-              rounded
-              border-slate-300
-              text-blue-600
-              focus:ring-blue-500
-            "
-          />
+          : {}),
+      }))
+    }
+    className="
+      h-5
+      w-5
+      rounded
+      border-slate-300
+      text-blue-600
+      focus:ring-blue-500
+    "
+  />
 
-          I currently work here
-        </label>
+  I currently work here
+</label>
+
+{/* END DATE */}
+{!form.currentlyWorking && (
+  <div className="mt-6 grid gap-5 sm:grid-cols-2">
+
+    {/* END MONTH */}
+    <div>
+  <PLabel>
+    End Month *
+  </PLabel>
+
+  <select
+    className={pfield}
+    value={form.endMonth}
+    onChange={setField("endMonth")}
+  >
+    <option value="">
+      Select month
+    </option>
+
+    {Array.from(
+      { length: 12 },
+      (_, index) => {
+        const month = String(index + 1).padStart(
+          2,
+          "0"
+        );
+
+        const label = new Date(
+          2000,
+          index,
+          1
+        ).toLocaleString(
+          "en-US",
+          {
+            month: "long",
+          }
+        );
+
+        return (
+          <option
+            key={month}
+            value={month}
+          >
+            {label}
+          </option>
+        );
+      }
+    )}
+  </select>
+</div>
+
+    {/* END YEAR */}
+    <div>
+      <PLabel>
+        End Year *
+      </PLabel>
+
+      <select
+        className={pfield}
+        value={form.endYear}
+        onChange={setField("endYear")}
+      >
+        <option value="">
+          Select year
+        </option>
+
+        {Array.from(
+          {
+            length:
+              new Date().getFullYear() - 1970 + 1,
+          },
+          (_, index) => {
+            const year =
+              new Date().getFullYear() - index;
+
+            return (
+              <option
+                key={year}
+                value={year}
+              >
+                {year}
+              </option>
+            );
+          }
+        )}
+      </select>
+    </div>
+
+  </div>
+)}
 
         {/* HIGHLIGHTS */}
 
@@ -1146,25 +1287,27 @@ export default function ProfilePage() {
      PAGE STATE
   ========================================================== */
 
-  const [
-    workExperience,
-    setWorkExperience,
-  ] = useState(null);
+ const [workExperiences, setWorkExperiences] = useState([]);
 
-  const [
-    workExperienceLoading,
-    setWorkExperienceLoading,
-  ] = useState(false);
+const [
+  selectedWorkExperience,
+  setSelectedWorkExperience,
+] = useState(null);
 
-  const [
-    workExperienceError,
-    setWorkExperienceError,
-  ] = useState("");
+const [
+  workExperienceLoading,
+  setWorkExperienceLoading,
+] = useState(false);
 
-  const [
-    workExperienceModalOpen,
-    setWorkExperienceModalOpen,
-  ] = useState(false);
+const [
+  workExperienceError,
+  setWorkExperienceError,
+] = useState("");
+
+const [
+  workExperienceModalOpen,
+  setWorkExperienceModalOpen,
+] = useState(false);
 
   const [data, setData] = useState({
     score: 0,
@@ -1275,57 +1418,51 @@ export default function ProfilePage() {
      FETCH WORK EXPERIENCE
   ========================================================== */
 
-  const fetchWorkExperience =
-    async () => {
-      try {
-        setWorkExperienceLoading(
-          true
-        );
+  const fetchWorkExperiences = async () => {
+  try {
+    setWorkExperienceLoading(true);
+    setWorkExperienceError("");
 
-        setWorkExperienceError(
-          ""
-        );
+    const response = await api.getWorkExperiences();
 
-        const response =
-          await api.getWorkExperiences();
+    const experiences = Array.isArray(response)
+      ? response
+      : response
+        ? [response]
+        : [];
 
-        const experiences =
-          Array.isArray(response)
-            ? response
-            : response
-              ? [response]
-              : [];
+    setWorkExperiences(experiences);
 
-        setWorkExperience(
-          experiences[0] || null
-        );
+    return experiences;
+  } catch (error) {
+    console.error(
+      "WORK EXPERIENCE FETCH ERROR:",
+      error
+    );
 
-        return (
-          experiences[0] || null
-        );
-      } catch (error) {
-        console.error(
-          "WORK EXPERIENCE FETCH ERROR:",
-          error
-        );
+    setWorkExperiences([]);
 
-        setWorkExperience(null);
+    setWorkExperienceError(
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      "Unable to load work experience."
+    );
 
-        setWorkExperienceError(
-          error?.response?.data
-            ?.detail ||
-          error?.response?.data
-            ?.message ||
-          "Unable to load work experience."
-        );
+    return [];
+  } finally {
+    setWorkExperienceLoading(false);
+  }
+};
 
-        return null;
-      } finally {
-        setWorkExperienceLoading(
-          false
-        );
-      }
-    };
+const handleAddWorkExperience = () => {
+  setSelectedWorkExperience(null);
+  setWorkExperienceModalOpen(true);
+};
+
+const handleEditWorkExperience = (experience) => {
+  setSelectedWorkExperience(experience);
+  setWorkExperienceModalOpen(true);
+};
 
   /* ==========================================================
      PROFILE PHOTO UPLOAD
@@ -1652,7 +1789,7 @@ export default function ProfilePage() {
     fetchScoreBreakdown();
     fetchJourney();
     loadProfilePhoto();
-    fetchWorkExperience();
+    fetchWorkExperiences();
   }, [ready, isAuthed]);
 
   /* ==========================================================
@@ -1980,354 +2117,282 @@ export default function ProfilePage() {
 <ProfileEditor
   user={user}
   photoFileId={photoFileId}
+  workExperiences={workExperiences}
 />
 
           {/* ==================================================
               WORK EXPERIENCE
           ================================================== */}
 
-          <div className="mt-8">
-            {workExperienceLoading ? (
-              <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
-                <p className="text-sm text-slate-500">
-                  Loading work experience...
-                </p>
+         <div className="mt-8">
+  <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-soft">
+
+    {/* HEADER */}
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900">
+          Work Experience
+        </h2>
+
+        <p className="mt-1 text-sm text-slate-500">
+          Your professional experience
+        </p>
+      </div>
+
+      {/* ALWAYS SHOW ADD BUTTON */}
+      <button
+        type="button"
+        onClick={handleAddWorkExperience}
+        className="
+          inline-flex
+          items-center
+          gap-2
+          rounded-full
+          bg-blue-600
+          px-4
+          py-2
+          text-sm
+          font-semibold
+          text-white
+          hover:bg-blue-700
+        "
+      >
+        <Plus className="h-4 w-4" />
+        Add Experience
+      </button>
+    </div>
+
+    {/* LOADING */}
+    {workExperienceLoading ? (
+      <div className="mt-6 py-10 text-center">
+        <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600" />
+      </div>
+
+    ) : workExperienceError ? (
+
+      <div className="mt-6 rounded-2xl bg-red-50 p-4 text-sm text-red-600">
+        {workExperienceError}
+      </div>
+
+    ) : workExperiences.length === 0 ? (
+
+      /* EMPTY */
+      <div className="mt-6 rounded-2xl bg-slate-50 p-6 text-center">
+        <Briefcase className="mx-auto h-8 w-8 text-slate-400" />
+
+        <p className="mt-3 font-medium text-slate-700">
+          No work experience added yet.
+        </p>
+
+        <p className="mt-1 text-sm text-slate-500">
+          Add your professional experience to complete your profile.
+        </p>
+      </div>
+
+    ) : (
+
+      /* EXPERIENCES */
+      <div className="mt-6 space-y-4">
+
+        {workExperiences.map((experience) => (
+
+          <div
+            key={experience.id}
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              p-6
+              transition
+              hover:border-blue-200
+              hover:shadow-sm
+            "
+          >
+
+            {/* CARD HEADER */}
+            <div className="flex items-start justify-between gap-4">
+
+              <div className="flex items-start gap-4">
+
+                <div
+                  className="
+                    flex
+                    h-12
+                    w-12
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-2xl
+                    bg-blue-50
+                    text-blue-600
+                  "
+                >
+                  <Briefcase className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-slate-900">
+                    {experience.job_title || "-"}
+                  </h3>
+
+                  <p className="mt-1 text-sm font-medium text-slate-600">
+                    {experience.company_name || "-"}
+                  </p>
+                </div>
+
               </div>
-            ) : workExperienceError ? (
-              <div className="rounded-3xl border border-red-100 bg-white p-8 shadow-soft">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">
-                      Work Experience
-                    </h2>
 
-                    <p className="mt-1 text-sm text-red-500">
-                      {workExperienceError}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-2">
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setWorkExperienceModalOpen(
-                        true
-                      )
-                    }
+                {experience.currently_working && (
+                  <span
                     className="
-                      inline-flex
-                      items-center
-                      gap-2
                       rounded-full
-                      border
-                      border-slate-200
-                      bg-white
-                      px-4
-                      py-2
-                      text-sm
+                      bg-emerald-50
+                      px-3
+                      py-1
+                      text-xs
                       font-semibold
-                      text-slate-700
-                      hover:bg-slate-50
+                      text-emerald-600
                     "
                   >
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </button>
-                </div>
+                    Currently Working
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleEditWorkExperience(experience)
+                  }
+                  className="
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    border
+                    border-slate-200
+                    px-4
+                    py-2
+                    text-sm
+                    font-semibold
+                    text-slate-700
+                    hover:bg-slate-50
+                    hover:text-blue-600
+                  "
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </button>
+
               </div>
-            ) : workExperience ? (
-              <div
-                className="
-                  rounded-3xl
-                  border
-                  border-slate-100
-                  bg-white
-                  p-8
-                  shadow-soft
-                "
-              >
-                {/* HEADER */}
+            </div>
 
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="
-                        flex
-                        h-12
-                        w-12
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-2xl
-                        bg-blue-50
-                        text-blue-600
-                      "
-                    >
-                      <Briefcase className="h-6 w-6" />
-                    </div>
+            {/* DETAILS */}
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
 
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900">
-                        Work Experience
-                      </h2>
+              <ProfileValue
+                label="Employment Type"
+                value={experience.employment_type || "-"}
+              />
 
-                      <p className="mt-1 text-sm text-slate-500">
-                        Your professional
-                        experience
-                      </p>
-                    </div>
-                  </div>
+              <ProfileValue
+                label="Location"
+                value={experience.location || "-"}
+              />
 
-                  <div className="flex items-center gap-2">
-                    {workExperience.currently_working && (
+              <ProfileValue
+                label="Start Date"
+                value={
+                  experience.start_date
+                    ? new Date(
+                        experience.start_date
+                      ).toLocaleDateString("en-IN", {
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "-"
+                }
+              />
+
+              {/* END DATE */}
+              <ProfileValue
+                label="End Date"
+                value={
+                  experience.currently_working
+                    ? "Present"
+                    : experience.end_date
+                      ? new Date(
+                          experience.end_date
+                        ).toLocaleDateString("en-IN", {
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : "-"
+                }
+              />
+
+            </div>
+
+            {/* HIGHLIGHTS */}
+            {experience.description && (
+              <div className="mt-6 border-t border-slate-100 pt-5">
+
+                <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  Highlights
+                </div>
+
+                <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
+                  {experience.description}
+                </p>
+
+              </div>
+            )}
+
+            {/* SKILLS */}
+            {experience.skills && (
+              <div className="mt-6">
+
+                <div className="mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  Skills
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+
+                  {experience.skills
+                    .split(",")
+                    .map((skill) => skill.trim())
+                    .filter(Boolean)
+                    .map((skill) => (
                       <span
+                        key={skill}
                         className="
                           rounded-full
-                          bg-emerald-50
+                          bg-slate-50
                           px-3
-                          py-1
+                          py-1.5
                           text-xs
-                          font-semibold
-                          text-emerald-600
+                          font-medium
+                          text-slate-600
                         "
                       >
-                        Currently Working
+                        {skill}
                       </span>
-                    )}
+                    ))}
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setWorkExperienceModalOpen(
-                          true
-                        )
-                      }
-                      className="
-                        inline-flex
-                        items-center
-                        gap-2
-                        rounded-full
-                        border
-                        border-slate-200
-                        bg-white
-                        px-4
-                        py-2
-                        text-sm
-                        font-semibold
-                        text-slate-700
-                        hover:bg-slate-50
-                        hover:text-blue-600
-                      "
-                    >
-                      <Pencil className="h-4 w-4" />
-                      Edit
-                    </button>
-                  </div>
-                </div>
-
-                {/* DETAILS */}
-
-                <div className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-                  <ProfileValue
-                    label="Job Title / Role"
-                    value={
-                      workExperience.job_title ||
-                      "-"
-                    }
-                  />
-
-                  <ProfileValue
-                    label="Organization / Company"
-                    value={
-                      workExperience.company_name ||
-                      "-"
-                    }
-                  />
-
-                  <ProfileValue
-                    label="Employment Type"
-                    value={
-                      workExperience.employment_type ||
-                      "-"
-                    }
-                  />
-
-                  <ProfileValue
-                    label="Location"
-                    value={
-                      workExperience.location ||
-                      "-"
-                    }
-                  />
-
-                  <ProfileValue
-                    label="Start Date"
-                    value={
-                      workExperience.start_date
-                        ? new Date(
-                            workExperience.start_date
-                          ).toLocaleDateString(
-                            "en-IN",
-                            {
-                              month:
-                                "long",
-                              year:
-                                "numeric",
-                            }
-                          )
-                        : "-"
-                    }
-                  />
-
-                  {!workExperience.currently_working &&
-                    workExperience.end_date && (
-                      <ProfileValue
-                        label="End Date"
-                        value={new Date(
-                          workExperience.end_date
-                        ).toLocaleDateString(
-                          "en-IN",
-                          {
-                            month:
-                              "long",
-                            year:
-                              "numeric",
-                          }
-                        )}
-                      />
-                    )}
-                </div>
-
-                {/* DESCRIPTION */}
-
-                {workExperience.description && (
-                  <div className="mt-7 border-t border-slate-100 pt-6">
-                    <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                      Highlights
-                    </div>
-
-                    <p className="whitespace-pre-line text-[15px] leading-7 text-slate-700">
-                      {
-                        workExperience.description
-                      }
-                    </p>
-                  </div>
-                )}
-
-                {/* SKILLS */}
-
-                {workExperience.skills && (
-                  <div className="mt-6">
-                    <div className="mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                      Skills
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {workExperience.skills
-                        .split(",")
-                        .map(
-                          (skill) =>
-                            skill.trim()
-                        )
-                        .filter(Boolean)
-                        .map(
-                          (skill) => (
-                            <span
-                              key={skill}
-                              className="
-                                rounded-full
-                                bg-slate-50
-                                px-3
-                                py-1.5
-                                text-xs
-                                font-medium
-                                text-slate-600
-                              "
-                            >
-                              {skill}
-                            </span>
-                          )
-                        )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* ==================================================
-                 NO EXPERIENCE
-              ================================================== */
-
-              <div
-                className="
-                  rounded-3xl
-                  border
-                  border-slate-100
-                  bg-white
-                  p-8
-                  shadow-soft
-                "
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="
-                        flex
-                        h-12
-                        w-12
-                        items-center
-                        justify-center
-                        rounded-2xl
-                        bg-slate-50
-                        text-slate-400
-                      "
-                    >
-                      <Briefcase className="h-6 w-6" />
-                    </div>
-
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900">
-                        Work Experience
-                      </h2>
-
-                      <p className="mt-1 text-sm text-slate-500">
-                        No work experience
-                        added yet.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* + ADD ONLY HERE */}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setWorkExperienceModalOpen(
-                        true
-                      )
-                    }
-                    className="
-                      inline-flex
-                      items-center
-                      gap-2
-                      rounded-full
-                      border
-                      border-slate-200
-                      bg-white
-                      px-4
-                      py-2
-                      text-sm
-                      font-semibold
-                      text-slate-700
-                      hover:bg-slate-50
-                      hover:text-blue-600
-                    "
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </button>
                 </div>
               </div>
             )}
+
           </div>
+
+        ))}
+
+      </div>
+    )}
+
+  </div>
+</div>
 
           {/* ==================================================
               SCORE BREAKDOWN + JOURNEY
@@ -2649,20 +2714,15 @@ export default function ProfilePage() {
           WORK EXPERIENCE MODAL
       ======================================================== */}
 
-      <WorkExperienceModal
-        open={
-          workExperienceModalOpen
-        }
-        onClose={() =>
-          setWorkExperienceModalOpen(
-            false
-          )
-        }
-        workExperience={
-          workExperience
-        }
-        onSaved={fetchWorkExperience}
-      />
+     <WorkExperienceModal
+  open={workExperienceModalOpen}
+  onClose={() => {
+    setWorkExperienceModalOpen(false);
+    setSelectedWorkExperience(null);
+  }}
+  workExperience={selectedWorkExperience}
+  onSaved={fetchWorkExperiences}
+/>
     </div>
   );
 }
@@ -2674,6 +2734,7 @@ export default function ProfilePage() {
 function ProfileEditor({
   user,
   photoFileId,
+  workExperiences,
 }) {
   const [p, setP] = useState(null);
 
@@ -2931,6 +2992,8 @@ function ProfileEditor({
 
     loadProfile();
   }, [user]);
+
+  
 
   /* ==========================================================
      SAVE PROFILE
@@ -3303,82 +3366,58 @@ function ProfileEditor({
      PROFILE COMPLETION
   ========================================================== */
 
-  const calculateCompletion =
-    () => {
-      if (!p) {
-        return 0;
-      }
+  const calculateCompletion = () => {
+  if (!p) {
+    return 0;
+  }
 
-      const commonFields = [
-        p.name,
-        p.dob,
-        p.profileCategory,
-        p.education,
-        p.careerGoal,
-        p.careerInterests,
-      ];
+  const basicFields = [
+    p.name,
+    p.dob,
+    p.profileCategory,
+    p.education,
+    p.careerGoal,
+    p.careerInterests,
+  ];
 
-      let requiredFields = [
-        ...commonFields,
-      ];
+  let total = basicFields.length;
+  let completed = basicFields.filter(
+    (value) =>
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== ""
+  ).length;
 
-      if (
-        p.profileCategory ===
-          "School student" ||
-        p.profileCategory ===
-          "College student"
-      ) {
-        requiredFields.push(
-          p.currentYear
-        );
+  if (
+    p.profileCategory === "School student" ||
+    p.profileCategory === "College student"
+  ) {
+    total += 2;
 
-        requiredFields.push(
-          p.schoolCollege
-        );
-      }
+    if (p.currentYear) {
+      completed += 1;
+    }
 
-      /*
-       * For Working Professional,
-       * work experience fields are
-       * part of completion.
-       */
+    if (p.schoolCollege) {
+      completed += 1;
+    }
+  }
 
-      if (
-        p.profileCategory ===
-        "Working professional"
-      ) {
-        requiredFields.push(
-          p.yearsExperience,
-          p.role,
-          p.organization,
-          p.location,
-          p.locationType,
-          p.employmentType,
-          p.startMonth,
-          p.startYear,
-          p.highlights,
-          p.currentlyWorking
-            ? "yes"
-            : ""
-        );
-      }
+  if (p.profileCategory === "Working professional") {
+    total += 1;
 
-      const completed =
-        requiredFields.filter(
-          (value) =>
-            value !== null &&
-            value !==
-              undefined &&
-            String(value).trim() !==
-              ""
-        );
+    if (
+      Array.isArray(workExperiences) &&
+      workExperiences.length > 0
+    ) {
+      completed += 1;
+    }
+  }
 
-      return Math.round(
-        (completed.length /
-          requiredFields.length) *
-          100
-      );
-    };
+  return Math.round(
+    (completed / total) * 100
+  );
+};
 
   /* ==========================================================
      LOADING
