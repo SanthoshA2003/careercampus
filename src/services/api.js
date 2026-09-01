@@ -274,6 +274,7 @@ export const api = {
   // ==================================================
   // ORGANISATIONS
   // ==================================================
+  
 
   companiesList: () =>
     client
@@ -282,7 +283,7 @@ export const api = {
 
   companyJoin: (body) =>
     client
-      .post("/companies/join", body)
+      .post("/companies/onboard", body)
       .then((r) => r.data),
 
   // ==================================================
