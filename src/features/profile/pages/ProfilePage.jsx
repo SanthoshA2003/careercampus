@@ -1780,17 +1780,24 @@ const handleEditWorkExperience = (experience) => {
      LOAD PAGE DATA
   ========================================================== */
 
-  useEffect(() => {
-    if (!ready || !isAuthed) {
-      return;
-    }
+ const refreshProfileSummary = async () => {
+  await Promise.all([
+    fetchScore(),
+    fetchScoreBreakdown(),
+    fetchJourney(),
+  ]);
+};
 
-    fetchScore();
-    fetchScoreBreakdown();
-    fetchJourney();
-    loadProfilePhoto();
-    fetchWorkExperiences();
-  }, [ready, isAuthed]);
+useEffect(() => {
+  if (!ready || !isAuthed) {
+    return;
+  }
+
+  refreshProfileSummary();
+
+  loadProfilePhoto();
+  fetchWorkExperiences();
+}, [ready, isAuthed]);
 
   /* ==========================================================
      BREAKDOWN ITEMS
@@ -2118,6 +2125,7 @@ const handleEditWorkExperience = (experience) => {
   user={user}
   photoFileId={photoFileId}
   workExperiences={workExperiences}
+  onProfileSaved={refreshProfileSummary}
 />
 
           {/* ==================================================
@@ -2735,6 +2743,7 @@ function ProfileEditor({
   user,
   photoFileId,
   workExperiences,
+  onProfileSaved,
 }) {
   const [p, setP] = useState(null);
 
@@ -3057,122 +3066,36 @@ function ProfileEditor({
     setSaving(true);
 
     try {
-      const body = {
-        dob:
-          p.dob || null,
+    const body = {
+  dob: p.dob || null,
 
-        profile_category:
-          p.profileCategory || null,
+  profile_category:
+    p.profileCategory || null,
 
-        education:
-          p.education || null,
+  education:
+    p.education || null,
 
-        career_goal:
-          p.careerGoal || null,
+  class_year:
+    p.currentYear || null,
 
-        career_interests:
-          p.careerInterests || null,
+  institution:
+    p.schoolCollege || null,
 
-        organization:
-          p.organization || null,
+  career_goal:
+    p.careerGoal || null,
 
-        location:
-          p.location || null,
+  career_interests:
+    p.careerInterests || null,
 
-        location_type:
-          p.locationType || null,
+  profile_photo_file_id:
+    photoFileId || null,
+};
 
-        employment_type:
-          p.employmentType || null,
-
-        currently_working:
-          Boolean(
-            p.currentlyWorking
-          ),
-
-        start_month:
-          p.startMonth || null,
-
-        start_year:
-          p.startYear
-            ? Number(
-                p.startYear
-              )
-            : null,
-
-        highlights:
-          p.highlights || null,
-
-        profile_photo_file_id:
-          photoFileId || null,
-      };
-
-      /* ------------------------------------------------------
-         STUDENT
-      ------------------------------------------------------ */
-
-      if (
-        p.profileCategory ===
-          "School student" ||
-        p.profileCategory ===
-          "College student"
-      ) {
-        body.class_year =
-          p.currentYear || null;
-
-        body.institution =
-          p.schoolCollege || null;
-
-        body.years_experience =
-          null;
-
-        body.role = null;
-
-        body.organization =
-          null;
-
-        body.location = null;
-
-        body.location_type =
-          null;
-
-        body.employment_type =
-          null;
-
-        body.currently_working =
-          null;
-
-        body.start_month = null;
-
-        body.start_year = null;
-
-        body.highlights = null;
-      }
-
+     
       /* ------------------------------------------------------
          WORKING PROFESSIONAL
       ------------------------------------------------------ */
 
-      if (
-        p.profileCategory ===
-        "Working professional"
-      ) {
-        body.years_experience =
-          p.yearsExperience !==
-          ""
-            ? Number(
-                p.yearsExperience
-              )
-            : null;
-
-        body.role =
-          p.role || null;
-
-        body.class_year = null;
-
-        body.institution =
-          null;
-      }
 
       console.log(
         "PROFILE SAVE REQUEST:",
@@ -3208,11 +3131,9 @@ function ProfileEditor({
        * so the score shown in the hero card changes without a page
        * refresh.
        */
-      await Promise.all([
-        fetchScore(),
-        fetchScoreBreakdown(),
-        fetchJourney(),
-      ]);
+      if (onProfileSaved) {
+  await onProfileSaved();
+}
 
       const normalized =
         normalizeProfile(
