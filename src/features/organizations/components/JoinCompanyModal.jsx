@@ -256,8 +256,8 @@ export default function JoinCompanyModal({ open, onClose }) {
         contact_role: f.contactRole.trim(),
 
         // Admin account
-        admin_email: f.adminEmail.trim(),
-        admin_password: f.password,
+       admin_official_email: f.adminEmail.trim(),
+       password: f.password,
 
         status: "pending",
         verified: false,
@@ -614,7 +614,7 @@ export default function JoinCompanyModal({ open, onClose }) {
                           <input
                             type="email"
                             className={field}
-                            value={f.adminEmail}
+                            value={f.contactEmail}
                             readOnly
                             disabled
                             placeholder="Loading email..."

@@ -80,7 +80,10 @@ export default function OrganizationsPage() {
                   <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {c.size}</span>
                 </div>
                 <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-600"><Briefcase className="h-4 w-4" /> {c.openRoles} open roles</span>
+                 <span className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-600">
+  <Briefcase className="h-4 w-4" /> {c.open_roles} open roles
+</span>
+
                   {c.website && <a href={c.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-blue-600" data-testid={`company-website-${i}`}>Visit <ExternalLink className="h-3.5 w-3.5" /></a>}
                 </div>
               </motion.div>
